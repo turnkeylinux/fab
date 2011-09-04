@@ -1,0 +1,523 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<leo_file>
+<leo_header file_format="2" tnodes="0" max_tnode_index="8" clone_windows="0"/>
+<globals body_outline_ratio="0.250803858521">
+	<global_window_position top="0" left="470" height="933" width="800"/>
+	<global_log_window_position top="0" left="0" height="0" width="0"/>
+</globals>
+<preferences/>
+<find_panel_settings/>
+<vnodes>
+<v t="zaril.20110904173229" a="E"><vh>Project</vh>
+<v t="zaril.20110904173337" a="E"><vh>design</vh>
+<v t="zaril.20110904173337.1"><vh>brainstorming</vh></v>
+<v t="zaril.20110904173519"><vh>high-level sketch</vh></v>
+<v t="zaril.20110904173337.3"><vh>terminology</vh></v>
+<v t="zaril.20110904173337.4" a="TV"><vh>cli syntax + psuedo-logic</vh></v>
+</v>
+<v t="zaril.20110904181421" a="E"><vh>implementation</vh>
+<v t="zaril.20110904173337.5"><vh>design exercise: port backstage to fab redesign</vh>
+<v t="zaril.20110904173337.6"><vh>explore make</vh>
+<v t="zaril.20110904173337.7"><vh>test: directory targets</vh></v>
+</v>
+</v>
+</v>
+</v>
+</vnodes>
+<tnodes>
+<t tx="zaril.20110904173229">@nocolor
+</t>
+<t tx="zaril.20110904173337"></t>
+<t tx="zaril.20110904173337.1">* REMINDER: design principles
+do simplest thing that could work
+let the future take care of itself
+
+* IDEAS
+use dpkg's --root=&lt;dir&gt; option to set root
+    chroots into &lt;dir&gt; in order to run installation scripts
+
+add option to deck that only unmounts submounts?
+
+* QUESTIONS
+Q: what is the name of the system?
+A:
+    fab for short
+    product fabrication framework
+---
+Q: name of subcommand that creates the spec from the plan?
+A:
+plan-resolve
+    goes nicely with plan-lint
+
+alternatives
+    make-spec
+    
+    resolve
+    resolve-plan
+    make-spec
+    create-spec
+    implement-plan
+    calc-spec
+    compile-spec
+    compile-plan
+    process-plan
+---
+
+Q: name of subcommand that applies the spec to a bootstrap?
+A:
+spec-build
+---
+Q: suffix for plan files?
+A: no suffix, identify plan files by context (in their own directory)
+---
+
+FUTURE
+
+Q: what is the workflow for recreating a recipe?
+---
+Q: how to handle required/base bootstrapping plans?
+    two separate non-recursable plans?
+    eliminate the base list, stay with just the required?
+        pass that to debootstrap?
+</t>
+<t tx="zaril.20110904173337.3">product := the final product used by the end-user
+    a product is created by formatting the `patched root' according to the format configuration
+        example format types (inspired by rpath)
+            CDROM ISO
+            network bootable PXE image
+            root tarball
+            vmware workstation image
+            vmware ESX image
+            Xen image
+            Parallels image
+
+    a product can be generated automatically in multiple forms
+
+the patched root := the chroot'able root filesystem of a product, patched manually or automatically
+    can be re-created automatically by applying the root patch as an overlay to `the root'
+
+the root patch := an overlay recording any changed performed by manual or automatic means to `the root'
+    distributed as a tarball in `the recipe'
+
+the root := the chroot'able root filesystem of a product
+    built by applying the `root spec' on the `bootstrap'
+
+a build := a filesystem created from a `spec'
+    e.g., root build, bootstrap build
+    
+    in the correct context, build is implied if it is dropped
+        e.g., `root' means `root build'
+
+the bootstrap := the minimal chroot'able filesystem used to bootstrap the root
+    built from a bootstrap spec
+
+a plan := a set of package names (I.e., see Python's set construct)
+    plan types:
+        root plan := the recursable plan from which we create the root spec
+            recursable means we lookup the dependencies of listed packages recursively
+        
+        bootstrap plan = the non-recursable plan from which we create the bootstrap spec
+            non-recursable means no recursion of the plan 
+        
+            due to implementation constraints may need to be separated into two parts (required, base)
+                hopefully not
+
+    plans = buildingblocks + blueprint's packages file
+        building blocks term has been eliminated
+        plan grouping has been implemented in a more flexible, generic way (cpp)
+            a single plan (e.g., for backstage) can support multiple `releases' (sphinx, rocky)
+
+a spec := a set of (package name, package version) tuples
+    a spec is created from a plan against a specific pool
+        the same plan will generate different specs against different pools
+
+    plan types:
+        root spec := the spec from which the root is built
+        bootstrap spec := the spec from which the bootstrap is built
+            due to implementation details, may need to be separated into two parts
+                e.g., required and based (for debootstrap)
+            
+                preferably there could be some way simplify this into one list
+        
+product recipe := a light bundle of data from which a product can be recreated from source
+    a product recipe is created during the creation of a new product
+        by recording the outputs of the build
+            bootstrap spec
+            root spec
+            root patch
+            product format configuration</t>
+<t tx="zaril.20110904173337.4">* global environment variables 
+    FAB_PLAN_INCLUDE_PATH       global include path for plan preprocessing
+        e.g.,
+            FAB_PLAN_INCLUDE_PATH=/turnkey/fab/common-plans
+        
+    FAB_POOL_PATH               lookup paths for a relative pool path
+        e.g.,
+            FAB_POOL_PATH=/turnkey/fab/pools
+
+    FAB_TMPDIR
+
+* fab-cpp /path/to/plan # Internal command
+    -D
+    -I
+    (passed on to CPP)
+
+logic
+    add FAB_PLAN_INCLUDE_PATH to includes
+ 
+* fab-plan-resolve [ -options ] &lt;pool&gt; /path/to/plan [ /path/to/bootstrap ]
+
+&lt;pool&gt; := relative/path | /absolute/path
+    if relative/path, pool is looked up in FAB_POOL_PATH
+
+environment variables
+    FAB_TMPDIR env var
+        defaults to TMPDIR or /var/tmp if not set
+
+    FAB_POOL_PATH               lookup paths for a relative pool path
+        e.g.,
+            FAB_POOL_PATH=/turnkey/fab/pools
+
+options
+    -o path/to/spec-output
+        by default we print spec to stdout
+
+    [ fab-cpp options ]
+        allows arbitrary CPP definitions which effect plan preprocessing
+
+logic
+    release_name = pool_name unless set explicitly
+    preprocess plan
+        -DRELEASE_NAME=...
+
+    filter out all comments
+    calculate package set from plan
+        add packages that don't start with !
+        remove packages that start with !
+            if package doesn't exist in set, ignore
+
+    print ### from plan
+    for each package in plan:
+        skip if package already handled
+
+        get_package_spec():
+            get package from pool
+                raise exception if we can't
+            extract deps and version 
+            for each package in deps:
+                skip if package already handled
+                get_package_spec(package)
+
+            print package=version
+        
+    if bootstrap argument
+        print ### from bootstrap
+        calculate bootstrap plan (dpkg -l)
+        for each package:
+            skip if package already handled
+            get package from pool
+                raise exception if we can't
+            extract version of package
+
+            print package=version
+        
+* fab-spec-install &lt;pool&gt; &lt;spec&gt; &lt;chroot&gt;
+
+environment variables
+    FAB_POOL_PATH               lookup paths for a relative pool path
+        e.g.,
+            FAB_POOL_PATH=/turnkey/fab/pools
+
+&lt;pool&gt; := relative/path | /absolute/path
+    if relative/path, pool is looked up in FAB_POOL_PATH
+
+&lt;spec&gt; := /path/to/spec | -
+    if spec is `-' reads spec in from stdin
+
+logic
+    mount required virtual filesystems in chroot
+        /proc /dev/pts
+
+    copies packages according to spec from the pool to chroot 
+        raises exception on error (e.g., if we can't get a package according to the spec)
+
+    installs all the packages with dpkg
+        raises exception if dpkg fails (e.g., missing dependency, configure failure, etc.)
+
+    prints dpkg output to stdout
+
+    unmount virtual filesystems in chroot (if we mounted them ourselves)
+                                                                                                            
+* fab-apply-removelist &lt;remove-list&gt; &lt;path&gt;
+
+* fab-apply-overlay &lt;overlay&gt; &lt;path&gt;
+
+* fab-plan-lint [ -options ] &lt;pool&gt; /path/to/plan [ ... ]
+
+&lt;pool&gt; := relative/path | /absolute/path
+    if relative/path, pool is looked up in FAB_POOL_PATH
+
+environment variables
+    FAB_TMPDIR env var
+        defaults to TMPDIR or /var/tmp if not set
+
+    FAB_POOL_PATH               lookup paths for a relative pool path
+        e.g.,
+            FAB_POOL_PATH=/turnkey/fab/pools
+
+options
+    -i          edit plan in-place
+
+logic
+    if -i, redirect print output to temporary file
+
+    parse plan into lines
+    for each line:
+        if only comment / new line, print and skip to the next line
+        parse package name
+        get package from pool into TMPDIR
+        raise exception if get fails
+        extract short description
+        print package name + "#" + short description
+    
+    if -i, copy temporary file over plan
+</t>
+<t tx="zaril.20110904173337.5">REMINDER: converting buildingblocks to plan
+
+perl -i -pe 's/^ \* //; s/==/##/g; s/\((.*?)\)/\1/g'    </t>
+<t tx="zaril.20110904173337.6">* RESOURCE: info make
+
+export FOO
+	export FOO to sub-programs
+
+override FOO = value
+	ignore user-set value for FOO (I.e., passed as argument)
+
+FOO ?= bar
+	set FOO to bar only if FOO is not already set
+
+FOO := bar
+	expanded
+
+FOO = bar
+	recursively expanded
+
+* QUESTIONS
+Q: can directories be targets?
+A:
+    yes
+    target must assume directory already exists
+        rule is executed if dependencies are newer than the directory
+        touch directory to update its modification time
+        changing contents of existing file in directory does not change its mod time
+---
+Q: is there a difference between target and target/
+A: yes, target/ is unreliable, use target instead
+---
+Q: are Makefile variables set in the environment
+A: no, unless .EXPORT_ALL_VARIABLES is used, or the variable is exported
+
+    not exported (by default)
+        FOO=bar
+    exported
+        export FOO=bar
+---
+Q: how are cli variables handled differently?
+A:
+    variables passed on the cli seem to forcefully override the Makefile's variables
+
+    experiment
+
+        Makefile
+            FOO = not changed
+            env:
+                echo $(FOO)
+            
+        FOO=changed make env
+            not changed
+    
+        make env FOO=changed
+            changed
+---
+
+Q: how do we access environment variables in the Makefile?
+A:
+    all variables in the environment are already set in the Makefile
+    experiment
+        Makefile
+            env:
+                @echo $(FOO)
+    
+        FOO=foo make env
+    
+---
+Q: how do set a default value only if the variable has not yet been defined in the environment
+    I.e., environment definition takes precedence over local definition
+A:
+    Makefile
+        FOO ?= foo
+    
+        env:
+            @echo $(FOO)
+    
+    FOO=bar make env
+        bar
+
+  </t>
+<t tx="zaril.20110904173337.7"># echo hello &gt; file
+# make clean
+# make
+# rm -rf foo
+# make (should recreate foo.copy)
+
+all: foo.copy
+
+clean:
+	rm -rf foo/ foo.copy/
+
+foo: file
+	mkdir -p $@
+	cp $&lt; $@
+
+foo.copy: foo
+	cp -a $&lt; $@
+</t>
+<t tx="zaril.20110904173519">new design disintegrates fab into multiple independent layers
+
+fab phases
+    make bootstrap
+        context: new bootstrap created per-release
+            can be recreated at any time from bootstrap spec
+    
+        steps
+            make bootstrap-spec # only if creating new bootstrap
+                inputs: pool, bootstrap plan
+    
+            make bootstrap
+                inputs: pool, bootstrap spec
+    
+    make root
+        context: performed per-product
+    
+        steps
+            make root-spec # only if creating a new root
+                inputs: pool, bootstrap, root plan
+    
+            make root
+                inputs: pool, bootstrap, root spec
+    
+    make root patch
+        output: tarball of the overlay created
+    
+        more than one way to create root patch
+            manually (e.g., with deck)
+            automatically
+                apply overrides/removes
+                run hook scripts which perform arbitrary changes on the root
+                    e.g., this is one way we could implement licop-like `activation'
+            hybrid (automatic changes + manual changes)
+            
+    make products
+        inputs: patched root + format configuration
+        a single patched root may be formatted into multiple format types
+    
+product build workflow
+    how its different
+        new design is local, old design is global
+            in the new design building is not performed in a global context
+                e.g., we don't dump builds to /turnkey/fabarea
+    
+    we build products using the same workflow and tools used to build compiled software
+        building performed per-product, each product in its own directory
+        we leverage make to implement the `build pipeline'
+        the build source for each product distributed via Git
+        .gitignore build products
+    
+        standard Makefile structure (I.e., standard targets like debian/rules)
+    
+        decrease repetition of standard tasks via
+            debhelper equivalents for the build process
+            included Makefile fragments (I.e., like Debian's CDBS)
+    
+        outputs for each product
+            the formatted product itself
+            a recipe that can be used to automatically reproduce the product
+                properties of the recipe
+                    very small footprint compared to the product
+                    accurate enough to recreate product from sources bit for bit
+                                
+pool design changes
+    pool can now be configured to include other pools
+        GOTCHA: circular dependencies need to be checked for and prevented
+            when a user asks to register pool A into pool B
+                list all sub-pools in pool A recursively
+                if B is already included, raise an exception
+                    (we can't have B can't including itself...)
+        
+    fab programs will not support multiple pools - will work with only one pool
+        pool will be configured as an absolute path or relative path
+            relative paths looked up in POOL_PATHS
+                e.g.,
+                    POOL_PATHS="/turnkey/pools"
+
+        Q: how do we set which pool a program is supposed to work with?
+        A: IDEAS
+            command line option            
+
+            passed to the program via an environment variable
+                POOL="rocky"
+    
+                environment can be overridden via standard command lineoption
+                    --pool rocky
+                    --pool /turnkey/pools/rocky
+        
+        also configurable via command line option
+
+plans
+    goals: 
+        support re-use of package grouping
+        support per-release configuration of changes to re-usable package groupings
+    
+    plans leverage cpp (c pre-processor)
+        grouping achieved via cpp includes
+        global include paths should configurable
+            #include &lt;global/path/to/plan&gt;
+    
+            from cli 
+                -I/path/to/includable/plans
+            from environment variable
+                PLAN_INCLUDE_PATH
+            
+        local includes paths should be relative
+            #include "relative/path"
+            
+        we can use CPP to implement global release profiles
+            per-release
+        
+        embed release-specific ifdef statements in package groups
+            ifdef triggered by release profile which is triggered by the pool name
+    
+    linting program adds package short description as comments
+        support editing in-place or output to stdout
+        works on pre-processed and non-preprocessed plans
+    
+    plan format
+        &lt;package&gt; # this adds the package to the plan set
+        !&lt;package&gt; # this removes the package (which may have been included earlier) from the plan set</t>
+<t tx="zaril.20110904181421">ROADMAP
+    fab-cpp
+    
+    fab-plan-resolve
+    fab-spec-install
+
+    fab-apply-removelist
+    fab-apply-overlay
+
+    fab-plan-lint
+
+    non-root support?
+        fakeroot
+        suid wrappers for critical tasks?ls
+</t>
+</tnodes>
+</leo_file>
