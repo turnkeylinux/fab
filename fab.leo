@@ -11,8 +11,8 @@
 <v t="zaril.20110904173229" a="E"><vh>Project</vh>
 <v t="zaril.20110904173337" a="E"><vh>design</vh>
 <v t="zaril.20110904173337.1"><vh>brainstorming</vh></v>
-<v t="zaril.20110904173519"><vh>high-level sketch</vh></v>
 <v t="zaril.20110904173337.3"><vh>terminology</vh></v>
+<v t="zaril.20110904173519"><vh>high-level sketch</vh></v>
 <v t="zaril.20110904173337.4" a="TV"><vh>cli syntax + psuedo-logic</vh></v>
 </v>
 <v t="zaril.20110904181421" a="E"><vh>implementation</vh>
@@ -155,20 +155,32 @@ product recipe := a light bundle of data from which a product can be recreated f
         e.g.,
             FAB_POOL_PATH=/turnkey/fab/pools
 
-    FAB_TMPDIR
+    FAB_TMPDIR                  where fab utils store temporary files (defaults to TMPDIR or /var/tmp)
 
-* fab-cpp /path/to/plan # Internal command
+* fab-cpp &lt;plan&gt; # Internal command
+pre-process a plan (light wrapper around cpp)
+
+&lt;plan&gt; := /path/to/plan | -
+    if `-' read plan from stdin
+
+options
     -D
     -I
     (passed on to CPP)
 
 logic
     add FAB_PLAN_INCLUDE_PATH to includes
+    create list of options from our cli arguments
+    executes cpp, passing list options directly
  
-* fab-plan-resolve [ -options ] &lt;pool&gt; /path/to/plan [ /path/to/bootstrap ]
+* fab-plan-resolve [ -options ] &lt;pool&gt; &lt;plan&gt; [ /path/to/bootstrap ]
+resolves a plan into a spec that uses the latest packages from a given pool
 
 &lt;pool&gt; := relative/path | /absolute/path
     if relative/path, pool is looked up in FAB_POOL_PATH
+
+&lt;plan&gt; := /path/to/plan | -
+    if `-' read plan from stdin
 
 environment variables
     FAB_TMPDIR env var
@@ -222,6 +234,7 @@ logic
             print package=version
         
 * fab-spec-install &lt;pool&gt; &lt;spec&gt; &lt;chroot&gt;
+gets packages from the &lt;pool&gt; according to the &lt;spec&gt; and installs them into the &lt;chroot&gt;
 
 environment variables
     FAB_POOL_PATH               lookup paths for a relative pool path
@@ -249,13 +262,19 @@ logic
     unmount virtual filesystems in chroot (if we mounted them ourselves)
                                                                                                             
 * fab-apply-removelist &lt;remove-list&gt; &lt;path&gt;
+remove files and directories as specified by &lt;removelist&gt; from &lt;path&gt;
 
 * fab-apply-overlay &lt;overlay&gt; &lt;path&gt;
+copy &lt;overlay&gt; over &lt;path&gt;
 
-* fab-plan-lint [ -options ] &lt;pool&gt; /path/to/plan [ ... ]
+* fab-plan-lint [ -options ] &lt;pool&gt; &lt;plan&gt; [ ... ]
+pretty print each package in the plan with its short description as a comment
 
 &lt;pool&gt; := relative/path | /absolute/path
     if relative/path, pool is looked up in FAB_POOL_PATH
+
+&lt;plan&gt; := /path/to/plan | -
+    if `-' read plan from stdin
 
 environment variables
     FAB_TMPDIR env var
