@@ -12,8 +12,9 @@ PATH_INSTALL_LIBEXEC=$(PATH_INSTALL)/libexec
 
 TRUEPATH_INSTALL=$(shell echo $(PATH_INSTALL) | sed -e 's/debian\/$(progname)//g')
 
-PYCC=python -O /usr/lib/python/py_compile.py
-PYCC_NODOC=python -OO /usr/lib/python/py_compile.py
+PYTHON_LIB=$(shell echo /usr/lib/python* | sed 's/.* //')
+PYCC=python -O $(PYTHON_LIB)/py_compile.py
+PYCC_NODOC=python -OO $(PYTHON_LIB)/py_compile.py
 
 PATH_DIST := $(progname)-$(shell date +%F)
 
