@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet ekr_test?>
 <leo_file>
-<leo_header file_format="2" tnodes="0" max_tnode_index="8" clone_windows="0"/>
-<globals body_outline_ratio="0.250803858521">
-	<global_window_position top="0" left="470" height="933" width="800"/>
+<leo_header file_format="2" tnodes="0" max_tnode_index="0" clone_windows="0"/>
+<globals body_outline_ratio="0.277583187391">
+	<global_window_position top="0" left="0" height="709" width="1142"/>
 	<global_log_window_position top="0" left="0" height="0" width="0"/>
 </globals>
 <preferences/>
@@ -13,10 +14,38 @@
 <v t="zaril.20110904173337.1"><vh>brainstorming</vh></v>
 <v t="zaril.20110904173337.3"><vh>terminology</vh></v>
 <v t="zaril.20110904173519"><vh>high-level sketch</vh></v>
-<v t="zaril.20110904173337.4" a="TV"><vh>cli syntax + psuedo-logic</vh></v>
+<v t="zaril.20110904173337.4"><vh>cli syntax + psuedo-logic</vh>
+<v t="loni.20110911164714"><vh>fab-cpp</vh></v>
+<v t="loni.20110911164714.1"><vh>fab-plan-resolve</vh>
+<v t="loni.20110911164714"><vh>fab-cpp</vh></v>
 </v>
-<v t="zaril.20110904181421" a="E"><vh>implementation</vh>
-<v t="zaril.20110904173337.5"><vh>design exercise: port backstage to fab redesign</vh>
+<v t="loni.20110911164714.2"><vh>fab-spec-install</vh></v>
+<v t="loni.20110911164714.3"><vh>fab-apply-removelist</vh></v>
+<v t="loni.20110910191100.1"><vh>fab-apply-overlay</vh></v>
+<v t="loni.20110911164714.5"><vh>fab-plan-lint</vh></v>
+</v>
+<v t="loni.20110910182617" a="E"><vh>exemplary make flow</vh>
+<v t="loni.20110910182756"><vh>bootstrap</vh></v>
+<v t="loni.20110910182756.1" a="E"><vh>root.spec</vh>
+<v t="loni.20110911164714.1" a="E"><vh>fab-plan-resolve</vh>
+<v t="loni.20110911164714"><vh>fab-cpp</vh></v>
+</v>
+</v>
+<v t="loni.20110910182756.2" a="E"><vh>root.build</vh>
+<v t="loni.20110911164714.2"><vh>fab-spec-install</vh></v>
+</v>
+<v t="loni.20110910182756.3" a="E"><vh>root.patched</vh>
+<v t="loni.20110911164714.3"><vh>fab-apply-removelist</vh></v>
+<v t="loni.20110910191100.1"><vh>fab-apply-overlay</vh></v>
+</v>
+<v t="loni.20110910182756.4" a="E"><vh>cdroot</vh>
+<v t="loni.20110910191100.1"><vh>fab-apply-overlay</vh></v>
+</v>
+<v t="loni.20110910182756.5"><vh>product.iso</vh></v>
+</v>
+</v>
+<v t="zaril.20110904181421" a="EV"><vh>implementation</vh>
+<v t="zaril.20110904173337.5" a="T"><vh>design exercise: port backstage to fab redesign</vh>
 <v t="zaril.20110904173337.6"><vh>explore make</vh>
 <v t="zaril.20110904173337.7"><vh>test: directory targets</vh></v>
 </v>
@@ -25,6 +54,222 @@
 </v>
 </vnodes>
 <tnodes>
+<t tx="loni.20110910182617"></t>
+<t tx="loni.20110910182756">rm -rf bootstrap
+cp -a /turnkey/fab/bootstraps/rocky bootstrap
+
+#notes
+idea:
+    * use oldfab to create drop in bootstrap
+
+</t>
+<t tx="loni.20110910182756.1">fab-plan-resolve /turnkey/fab/pools/rocky plan/main bootstrap &gt; root.spec
+
+
+# notes
+fab-plan-resolve [ -options ] &lt;pool&gt; &lt;plan&gt; [ /path/to/bootstrap ]
+
+
+package=version
+
+a spec := a set of (package name, package version) tuples
+    a spec is created from a plan against a specific pool
+        the same plan will generate different specs against different pools
+        
+- parse plan for packages
+- create set construct of packages=version tuples for all packages, and their deps recursively
+  by querying the pool
+
+deps?
+    in order to create the root.spec, the product plan is resolved against a pool
+    resolving requires getting the version and dependencies of packages, recursively
+    Q: how do we get the version and deps of packages? (problem being deps)
+    
+    alternatives:
+        patch pool-list to have -depends option
+            not good option, its not pools objective to get that info
+            
+        generate an index on the pool, an parse it
+            directly indexing the pool is not an actual option, we would have to follow $pool/.pool/stocks
+            and will only get the binary deps, not the sources
+            
+        pool-get all packages into a temp directory, index temp, parse the index and repeat
+            kludgy...
+            
+        pool-get each package, extract and parse control file, do the same for each dep, continue...
+            IDEA: we could use the outdir to optimize the root.build, but
+                  pre-mature optimization is the root of all evil
+                  and besides, pool-get shouldn't be expensive, its just a hardlink
+        
+Q: what is bootstrap for? we have the spec anyway?
+   HYPO: plan packages depend on packages installed in the bootstrap, so we dont need to get them again...</t>
+<t tx="loni.20110910182756.2">rm -rf root.build
+cp -a bootstrap root.build
+fab-spec-install /turnkey/fab/pools/rocky root.spec root.build
+
+</t>
+<t tx="loni.20110910182756.3">rm -rf root.patched
+cp -a root.build root.patched
+fab-apply-removelist removelist root.patched
+fab-apply-overlay overlay root.patched
+
+</t>
+<t tx="loni.20110910182756.4">rm -rf cdroot
+cp -a /turnkey/fab/cdroots/bootsplash cdroot
+fab-apply-overlay cdroot.overlay cdroot
+cp root.patched/usr/lib/syslinux/isolinux.bin cdroot/isolinux
+cp root.patched/boot/vmlinuz-* cdroot/casper/vmlinuz
+cp root.patched/boot/initrd.img-* cdroot/casper/initrd.gz
+mksquashfs root.patched cdroot/casper/filesystem.squashfs
+
+</t>
+<t tx="loni.20110910182756.5">mkisofs -o product.iso -r -J -l \
+                -V backstage \
+                -b isolinux/isolinux.bin \
+                -c isolinux/boot.cat \
+                -no-emul-boot \
+                -boot-load-size 4 \
+                -boot-info-table cdroot/
+</t>
+<t tx="loni.20110910191100.1">* fab-apply-overlay &lt;overlay&gt; &lt;path&gt;
+copy &lt;overlay&gt; over &lt;path&gt;
+</t>
+<t tx="loni.20110911164714">* fab-cpp &lt;plan&gt; # Internal command
+pre-process a plan (light wrapper around cpp)
+
+&lt;plan&gt; := /path/to/plan | -
+    if `-' read plan from stdin
+
+options
+    -D
+    -I
+    (passed on to CPP)
+
+logic
+    add FAB_PLAN_INCLUDE_PATH to includes
+    create list of options from our cli arguments
+    executes cpp, passing list options directly</t>
+<t tx="loni.20110911164714.1">* fab-plan-resolve [ -options ] &lt;pool&gt; &lt;plan&gt; [ /path/to/bootstrap ]
+resolves a plan into a spec that uses the latest packages from a given pool
+
+&lt;pool&gt; := relative/path | /absolute/path
+    if relative/path, pool is looked up in FAB_POOL_PATH
+
+&lt;plan&gt; := /path/to/plan | -
+    if `-' read plan from stdin
+
+environment variables
+    FAB_TMPDIR env var
+        defaults to TMPDIR or /var/tmp if not set
+
+    FAB_POOL_PATH               lookup paths for a relative pool path
+        e.g.,
+            FAB_POOL_PATH=/turnkey/fab/pools
+
+options
+    -o path/to/spec-output
+        by default we print spec to stdout
+
+    [ fab-cpp options ]
+        allows arbitrary CPP definitions which effect plan preprocessing
+
+logic
+    release_name = pool_name unless set explicitly
+    preprocess plan
+        -DRELEASE_NAME=...
+
+    filter out all comments
+    calculate package set from plan
+        add packages that don't start with !
+        remove packages that start with !
+            if package doesn't exist in set, ignore
+
+    print ### from plan
+    for each package in plan:
+        skip if package already handled
+
+        get_package_spec():
+            get package from pool
+                raise exception if we can't
+            extract deps and version 
+            for each package in deps:
+                skip if package already handled
+                get_package_spec(package)
+
+            print package=version
+        
+    if bootstrap argument
+        print ### from bootstrap
+        calculate bootstrap plan (dpkg -l)
+        for each package:
+            skip if package already handled
+            get package from pool
+                raise exception if we can't
+            extract version of package
+
+            print package=version</t>
+<t tx="loni.20110911164714.2">* fab-spec-install &lt;pool&gt; &lt;spec&gt; &lt;chroot&gt;
+gets packages from the &lt;pool&gt; according to the &lt;spec&gt; and installs them into the &lt;chroot&gt;
+
+environment variables
+    FAB_POOL_PATH               lookup paths for a relative pool path
+        e.g.,
+            FAB_POOL_PATH=/turnkey/fab/pools
+
+&lt;pool&gt; := relative/path | /absolute/path
+    if relative/path, pool is looked up in FAB_POOL_PATH
+
+&lt;spec&gt; := /path/to/spec | -
+    if spec is `-' reads spec in from stdin
+
+logic
+    mount required virtual filesystems in chroot
+        /proc /dev/pts
+
+    copies packages according to spec from the pool to chroot 
+        raises exception on error (e.g., if we can't get a package according to the spec)
+
+    installs all the packages with dpkg
+        raises exception if dpkg fails (e.g., missing dependency, configure failure, etc.)
+
+    prints dpkg output to stdout
+
+    unmount virtual filesystems in chroot (if we mounted them ourselves)</t>
+<t tx="loni.20110911164714.3">* fab-apply-removelist &lt;remove-list&gt; &lt;path&gt;
+remove files and directories as specified by &lt;removelist&gt; from &lt;path&gt;</t>
+<t tx="loni.20110911164714.5">* fab-plan-lint [ -options ] &lt;pool&gt; &lt;plan&gt; [ ... ]
+pretty print each package in the plan with its short description as a comment
+
+&lt;pool&gt; := relative/path | /absolute/path
+    if relative/path, pool is looked up in FAB_POOL_PATH
+
+&lt;plan&gt; := /path/to/plan | -
+    if `-' read plan from stdin
+
+environment variables
+    FAB_TMPDIR env var
+        defaults to TMPDIR or /var/tmp if not set
+
+    FAB_POOL_PATH               lookup paths for a relative pool path
+        e.g.,
+            FAB_POOL_PATH=/turnkey/fab/pools
+
+options
+    -i          edit plan in-place
+
+logic
+    if -i, redirect print output to temporary file
+
+    parse plan into lines
+    for each line:
+        if only comment / new line, print and skip to the next line
+        parse package name
+        get package from pool into TMPDIR
+        raise exception if get fails
+        extract short description
+        print package name + "#" + short description
+    
+    if -i, copy temporary file over plan</t>
 <t tx="zaril.20110904173229">@nocolor
 </t>
 <t tx="zaril.20110904173337"></t>
@@ -156,150 +401,6 @@ product recipe := a light bundle of data from which a product can be recreated f
             FAB_POOL_PATH=/turnkey/fab/pools
 
     FAB_TMPDIR                  where fab utils store temporary files (defaults to TMPDIR or /var/tmp)
-
-* fab-cpp &lt;plan&gt; # Internal command
-pre-process a plan (light wrapper around cpp)
-
-&lt;plan&gt; := /path/to/plan | -
-    if `-' read plan from stdin
-
-options
-    -D
-    -I
-    (passed on to CPP)
-
-logic
-    add FAB_PLAN_INCLUDE_PATH to includes
-    create list of options from our cli arguments
-    executes cpp, passing list options directly
- 
-* fab-plan-resolve [ -options ] &lt;pool&gt; &lt;plan&gt; [ /path/to/bootstrap ]
-resolves a plan into a spec that uses the latest packages from a given pool
-
-&lt;pool&gt; := relative/path | /absolute/path
-    if relative/path, pool is looked up in FAB_POOL_PATH
-
-&lt;plan&gt; := /path/to/plan | -
-    if `-' read plan from stdin
-
-environment variables
-    FAB_TMPDIR env var
-        defaults to TMPDIR or /var/tmp if not set
-
-    FAB_POOL_PATH               lookup paths for a relative pool path
-        e.g.,
-            FAB_POOL_PATH=/turnkey/fab/pools
-
-options
-    -o path/to/spec-output
-        by default we print spec to stdout
-
-    [ fab-cpp options ]
-        allows arbitrary CPP definitions which effect plan preprocessing
-
-logic
-    release_name = pool_name unless set explicitly
-    preprocess plan
-        -DRELEASE_NAME=...
-
-    filter out all comments
-    calculate package set from plan
-        add packages that don't start with !
-        remove packages that start with !
-            if package doesn't exist in set, ignore
-
-    print ### from plan
-    for each package in plan:
-        skip if package already handled
-
-        get_package_spec():
-            get package from pool
-                raise exception if we can't
-            extract deps and version 
-            for each package in deps:
-                skip if package already handled
-                get_package_spec(package)
-
-            print package=version
-        
-    if bootstrap argument
-        print ### from bootstrap
-        calculate bootstrap plan (dpkg -l)
-        for each package:
-            skip if package already handled
-            get package from pool
-                raise exception if we can't
-            extract version of package
-
-            print package=version
-        
-* fab-spec-install &lt;pool&gt; &lt;spec&gt; &lt;chroot&gt;
-gets packages from the &lt;pool&gt; according to the &lt;spec&gt; and installs them into the &lt;chroot&gt;
-
-environment variables
-    FAB_POOL_PATH               lookup paths for a relative pool path
-        e.g.,
-            FAB_POOL_PATH=/turnkey/fab/pools
-
-&lt;pool&gt; := relative/path | /absolute/path
-    if relative/path, pool is looked up in FAB_POOL_PATH
-
-&lt;spec&gt; := /path/to/spec | -
-    if spec is `-' reads spec in from stdin
-
-logic
-    mount required virtual filesystems in chroot
-        /proc /dev/pts
-
-    copies packages according to spec from the pool to chroot 
-        raises exception on error (e.g., if we can't get a package according to the spec)
-
-    installs all the packages with dpkg
-        raises exception if dpkg fails (e.g., missing dependency, configure failure, etc.)
-
-    prints dpkg output to stdout
-
-    unmount virtual filesystems in chroot (if we mounted them ourselves)
-                                                                                                            
-* fab-apply-removelist &lt;remove-list&gt; &lt;path&gt;
-remove files and directories as specified by &lt;removelist&gt; from &lt;path&gt;
-
-* fab-apply-overlay &lt;overlay&gt; &lt;path&gt;
-copy &lt;overlay&gt; over &lt;path&gt;
-
-* fab-plan-lint [ -options ] &lt;pool&gt; &lt;plan&gt; [ ... ]
-pretty print each package in the plan with its short description as a comment
-
-&lt;pool&gt; := relative/path | /absolute/path
-    if relative/path, pool is looked up in FAB_POOL_PATH
-
-&lt;plan&gt; := /path/to/plan | -
-    if `-' read plan from stdin
-
-environment variables
-    FAB_TMPDIR env var
-        defaults to TMPDIR or /var/tmp if not set
-
-    FAB_POOL_PATH               lookup paths for a relative pool path
-        e.g.,
-            FAB_POOL_PATH=/turnkey/fab/pools
-
-options
-    -i          edit plan in-place
-
-logic
-    if -i, redirect print output to temporary file
-
-    parse plan into lines
-    for each line:
-        if only comment / new line, print and skip to the next line
-        parse package name
-        get package from pool into TMPDIR
-        raise exception if get fails
-        extract short description
-        print package name + "#" + short description
-    
-    if -i, copy temporary file over plan
 </t>
 <t tx="zaril.20110904173337.5">REMINDER: converting buildingblocks to plan
 
@@ -436,7 +537,7 @@ fab phases
                     e.g., this is one way we could implement licop-like `activation'
             hybrid (automatic changes + manual changes)
             
-    make products
+    make product
         inputs: patched root + format configuration
         a single patched root may be formatted into multiple format types
     
@@ -524,19 +625,24 @@ plans
         &lt;package&gt; # this adds the package to the plan set
         !&lt;package&gt; # this removes the package (which may have been included earlier) from the plan set</t>
 <t tx="zaril.20110904181421">ROADMAP
-    fab-cpp
-    
+    fab-cpp    
     fab-plan-resolve
+    
+    bootstrap dropin
     fab-spec-install
 
-    fab-apply-removelist
     fab-apply-overlay
 
+    fab-apply-removelist
     fab-plan-lint
 
+    integrate deck support
+    full logging and re-fab support from specs
+    
     non-root support?
-        fakeroot
-        suid wrappers for critical tasks?ls
+        fakeroot, fakechroot
+        suid wrappers for critical tasks?
+
 </t>
 </tnodes>
 </leo_file>
