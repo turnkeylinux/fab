@@ -44,12 +44,13 @@
 <v t="loni.20110910182756.5"><vh>product.iso</vh></v>
 </v>
 </v>
-<v t="zaril.20110904181421" a="EV"><vh>implementation</vh>
-<v t="zaril.20110904173337.5" a="T"><vh>design exercise: port backstage to fab redesign</vh>
+<v t="zaril.20110904181421" a="E"><vh>implementation</vh>
+<v t="zaril.20110904173337.5"><vh>design exercise: port backstage to fab redesign</vh>
 <v t="zaril.20110904173337.6"><vh>explore make</vh>
 <v t="zaril.20110904173337.7"><vh>test: directory targets</vh></v>
 </v>
 </v>
+<v t="loni.20110911180234" a="TV"><vh>fab-cpp</vh></v>
 </v>
 </v>
 </vnodes>
@@ -270,6 +271,46 @@ logic
         print package name + "#" + short description
     
     if -i, copy temporary file over plan</t>
+<t tx="loni.20110911180234">fab-cpp is an internal command, called by fab-plan-resolve
+
+-----------------------/
+fab-cpp [-options] &lt;plan&gt;
+
+Pre-process a plan (internal command)
+
+Arguments:
+  &lt;plan&gt;                path to read plan from (- for stdin)
+  
+Options:
+  --cpp=                 options to pass directly to the C Preprocessor
+
+-----------------------/
+
+cpp -I&lt;FAB_PLAN_INCLUDE_PATH&gt; &lt;plan&gt;
+    eg.
+    cpp -I/turnkey/fab/common-plans plan/main
+    
+Q: how do i pass the plan i read from stdin to CPP?
+A: cpp will read from stdin if '-' is specified
+    note: if no infile not '-' is specifed, stdin is specified as default
+    
+IDEA:
+    read in plan, whether file or stdin
+    pass "plan contents" to cpp on stdin
+    eg.
+        cat plan/main | cpp -I/turnkey/fab/common-plans
+        
+problem: local includes aren't found, we have to give the path
+    cat plan/main | cpp -I/turnkey/fab/common-plans -Iplan
+    
+Q: should fab-cpp have options, such as -I, -D, etc?
+    we could have multiple include options, how would we handle that?
+    
+    IDEA: have option called --cpp="" to pass options directly to cpp
+
+
+&lt;plan&gt; | cpp -I&lt;FAB_PLAN_INCLUDE_PATH&gt; &lt;CPP_EXTRA_OPTIONS&gt;
+</t>
 <t tx="zaril.20110904173229">@nocolor
 </t>
 <t tx="zaril.20110904173337"></t>

@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # Copyright (c) 2011 TurnKey Linux - all rights reserved
-"""Python project skeleton
+"""
+Configuration environment variables:
+    FAB_PLAN_INCLUDE_PATH   Global include path for plan preprocessing
 """
 
 import re
