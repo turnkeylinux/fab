@@ -50,7 +50,9 @@
 <v t="zaril.20110904173337.7"><vh>test: directory targets</vh></v>
 </v>
 </v>
-<v t="loni.20110911180234" a="TV"><vh>fab-cpp</vh></v>
+<v t="loni.20110911180234" a="E"><vh>fab-cpp</vh>
+<v t="loni.20110912121610" a="TV"><vh>weird: s/linux/1/</vh></v>
+</v>
 </v>
 </v>
 </vnodes>
@@ -310,6 +312,45 @@ Q: should fab-cpp have options, such as -I, -D, etc?
 
 
 &lt;plan&gt; | cpp -I&lt;FAB_PLAN_INCLUDE_PATH&gt; &lt;CPP_EXTRA_OPTIONS&gt;
+
+
+</t>
+<t tx="loni.20110912121610">the word "linux" is being replaced by the number 1 with a space:
+    s/linux/1 /
+
+    $ echo linux-test | cpp
+    # 1 "&lt;stdin&gt;"
+    # 1 "&lt;built-in&gt;"
+    # 1 "&lt;command line&gt;"
+    # 1 "&lt;stdin&gt;"
+    1 -test
+
+
+It seems "linux" is a macro, with a definition of 1.
+
+Solution: redefine the macro
+
+    $ echo linux-test | cpp -D linux=linux
+    # 1 "&lt;stdin&gt;"
+    # 1 "&lt;built-in&gt;"
+    # 1 "&lt;command line&gt;"
+    &lt;command line&gt;:1:1: warning: "linux" redefined
+    &lt;built-in&gt;: warning: this is the location of the previous definition
+    # 1 "&lt;stdin&gt;"
+    linux-test
+
+
+Better Solution: undefine the macro
+
+    $ echo linux-test | cpp -U linux
+    # 1 "&lt;stdin&gt;"
+    # 1 "&lt;built-in&gt;"
+    # 1 "&lt;command line&gt;"
+    # 1 "&lt;stdin&gt;"
+    linux-test
+
+Q: should we add this to fab-cpp?
+A: no, it should be added by the user of fab-cpp, along with any other cpp options he wishes
 </t>
 <t tx="zaril.20110904173229">@nocolor
 </t>
