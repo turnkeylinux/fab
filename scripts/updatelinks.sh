@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 set -e
 set +v
@@ -11,7 +11,7 @@ fi
 
 progname=$(sed -n 's/^progname=//p' Makefile)
 
-for oldlink in $(find -type l -maxdepth 1); do
+for oldlink in $(find -maxdepth 1 -type l); do
     if [ "$git" == "true" ]; then
 	git-rm $oldlink >& /dev/null || true
     fi
