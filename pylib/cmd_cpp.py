@@ -10,27 +10,18 @@ Options:
 
 """
 
+import re
 import os
 import sys
 import help
 import getopt
-import subprocess
-
 from os.path import *
-import re
 
-class Error(Exception):
-    pass
+from utils import *
 
 @help.usage(__doc__)
 def usage():
     print >> sys.stderr, "Syntax: %s [-options] <plan>" % sys.argv[0]
-
-def system_pipe(command, pipein):
-    p = subprocess.Popen(command,
-                         stdin = subprocess.PIPE, 
-                         close_fds = True)
-    return p.communicate(pipein)
 
 def read_plan(fh):
     plan = ""
