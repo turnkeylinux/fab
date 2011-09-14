@@ -23,12 +23,6 @@ from utils import *
 def usage():
     print >> sys.stderr, "Syntax: %s [-options] <plan>" % sys.argv[0]
 
-def read_plan(fh):
-    plan = ""
-    for line in fh.readlines():
-        plan += line
-    return plan
-
 def main():
     try:
         opts, args = getopt.gnu_getopt(sys.argv[1:], "",
@@ -59,7 +53,7 @@ def main():
 
     cmd = opt_cpp
     cmd.insert(0, "cpp")
-    system_pipe(cmd, read_plan(input))
+    system_pipe(cmd, read_filehandle(input))
 
         
 if __name__=="__main__":

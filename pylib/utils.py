@@ -8,6 +8,12 @@ import subprocess
 class Error(Exception):
     pass
 
+def read_filehandle(fh):
+    ret = ""
+    for line in fh.readlines():
+        ret += line
+    return ret
+
 def system(command, *args):
     command = command + " " + " ".join([commands.mkarg(arg) for arg in args])
     err = os.system(command)
