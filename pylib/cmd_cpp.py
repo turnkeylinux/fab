@@ -6,7 +6,7 @@ Arguments:
                  If path/to/plan, dir of plan will be searched for header files
 
 Options:
-  --cpp=         Extra options to pass directly to the C Preprocessor
+  --cpp=         Arbitrary CPP definitions to effect plan preprocessing
 
 """
 
@@ -44,7 +44,10 @@ def main():
                                        ['cpp='])
     except getopt.GetoptError, e:
         usage(e)
-
+    
+    if sys.argv.count("-") == 1:
+        args.insert(0, "-")
+    
     if not args:
         usage()
 
