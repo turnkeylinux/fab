@@ -21,8 +21,17 @@ def system(command, *args):
         raise Error("command failed: " + command,
                     os.WEXITSTATUS(err))
 
-def system_pipe(command, pipein):
-    p = subprocess.Popen(command,
-                         stdin = subprocess.PIPE, 
-                         close_fds = True)
-    return p.communicate(pipein)
+def system_pipe(command, pipein, quiet=False):
+    if quiet:
+        p = subprocess.Popen(command,
+                             stdin = subprocess.PIPE,
+                             stdout = subprocess.PIPE,
+                             #stderr = subprocess.PIPE,
+                             close_fds = True)
+    else:
+        p = subprocess.Popen(command,
+                             stdin = subprocess.PIPE,
+                             close_fds = True)
+        
+    out, err =  p.communicate(pipein)
+    return out, err

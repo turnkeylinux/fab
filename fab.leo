@@ -50,9 +50,10 @@
 <v t="zaril.20110904173337.7"><vh>test: directory targets</vh></v>
 </v>
 </v>
-<v t="loni.20110911180234" a="E"><vh>fab-cpp</vh>
-<v t="loni.20110912121610" a="TV"><vh>weird: s/linux/1/</vh></v>
+<v t="loni.20110911180234"><vh>fab-cpp</vh>
+<v t="loni.20110912121610"><vh>weird: s/linux/1/</vh></v>
 </v>
+<v t="loni.20110912123550" a="TV"><vh>fab-plan-resolve</vh></v>
 </v>
 </v>
 </vnodes>
@@ -352,6 +353,66 @@ Better Solution: undefine the macro
 Q: should we add this to fab-cpp?
 A: no, it should be added by the user of fab-cpp, along with any other cpp options he wishes
 </t>
+<t tx="loni.20110912123550">fab-plan-resolve [ -options ] &lt;pool&gt; &lt;plan&gt; [ /path/to/bootstrap ]
+
+Resolve plan into spec using the latest packages from a given pool
+
+Arguments:
+  &lt;pool&gt;                Relative or absolute pool path
+                        If relative, pool path is looked up in FAB_POOL_PATH
+  &lt;plan&gt;                Path to read plan from (- for stdin)
+  
+Options:
+  --output=             Path to spec-output (default is stdout)
+  --cpp=                Arbitrary CPP definitions to effect plan preprocessing
+
+
+-----------------------/
+
++ create skeleton
++ call fab-cpp
+  + plan file
+  + plan stdin
++ filter plan output (newlines, comments, etc.) and
+- create package SET
+
+  
+
+logic
+    release_name = pool_name unless set explicitly
+    preprocess plan
+        -DRELEASE_NAME=...
+
+    filter out all comments
+    calculate package set from plan
+        add packages that don't start with !
+        remove packages that start with !
+            if package doesn't exist in set, ignore
+
+    print ### from plan
+    for each package in plan:
+        skip if package already handled
+
+        get_package_spec():
+            get package from pool
+                raise exception if we can't
+            extract deps and version 
+            for each package in deps:
+                skip if package already handled
+                get_package_spec(package)
+
+            print package=version
+        
+    if bootstrap argument
+        print ### from bootstrap
+        calculate bootstrap plan (dpkg -l)
+        for each package:
+            skip if package already handled
+            get package from pool
+                raise exception if we can't
+            extract version of package
+
+            print package=version</t>
 <t tx="zaril.20110904173229">@nocolor
 </t>
 <t tx="zaril.20110904173337"></t>
