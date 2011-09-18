@@ -60,7 +60,7 @@ class Plan:
         os.environ['POOL_DIR'] = pool
     
     def get_package(self, package):
-        system("/turnkey/projects/pool/pool-get --strict %s %s" % (self.tmpdir, package))
+        system("pool-get --strict %s %s" % (self.tmpdir, package))
         if "=" in package:
             name, version = package.split("=", 1)
         else:
@@ -78,7 +78,32 @@ class Plan:
                 return filepath
 
         return None
+    
+    def _quickfix(self, name):
+        #TODO: solve the provides/virtual issue properly
+        if (name == "perlapi-5.8.7" or
+            name == "perlapi-5.8.8"):
+            return "perl-base"
         
+        elif (name == "perl5"):
+            return "perl"
+
+        elif (name == "aufs-modules"):
+            return "aufs-modules-2.6.20-15-386"
+
+        elif (name == "mail-transport-agent"):
+            return "postfix"
+
+        else:
+            return name
+
+    def package_exists(self, package):
+        err = getstatus("pool-exists " + package)
+        if err:
+            return False
+        
+        return True
+
     def get_package_spec(self, name):
         if not self.handled.exists(name):
             package_path = self.get_package(name)
@@ -89,15 +114,15 @@ class Plan:
             self.handled.add(name, package['Version'], quiet=False)
             if package.has_key('Depends'):
                 for dep in apt_pkg.ParseDepends(package['Depends']):
-                    depname = dep[0][0]
+                    # eg. [('initramfs-tools', '0.40ubuntu11', '>='),(...),
                     #TODO: depends on version
-                    #TODO: provides/virtual
-                    if (depname == "perlapi-5.8.7" or
-                        depname == "perlapi-5.8.8"):
-                        depname = "perl-base"
-                        
-                    if (depname == "perl5"):
-                        depname = "perl"
+                    if len(dep) > 1:
+                        for d in dep:
+                            depname = self._quickfix(d[0])
+                            if self.package_exists(depname):
+                                break
+                    else:
+                        depname = self._quickfix(dep[0][0])
                     
                     self.get_package_spec(depname)
     

@@ -35,3 +35,11 @@ def system_pipe(command, pipein, quiet=False):
         
     out, err =  p.communicate(pipein)
     return out, err
+
+def getstatus(command):
+    (s,o) = commands.getstatusoutput(command)
+    return s
+
+def getoutput(command):
+    (s,o) = commands.getstatusoutput(command)
+    return o
