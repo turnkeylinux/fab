@@ -27,15 +27,21 @@ from utils import *
 def usage():
     print >> sys.stderr, "Syntax: %s [-options] <plan> <pool> [/path/to/bootstrap]" % sys.argv[0]
 
-def clean_plan(raw):
-    plan = []
+def calculate_plan(raw):
+    yes = set()
+    no = set()
     for line in raw.split("\n"):
         line = re.sub(r'#.*', '', line)
         line = line.strip()
         if not line:
             continue
-        plan.append(line)
-    return plan
+        m = re.match("!(.*)", line)
+        if m:
+            no.add(m.group(1))
+        else:
+            yes.add(line)
+
+    return yes - no
 
 def main():
     try:
@@ -76,7 +82,7 @@ def main():
         cmd_cpp.append("--cpp=" + o)
     
     out, err = system_pipe(cmd_cpp, read_filehandle(input), quiet=True)
-    plan = clean_plan(out)
+    plan = calculate_plan(out)
 
     fab.Plan(pool).resolve(plan, opt_out)
 
