@@ -94,6 +94,9 @@ class Plan:
         elif (name == "mail-transport-agent"):
             return "postfix"
 
+        elif (name == "libapt-pkg-libc6.4-6-3.53"):
+            return "apt"
+        
         else:
             return name
 
