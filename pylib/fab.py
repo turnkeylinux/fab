@@ -17,22 +17,22 @@ def parse_deb_filename(filename):
 
     return name, version
 
-class Handled:
+class PackagesSpec:
     def __init__(self, output=None):
-        self.handled = []
+        self.packages = []
         self.output = output
     
     def add(self, name, version, quiet=True):
-        self.handled.append([name, version])
+        self.packages.append([name, version])
         if not quiet:
             self.print_spec(name, version)
         
     def exists(self, name, version=None):
-        for h in self.handled:
+        for p in self.packages:
             if version:
-                if h[0] == name and h[1] == version:
+                if p[0] == name and p[1] == version:
                     return True
-            elif h[0] == name:
+            elif p[0] == name:
                 return True
         return False
 
@@ -44,8 +44,8 @@ class Handled:
             print spec
     
     def print_specs(self):
-        for h in self.handled:
-            self.print_spec(h[0], h[1])
+        for p in self.packages:
+            self.print_spec(p[0], p[1])
 
 class Plan:
     def __init__(self, pool):
@@ -108,13 +108,13 @@ class Plan:
         return True
 
     def get_package_spec(self, name):
-        if not self.handled.exists(name):
+        if not self.rootspec.exists(name):
             package_path = self.get_package(name)
 
             control = apt_inst.debExtractControl(open(package_path))
             package = apt_pkg.ParseSection(control)
 
-            self.handled.add(name, package['Version'], quiet=False)
+            self.rootspec.add(name, package['Version'], quiet=False)
             if package.has_key('Depends'):
                 for dep in apt_pkg.ParseDepends(package['Depends']):
                     # eg. [('initramfs-tools', '0.40ubuntu11', '>='),(...),
@@ -130,7 +130,7 @@ class Plan:
                     self.get_package_spec(depname)
     
     def resolve(self, plan, output=None):
-        self.handled = Handled(output)
+        self.rootspec = PackagesSpec(output)
         
         for name in plan:
             self.get_package_spec(name)
