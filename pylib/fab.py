@@ -17,27 +17,29 @@ def parse_deb_filename(filename):
 
     return name, version
 
+
 class PackagesSpec:
     def __init__(self, output=None):
-        self.packages = []
+        self.packages = set()
         self.output = output
-    
-    def add(self, name, version, quiet=True):
-        self.packages.append([name, version])
-        if not quiet:
-            self.print_spec(name, version)
         
+    def add(self, name, version, quiet=True):
+        spec = name + "=" + version
+        self.packages.add(spec)
+        if not quiet:
+            self.print_spec(spec)
+            
     def exists(self, name, version=None):
-        for p in self.packages:
-            if version:
-                if p[0] == name and p[1] == version:
-                    return True
-            elif p[0] == name:
+        if version:
+            if name + "=" + version in self.packages:
                 return True
+        else:
+            for p in self.packages:
+                if re.match(name + "=(.*)", p):
+                    return True
         return False
 
-    def print_spec(self, name, version):
-        spec = name + "=" + version
+    def print_spec(self, spec):
         if self.output:
             open(self.output, "a").write(spec + "\n")
         else:
@@ -45,7 +47,8 @@ class PackagesSpec:
     
     def print_specs(self):
         for p in self.packages:
-            self.print_spec(p[0], p[1])
+            print_spec(p)
+    
 
 class Plan:
     def __init__(self, pool):
