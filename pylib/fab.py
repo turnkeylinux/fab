@@ -18,11 +18,14 @@ def parse_deb_filename(filename):
     return name, version
 
 class Handled:
-    def __init__(self):
-        self.handled=[]
+    def __init__(self, output=None):
+        self.handled = []
+        self.output = output
     
-    def add(self, name, version):
+    def add(self, name, version, quiet=True):
         self.handled.append([name, version])
+        if not quiet:
+            self.print_spec(name, version)
         
     def exists(self, name, version=None):
         for h in self.handled:
@@ -32,15 +35,17 @@ class Handled:
             elif h[0] == name:
                 return True
         return False
+
+    def print_spec(self, name, version):
+        spec = name + "=" + version
+        if self.output:
+            open(self.output, "a").write(spec + "\n")
+        else:
+            print spec
     
-    def print_spec(self, output=None):
+    def print_specs(self):
         for h in self.handled:
-            spec = h[0] + "=" + h[1]
-            if output:
-                open(output, "a").write(spec + "\n")
-            else:
-                print spec
-                
+            self.print_spec(h[0], h[1])
 
 class Plan:
     def __init__(self, pool):
@@ -53,12 +58,9 @@ class Plan:
             if poolpath:
                 pool = join(poolpath, pool)
         os.environ['POOL_DIR'] = pool
-            
-        self.handled = Handled()
     
     def get_package(self, package):
-        #TODO: replace quiet with strict once provides/virtual supported
-        system("/turnkey/projects/pool/pool-get --quiet %s %s" % (self.tmpdir, package))
+        system("/turnkey/projects/pool/pool-get --strict %s %s" % (self.tmpdir, package))
         if "=" in package:
             name, version = package.split("=", 1)
         else:
@@ -84,22 +86,26 @@ class Plan:
             control = apt_inst.debExtractControl(open(package_path))
             package = apt_pkg.ParseSection(control)
 
-            self.handled.add(name, package['Version'])
+            self.handled.add(name, package['Version'], quiet=False)
             if package.has_key('Depends'):
                 for dep in apt_pkg.ParseDepends(package['Depends']):
-                    print "Sub-Processing: " + dep[0][0]
+                    depname = dep[0][0]
                     #TODO: depends on version
                     #TODO: provides/virtual
-                    if (dep[0][0] == "perlapi-5.8.7" or
-                        dep[0][0] == "perlapi-5.8.8"):
-                        continue
-                    self.get_package_spec(dep[0][0])
+                    if (depname == "perlapi-5.8.7" or
+                        depname == "perlapi-5.8.8"):
+                        depname = "perl-base"
+                        
+                    if (depname == "perl5"):
+                        depname = "perl"
+                    
+                    self.get_package_spec(depname)
     
     def resolve(self, plan, output=None):
+        self.handled = Handled(output)
+        
         for name in plan:
-            print "Processing: " + name
             self.get_package_spec(name)
             
-        self.handled.print_spec(output)
         
         

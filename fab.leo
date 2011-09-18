@@ -53,8 +53,8 @@
 <v t="loni.20110911180234"><vh>fab-cpp</vh>
 <v t="loni.20110912121610"><vh>weird: s/linux/1/</vh></v>
 </v>
-<v t="loni.20110912123550" a="E"><vh>fab-plan-resolve</vh>
-<v t="loni.20110916154247" a="V"><vh>issue: provides/virtual</vh></v>
+<v t="loni.20110912123550" a="ETV"><vh>fab-plan-resolve</vh>
+<v t="loni.20110916154247"><vh>issue: provides/virtual</vh></v>
 </v>
 </v>
 </v>
@@ -370,15 +370,6 @@ Options:
 
 
 -----------------------/
-
-+ create skeleton
-+ call fab-cpp
-  + plan file
-  + plan stdin
-+ filter plan output (newlines, comments, etc.) and
-- create package SET
-
-  
 
 logic
     release_name = pool_name unless set explicitly
