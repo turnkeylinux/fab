@@ -28,6 +28,10 @@ class PackagesSpec:
         self.packages.add(spec)
         if not quiet:
             self.print_spec(spec)
+    
+    def read(self, filename):
+        for line in open(filename, "r").readlines():
+            self.packages.add(line.strip())
             
     def exists(self, name, version=None):
         if version:
@@ -35,7 +39,7 @@ class PackagesSpec:
                 return True
         else:
             for p in self.packages:
-                if re.match(name + "=(.*)", p):
+                if name in p:
                     return True
         return False
 
@@ -132,8 +136,11 @@ class Plan:
                     
                     self.get_package_spec(depname)
     
-    def resolve(self, plan, output=None):
+    def resolve(self, plan, exclude=None, output=None):
         self.rootspec = PackagesSpec(output)
+        
+        if exclude:
+            self.rootspec.read(exclude)
         
         for name in plan:
             self.get_package_spec(name)

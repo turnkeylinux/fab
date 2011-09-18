@@ -62,11 +62,31 @@
 <tnodes>
 <t tx="loni.20110910182617"></t>
 <t tx="loni.20110910182756">rm -rf bootstrap
+rm -rf bootstrap.spec
 cp -a /turnkey/fab/bootstraps/rocky bootstrap
+cp -a /turnkey/fab/bootstraps/rocky.spec bootstrap.spec
 
 #notes
 idea:
     * use oldfab to create drop in bootstrap
+
+
+
+
+fab/bootstraps/rocky/
+        cd projects/oldfab/bin
+        ./10initialize
+        ./15bootstrap rocky
+        cp -a /turnkey/fabarea/products/chroot/* /turnkey/fab/bootstrap/rocky/
+
+fab/bootstraps/rocky.list
+        cd projects/oldfab/bin
+        ./command "dpkg -l" &gt; /turnkey/fab/bootstraps/rocky.list
+
+fab/bootstraps/rocky.spec
+        cd /turnkey/fab/bootstraps
+        cat rocky.list | awk '{print $2"="$3}' &gt; rocky.spec
+
 
 </t>
 <t tx="loni.20110910182756.1">fab-plan-resolve /turnkey/fab/pools/rocky plan/main bootstrap &gt; root.spec
@@ -108,7 +128,13 @@ deps?
                   and besides, pool-get shouldn't be expensive, its just a hardlink
         
 Q: what is bootstrap for? we have the spec anyway?
-   HYPO: plan packages depend on packages installed in the bootstrap, so we dont need to get them again...</t>
+   HYPO: plan packages depend on packages installed in the bootstrap, so we dont need to get them again...
+   
+Q: should the root.spec include packages already installed in the bootstrap?
+   ie. should the spec be dependent on the bootstrap?
+A: the root.spec should _NOT_ include bootstrap packages, together the bootstrap.spec and root.spec could be used to (almost) reasemble a product.
+
+</t>
 <t tx="loni.20110910182756.2">rm -rf root.build
 cp -a bootstrap root.build
 fab-spec-install /turnkey/fab/pools/rocky root.spec root.build
@@ -355,7 +381,7 @@ Better Solution: undefine the macro
 Q: should we add this to fab-cpp?
 A: no, it should be added by the user of fab-cpp, along with any other cpp options he wishes
 </t>
-<t tx="loni.20110912123550">fab-plan-resolve [ -options ] &lt;pool&gt; &lt;plan&gt; [ /path/to/bootstrap ]
+<t tx="loni.20110912123550">fab-plan-resolve [ -options ] &lt;pool&gt; &lt;plan&gt; [bootstrap.spec]
 
 Resolve plan into spec using the latest packages from a given pool
 
@@ -363,6 +389,7 @@ Arguments:
   &lt;pool&gt;                Relative or absolute pool path
                         If relative, pool path is looked up in FAB_POOL_PATH
   &lt;plan&gt;                Path to read plan from (- for stdin)
+  bootstrap.spec        Path to spec of packages to not be included in root.spec
   
 Options:
   --output=             Path to spec-output (default is stdout)
@@ -370,6 +397,31 @@ Options:
 
 
 -----------------------/
+
+bootstrap
+---------
+i don't know how we will be creating the bootstrap, so currently i 
+am using a dropin created with oldfab.
+
+to get around the need for root privs to get a list of packages in the bootstrap (dpkg -l), 
+or getting the list from a bootstrap source list (not decided upon yet), i have also created
+a list manually created with dpkg -l.
+
+i then turned the list into a bootstrap.spec, which will be used by resolve-plan
+root.spec will _not_ include packages in the bootstrap.spec
+
+
+
+
+
+TODO:
+    support bootstrap argument
+    update Makefile
+    
+    clean up code
+    
+    move onto fab-spec-install...
+    
 
 logic
     release_name = pool_name unless set explicitly
