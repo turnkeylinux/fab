@@ -3,6 +3,9 @@
 """
 Configuration environment variables:
     FAB_PLAN_INCLUDE_PATH   Global include path for plan preprocessing
+    FAB_POOL_PATH           Lookup path for a relative pool path
+    FAB_TMPDIR              Temporary storage (defaults to /var/tmp)
+
 """
 
 import re

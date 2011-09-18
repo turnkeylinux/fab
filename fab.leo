@@ -53,7 +53,9 @@
 <v t="loni.20110911180234"><vh>fab-cpp</vh>
 <v t="loni.20110912121610"><vh>weird: s/linux/1/</vh></v>
 </v>
-<v t="loni.20110912123550" a="TV"><vh>fab-plan-resolve</vh></v>
+<v t="loni.20110912123550" a="E"><vh>fab-plan-resolve</vh>
+<v t="loni.20110916154247" a="V"><vh>issue: provides/virtual</vh></v>
+</v>
 </v>
 </v>
 </vnodes>
@@ -413,6 +415,23 @@ logic
             extract version of package
 
             print package=version</t>
+<t tx="loni.20110916154247">
+pool-get can't/doesn't get a package requested if the package name is provided by a package
+eg. perlapi-5.8.7 (dep via dep of casper)
+    is provided by perl-base
+
+possible solutions:
+    * fork the packages that depend on "provided" packages
+    * add functionality to pool
+    * add functionality to fab
+    * add a virtual package
+    * add a meta-package to the package pool
+
+
+we can't "get_package_spec" of a virtual package
+eg. libapt-pkg-libc6.4-6-3.53 (dep of apt-utils)
+
+</t>
 <t tx="zaril.20110904173229">@nocolor
 </t>
 <t tx="zaril.20110904173337"></t>

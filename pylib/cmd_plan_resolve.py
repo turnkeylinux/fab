@@ -19,7 +19,9 @@ import help
 import getopt
 from os.path import *
 
+import fab
 from utils import *
+
 
 @help.usage(__doc__)
 def usage():
@@ -61,6 +63,8 @@ def main():
         input = file(args[0], "r")
         opt_cpp.append("-I" + dirname(args[0]))
 
+    pool = args[1]
+    
     for opt, val in opts:
         if opt == '--cpp':
             opt_cpp.append(val)
@@ -69,11 +73,9 @@ def main():
         cmd_cpp.append("--cpp=" + o)
     
     out, err = system_pipe(cmd_cpp, read_filehandle(input), quiet=True)
-    #print out
-    
-    print clean_plan(out)
+    plan = clean_plan(out)
 
-
+    fab.Plan(pool).resolve(plan)
 
         
 if __name__=="__main__":
