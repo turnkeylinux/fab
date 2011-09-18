@@ -52,6 +52,7 @@ def main():
     
     cmd_cpp = ['./fab-cpp', '-']
     opt_cpp = ['-Ulinux']
+    opt_out = None
 
     inc = os.getenv('FAB_PLAN_INCLUDE_PATH')
     if inc:
@@ -68,6 +69,8 @@ def main():
     for opt, val in opts:
         if opt == '--cpp':
             opt_cpp.append(val)
+        elif opt == '--output':
+            opt_out = val
 
     for o in opt_cpp:
         cmd_cpp.append("--cpp=" + o)
@@ -75,7 +78,7 @@ def main():
     out, err = system_pipe(cmd_cpp, read_filehandle(input), quiet=True)
     plan = clean_plan(out)
 
-    fab.Plan(pool).resolve(plan)
+    fab.Plan(pool).resolve(plan, opt_out)
 
         
 if __name__=="__main__":

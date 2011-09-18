@@ -33,9 +33,13 @@ class Handled:
                 return True
         return False
     
-    def print_spec(self):
+    def print_spec(self, output=None):
         for h in self.handled:
-            print h[0] + "=" + h[1]
+            spec = h[0] + "=" + h[1]
+            if output:
+                open(output, "a").write(spec + "\n")
+            else:
+                print spec
                 
 
 class Plan:
@@ -91,11 +95,11 @@ class Plan:
                         continue
                     self.get_package_spec(dep[0][0])
     
-    def resolve(self, plan):
+    def resolve(self, plan, output=None):
         for name in plan:
             print "Processing: " + name
             self.get_package_spec(name)
             
-        self.handled.print_spec()
+        self.handled.print_spec(output)
         
         
