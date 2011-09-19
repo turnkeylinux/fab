@@ -88,7 +88,7 @@ def main():
     out, err = system_pipe(cmd_cpp, read_filehandle(input), quiet=True)
     plan = calculate_plan(out)
 
-    fab.Plan(pool).resolve(plan, opt_exclude, opt_out)
+    fab.plan_resolve(pool, plan, opt_exclude, opt_out)
 
         
 if __name__=="__main__":

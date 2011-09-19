@@ -58,8 +58,8 @@ class PackagesSpec:
             self.print_spec(p)
     
 
-class Plan:
-    def __init__(self, pool):
+class Packages:
+    def __init__(self, pool, spec):
         self.tmpdir = os.getenv('FAB_TMPDIR')
         if not self.tmpdir:
             self.tmpdir = "/var/tmp/fab"
@@ -69,6 +69,8 @@ class Plan:
             if poolpath:
                 pool = join(poolpath, pool)
         os.environ['POOL_DIR'] = pool
+        
+        self.spec = spec
     
     def get_package(self, package):
         system("pool-get --strict %s %s" % (self.tmpdir, package))
@@ -119,13 +121,13 @@ class Plan:
         return True
 
     def get_package_spec(self, name):
-        if not self.rootspec.exists(name):
+        if not self.spec.exists(name):
             package_path = self.get_package(name)
 
             control = apt_inst.debExtractControl(open(package_path))
             package = apt_pkg.ParseSection(control)
 
-            self.rootspec.add(name, package['Version'], quiet=False)
+            self.spec.add(name, package['Version'], quiet=False)
             if package.has_key('Depends'):
                 for dep in apt_pkg.ParseDepends(package['Depends']):
                     # eg. [('initramfs-tools', '0.40ubuntu11', '>='),(...),
@@ -140,15 +142,6 @@ class Plan:
                     
                     self.get_package_spec(depname)
     
-    def resolve(self, plan, exclude=None, output=None):
-        self.rootspec = PackagesSpec(output)
-        
-        if exclude:
-            self.rootspec.read(exclude)
-        
-        for name in plan:
-            self.get_package_spec(name)
-            
     def install(self, spec, chroot):
         self.rootspec = PackagesSpec()
         self.rootspec.read(spec)
@@ -157,4 +150,17 @@ class Plan:
         self.rootspec.print_specs()
         print "into this chroot: " + chroot
         print "using this pool: " + os.getenv('POOL_DIR')
+
         
+def plan_resolve(pool, plan, exclude, output):
+    rootspec = PackagesSpec(output)
+    if exclude:
+        rootspec.read(exclude)
+    
+    p = Packages(pool, rootspec)
+    for name in plan:
+        p.get_package_spec(name)
+    
+
+    
+    
