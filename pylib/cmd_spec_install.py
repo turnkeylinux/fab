@@ -45,7 +45,7 @@ def main():
     pool = args[1]
     chroot = args[2]
 
-    fab.Plan(pool).install(spec, chroot)
+    fab.spec_install(pool, spec, chroot)
 
         
 if __name__=="__main__":

@@ -143,16 +143,6 @@ class Packages:
                     
                     self.get_package_spec(depname)
     
-    def install(self, spec, chroot):
-        self.rootspec = PackagesSpec()
-        self.rootspec.read(spec)
-        
-        print "installing this spec:"
-        self.rootspec.print_specs()
-        print "into this chroot: " + chroot
-        print "using this pool: " + os.getenv('POOL_DIR')
-
-        
 def plan_resolve(pool, plan, exclude, output):
     rootspec = PackagesSpec(output)
     if exclude:
@@ -162,6 +152,12 @@ def plan_resolve(pool, plan, exclude, output):
     for name in plan:
         p.get_package_spec(name)
     
-
+def spec_install(pool, spec, chroot):
+    rootspec = PackagesSpec()
+    rootspec.read(spec)
     
-    
+    print "installing this spec:"
+    rootspec.print_specs()
+    print "into this chroot: " + chroot
+    p = Packages(pool, rootspec)
+    print "using this pool: " + os.getenv('POOL_DIR')
