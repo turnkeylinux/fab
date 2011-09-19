@@ -120,6 +120,10 @@ class Packages:
 
     @staticmethod
     def _get(package, outdir):
+        if ":" in package:
+            name, version = package.split("=")
+            version = re.sub('.:', '', version)
+            package = name + "=" + version
         system("pool-get --strict %s %s" % (outdir, package))
         
     def get_all_packages(self):
