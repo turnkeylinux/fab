@@ -8,6 +8,20 @@ import subprocess
 class Error(Exception):
     pass
 
+def fatal(s):
+    print >> sys.stderr, "FATAL: " + str(s)
+    sys.exit(1)
+
+def mkdir_parents(path, mode=0777):
+    """mkdir 'path' recursively (I.e., equivalent to mkdir -p)"""
+    path = str(path)
+    dirs = path.split("/")
+    for i in range(2, len(dirs) + 1):
+        dir = "/".join(dirs[:i+1])
+        if os.path.isdir(dir):
+            continue
+        os.mkdir(dir, mode)
+
 def read_filehandle(fh):
     ret = ""
     for line in fh.readlines():

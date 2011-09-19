@@ -44,6 +44,9 @@ def main():
     spec = read_filehandle(input)
     pool = args[1]
     chroot = args[2]
+    
+    if not isdir(chroot):
+        fatal("chroot does not exist: " + chroot)
 
     fab.spec_install(pool, spec, chroot)
 

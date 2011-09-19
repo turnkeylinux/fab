@@ -88,12 +88,20 @@ class Packages:
             self.outdir = outdir
         else:
             self.outdir = self.tmpdir
-        
+
+        for dir in [self.outdir, self.tmpdir]:
+            if not isdir(dir):
+                mkdir_parents(dir)
+                
         if not isabs(pool):
             poolpath = os.getenv('FAB_POOL_PATH')
             if poolpath:
                 pool = join(poolpath, pool)
-        os.environ['POOL_DIR'] = pool
+        
+        if isdir(join(pool, ".pool")):
+            os.environ['POOL_DIR'] = pool
+        else:
+            fatal("pool does not exist" + pool)
         
         self.spec = spec
 
