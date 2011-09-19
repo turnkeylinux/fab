@@ -157,25 +157,27 @@ class Packages:
                     self.get_package_spec(depname)
     
 def plan_resolve(pool, plan, exclude, output):
-    rootspec = PackagesSpec(output)
+    spec = PackagesSpec(output)
     if exclude:
-        rootspec.read(exclude)
+        spec.read(exclude)
     
-    p = Packages(pool, rootspec)
+    p = Packages(pool, spec)
     for name in plan:
         p.get_package_spec(name)
     
 def spec_install(pool, spec, chroot):
-    rootspec = PackagesSpec()
-    rootspec.read(spec)
+    spec = PackagesSpec()
+    spec.read(spec)
     
     print "installing this spec:"
-    rootspec.print_specs()
+    spec.print_specs()
     
     chroot = realpath(chroot)
     outdir = join(chroot, "fab")
-    p = Packages(pool, rootspec, outdir)
+    p = Packages(pool, spec, outdir)
 
     print "into this chroot: " + chroot
     
     print "using this pool: " + os.getenv('POOL_DIR')
+    
+    
