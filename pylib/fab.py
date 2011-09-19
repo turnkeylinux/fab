@@ -17,7 +17,27 @@ def parse_deb_filename(filename):
 
     return name, version
 
+def parse_package_name(name):
+    #TODO: solve the provides/virtual issue properly
+    if (name == "perlapi-5.8.7" or
+        name == "perlapi-5.8.8"):
+        return "perl-base"
+    
+    elif (name == "perl5"):
+        return "perl"
 
+    elif (name == "aufs-modules"):
+        return "aufs-modules-2.6.20-15-386"
+    
+    elif (name == "mail-transport-agent"):
+        return "postfix"
+
+    elif (name == "libapt-pkg-libc6.4-6-3.53"):
+        return "apt"
+   
+    else:
+        return name
+        
 class PackagesSpec:
     def __init__(self, output=None):
         self.packages = set()
@@ -92,27 +112,6 @@ class Packages:
 
         return None
     
-    def _quickfix(self, name):
-        #TODO: solve the provides/virtual issue properly
-        if (name == "perlapi-5.8.7" or
-            name == "perlapi-5.8.8"):
-            return "perl-base"
-        
-        elif (name == "perl5"):
-            return "perl"
-
-        elif (name == "aufs-modules"):
-            return "aufs-modules-2.6.20-15-386"
-
-        elif (name == "mail-transport-agent"):
-            return "postfix"
-
-        elif (name == "libapt-pkg-libc6.4-6-3.53"):
-            return "apt"
-        
-        else:
-            return name
-
     def package_exists(self, package):
         err = getstatus("pool-exists " + package)
         if err:
@@ -121,6 +120,7 @@ class Packages:
         return True
 
     def get_package_spec(self, name):
+        name = parse_package_name(name)
         if not self.spec.exists(name):
             package_path = self.get_package(name)
 
@@ -134,11 +134,11 @@ class Packages:
                     #TODO: depends on version
                     if len(dep) > 1:
                         for d in dep:
-                            depname = self._quickfix(d[0])
+                            depname = parse_package_name(d[0])
                             if self.package_exists(depname):
                                 break
                     else:
-                        depname = self._quickfix(dep[0][0])
+                        depname = parse_package_name(dep[0][0])
                     
                     self.get_package_spec(depname)
     
