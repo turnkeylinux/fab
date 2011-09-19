@@ -79,11 +79,16 @@ class PackagesSpec:
     
 
 class Packages:
-    def __init__(self, pool, spec):
+    def __init__(self, pool, spec, outdir=None):
         self.tmpdir = os.getenv('FAB_TMPDIR')
         if not self.tmpdir:
             self.tmpdir = "/var/tmp/fab"
 
+        if outdir:
+            self.outdir = outdir
+        else:
+            self.outdir = self.tmpdir
+        
         if not isabs(pool):
             poolpath = os.getenv('FAB_POOL_PATH')
             if poolpath:
@@ -101,15 +106,15 @@ class Packages:
         return True
 
     def get_package(self, package):
-        system("pool-get --strict %s %s" % (self.tmpdir, package))
+        system("pool-get --strict %s %s" % (self.outdir, package))
         if "=" in package:
             name, version = package.split("=", 1)
         else:
             name = package
             version = None
 
-        for filename in os.listdir(self.tmpdir):
-            filepath = join(self.tmpdir, filename)
+        for filename in os.listdir(self.outdir):
+            filepath = join(self.outdir, filename)
 
             if not isfile(filepath) or not filename.endswith(".deb"):
                 continue
@@ -158,6 +163,11 @@ def spec_install(pool, spec, chroot):
     
     print "installing this spec:"
     rootspec.print_specs()
+    
+    chroot = realpath(chroot)
+    outdir = join(chroot, "fab")
+    p = Packages(pool, rootspec, outdir)
+
     print "into this chroot: " + chroot
-    p = Packages(pool, rootspec)
+    
     print "using this pool: " + os.getenv('POOL_DIR')
