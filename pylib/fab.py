@@ -173,6 +173,51 @@ class Packages:
                         depname = parse_package_name(dep[0][0])
                     
                     self.get_package_spec(depname)
+
+class Chroot:
+    def __init__(self, path):
+        if os.getuid() != 0:
+            fatal("root privileges required for chroot")
+
+        self.path = path
+    
+    def mountpoints(self):
+        mount('proc-chroot',   '%s/proc'    % self.path, '-tproc')
+        mount('devpts-chroot', '%s/dev/pts' % self.path, '-tdevpts')
+
+    def umountpoints(self):
+        umount('devpts-chroot')
+        umount('proc-chroot')
+
+    def _insert_fakestartstop(self):
+        daemon = join(self.path, 'sbin/start-stop-daemon')
+        if isfile('%s.REAL' % daemon): #already created
+            return
+        
+        system("mv %s %s.REAL" % (daemon, daemon))
+        
+        fake = "#!/bin/sh\n" \
+               "echo\n" \
+               "echo \"Warning: Fake start-stop-daemon called, doing nothing\"\n"
+        
+        open(daemon, "w").write(fake)
+        os.chmod(daemon, 0755)
+
+    def _remove_fakestartstop(self):
+        daemon = join(self.path, 'sbin/start-stop-daemon')
+        system("mv %s.REAL %s" % (daemon, daemon))
+
+    def system_chroot(self, command):
+        env = "/usr/bin/env -i HOME=/root TERM=${TERM} LC_ALL=C " \
+              "PATH=/usr/sbin:/usr/bin:/sbin:/bin DEBIAN_PRIORITY=critical"
+        
+        system("chroot %s %s %s" % (self.path, env, command))
+
+    def install_packagedir(self, dir):
+        self._insert_fakestartstop()
+        self.system_chroot("dpkg --install --recursive " + dir)
+        self._remove_fakestartstop()
+
     
 def plan_resolve(pool, plan, exclude, output):
     spec = PackagesSpec(output)
@@ -183,20 +228,22 @@ def plan_resolve(pool, plan, exclude, output):
     for name in plan:
         p.get_package_spec(name)
     
-def spec_install(pool, specinfo, chroot):
+def spec_install(pool, specinfo, chroot_path):
     spec = PackagesSpec()
     spec.read(specinfo)
+
+    pkgdir = "/fab"
+    chroot_path = realpath(chroot_path)
+    pkgdir_path = join(chroot_path, pkgdir)
     
-    chroot = realpath(chroot)
-    outdir = join(chroot, "fab")
-
-    #mountpoints
-
-    #get packages
-    p = Packages(pool, spec, outdir)
+    p = Packages(pool, spec, pkgdir_path)
     p.get_all_packages()
 
-    #install packages
-    #umountpoints
-    
-    
+    c = Chroot(chroot_path)
+    c.mountpoints()
+    c.install_packagedir(pkgdir)
+    c.umountpoints()
+
+    #system("rm -rf " + pkgdir_path)
+
+

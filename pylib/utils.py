@@ -57,3 +57,23 @@ def getstatus(command):
 def getoutput(command):
     (s,o) = commands.getstatusoutput(command)
     return o
+
+def is_mounted(dir):
+    mounts = file("/proc/mounts").read()
+    if mounts.find(dir) != -1:
+        return True
+    return False
+
+def mount(device, mountp, options=None):
+    if not is_mounted(device):
+        print "mounting: " + device
+        if options:
+            system("mount", device, mountp, options)
+        else:
+            system("mount", device, mountp)
+
+def umount(device):
+    if is_mounted(device):
+        print "umounting: " + device
+        system("umount", "-f", device)
+

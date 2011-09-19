@@ -25,7 +25,7 @@
 <v t="loni.20110911164714.5"><vh>fab-plan-lint</vh></v>
 </v>
 <v t="loni.20110910182617" a="E"><vh>exemplary make flow</vh>
-<v t="loni.20110910182756"><vh>bootstrap</vh></v>
+<v t="loni.20110910182756" a="TV"><vh>bootstrap</vh></v>
 <v t="loni.20110910182756.1" a="E"><vh>root.spec</vh>
 <v t="loni.20110911164714.1" a="E"><vh>fab-plan-resolve</vh>
 <v t="loni.20110911164714"><vh>fab-cpp</vh></v>
@@ -56,7 +56,7 @@
 <v t="loni.20110912123550"><vh>fab-plan-resolve</vh>
 <v t="loni.20110916154247"><vh>issue: provides/virtual</vh></v>
 </v>
-<v t="loni.20110917153918" a="TV"><vh>fab-spec-install</vh></v>
+<v t="loni.20110917153918"><vh>fab-spec-install</vh></v>
 </v>
 </v>
 </vnodes>
@@ -71,8 +71,10 @@ cp -a /turnkey/fab/bootstraps/rocky.spec bootstrap.spec
 idea:
     * use oldfab to create drop in bootstrap
 
-
-
+This will be added to the actual bootstrap
+# The linux-image package asks interactively for initial ramdisk
+# creation. Therefore, we preconfigure /etc/kernel-img.conf
+echo "do_initrd = Yes" &gt; ${FABPROD}/chroot/etc/kernel-img.conf
 
 fab/bootstraps/rocky/
         cd projects/oldfab/bin
