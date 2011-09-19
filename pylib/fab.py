@@ -49,6 +49,9 @@ class PackagesSpec:
         if not quiet:
             self.print_spec(spec)
     
+    def get(self):
+        return self.packages
+    
     def read(self, input):
         if isfile(input):
             for line in open(input, "r").readlines():
@@ -113,8 +116,17 @@ class Packages:
         
         return True
 
+    @staticmethod
+    def _get(package, outdir):
+        system("pool-get --strict %s %s" % (outdir, package))
+        
+    def get_all_packages(self):
+        for package in self.spec.get():
+            print "getting: " + package
+            self._get(package, self.outdir)
+    
     def get_package(self, package):
-        system("pool-get --strict %s %s" % (self.outdir, package))
+        self._get(package, self.outdir)
         if "=" in package:
             name, version = package.split("=", 1)
         else:
@@ -165,19 +177,20 @@ def plan_resolve(pool, plan, exclude, output):
     for name in plan:
         p.get_package_spec(name)
     
-def spec_install(pool, spec, chroot):
+def spec_install(pool, specinfo, chroot):
     spec = PackagesSpec()
-    spec.read(spec)
-    
-    print "installing this spec:"
-    spec.print_specs()
+    spec.read(specinfo)
     
     chroot = realpath(chroot)
     outdir = join(chroot, "fab")
-    p = Packages(pool, spec, outdir)
 
-    print "into this chroot: " + chroot
-    
-    print "using this pool: " + os.getenv('POOL_DIR')
+    #mountpoints
+
+    #get packages
+    p = Packages(pool, spec, outdir)
+    p.get_all_packages()
+
+    #install packages
+    #umountpoints
     
     
