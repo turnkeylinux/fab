@@ -29,10 +29,14 @@ class PackagesSpec:
         if not quiet:
             self.print_spec(spec)
     
-    def read(self, filename):
-        for line in open(filename, "r").readlines():
-            self.packages.add(line.strip())
-            
+    def read(self, input):
+        if isfile(input):
+            for line in open(input, "r").readlines():
+                self.packages.add(line.strip())
+        else:
+            for line in input.split("\n"):
+                self.packages.add(line.strip())
+    
     def exists(self, name, version=None):
         if version:
             if name + "=" + version in self.packages:
@@ -51,7 +55,7 @@ class PackagesSpec:
     
     def print_specs(self):
         for p in self.packages:
-            print_spec(p)
+            self.print_spec(p)
     
 
 class Plan:
@@ -145,5 +149,12 @@ class Plan:
         for name in plan:
             self.get_package_spec(name)
             
+    def install(self, spec, chroot):
+        self.rootspec = PackagesSpec()
+        self.rootspec.read(spec)
         
+        print "installing this spec:"
+        self.rootspec.print_specs()
+        print "into this chroot: " + chroot
+        print "using this pool: " + os.getenv('POOL_DIR')
         

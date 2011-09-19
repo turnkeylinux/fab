@@ -53,9 +53,10 @@
 <v t="loni.20110911180234"><vh>fab-cpp</vh>
 <v t="loni.20110912121610"><vh>weird: s/linux/1/</vh></v>
 </v>
-<v t="loni.20110912123550" a="ETV"><vh>fab-plan-resolve</vh>
+<v t="loni.20110912123550"><vh>fab-plan-resolve</vh>
 <v t="loni.20110916154247"><vh>issue: provides/virtual</vh></v>
 </v>
+<v t="loni.20110917153918" a="TV"><vh>fab-spec-install</vh></v>
 </v>
 </v>
 </vnodes>
@@ -145,7 +146,12 @@ cp -a root.build root.patched
 fab-apply-removelist removelist root.patched
 fab-apply-overlay overlay root.patched
 
-</t>
+
+
+reminder for removelist:
+    post removal: in-chroot /etc/cron.daily/slocate
+    
+    </t>
 <t tx="loni.20110910182756.4">rm -rf cdroot
 cp -a /turnkey/fab/cdroots/bootsplash cdroot
 fab-apply-overlay cdroot.overlay cdroot
@@ -473,6 +479,62 @@ possible solutions:
 
 we can't "get_package_spec" of a virtual package
 eg. libapt-pkg-libc6.4-6-3.53 (dep of apt-utils)
+
+</t>
+<t tx="loni.20110917153918">fab-spec-install &lt;spec&gt; &lt;pool&gt; &lt;chroot&gt;
+
+Installs packages from given pool in chroot according to the spec
+
+Arguments:
+  &lt;spec&gt;                Path to read spec from (- for stdin)
+  &lt;pool&gt;                Relative or absolute pool path
+                        If relative, pool path is looked up in FAB_POOL_PATH
+  &lt;chroot&gt;              Path to chroot
+
+
+-----------------------/
+
+rm -rf root.build
+cp -a bootstrap root.build
+fab-spec-install /turnkey/fab/pools/rocky root.spec root.build
+
+
+logic
+    mount required virtual filesystems in chroot
+        /proc /dev/pts
+
+    copies packages according to spec from the pool to chroot 
+        raises exception on error (e.g., if we can't get a package according to the spec)
+
+    installs all the packages with dpkg
+        raises exception if dpkg fails (e.g., missing dependency, configure failure, etc.)
+
+    prints dpkg output to stdout
+
+    unmount virtual filesystems in chroot (if we mounted them ourselves)
+    
+oldfab related notes
+    20mountpoints
+        mount proc-chroot ${FABPROD}/chroot/proc -t proc
+        mount devpts-chroot ${FABPROD}/chroot/dev/pts -t devpts
+        
+    21finalize-bootstrap (maybe this should be in the bootstrap already?)
+        echo "do_initrd = Yes" &gt; ${FABPROD}/chroot/etc/kernel-img.conf
+    
+    install-packages
+        create fake start-stop daemon
+        inchroot
+            chroot ${FABPROD}/chroot /usr/bin/env -i HOME=/root TERM=${TERM} \
+                LC_ALL=C PATH=/usr/sbin:/usr/bin:/sbin:/bin \
+                DEBIAN_PRIORITY=critical ${1}
+        replace fake start-stop daemon with real
+    
+        note: remove debs
+    
+    35umountpoints
+        umount -f devpts-chroot
+        umount -f proc-chroot
+        
 
 </t>
 <t tx="zaril.20110904173229">@nocolor
