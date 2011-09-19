@@ -55,10 +55,12 @@ class PackagesSpec:
     def read(self, input):
         if isfile(input):
             for line in open(input, "r").readlines():
-                self.packages.add(line.strip())
+                if line:
+                    self.packages.add(line.strip())
         else:
             for line in input.split("\n"):
-                self.packages.add(line.strip())
+                if line:
+                    self.packages.add(line.strip())
     
     def exists(self, name, version=None):
         if version:
