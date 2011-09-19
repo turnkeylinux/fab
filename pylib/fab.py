@@ -91,7 +91,15 @@ class Packages:
         os.environ['POOL_DIR'] = pool
         
         self.spec = spec
-    
+
+    @staticmethod
+    def _package_exists(package):
+        err = getstatus("pool-exists " + package)
+        if err:
+            return False
+        
+        return True
+
     def get_package(self, package):
         system("pool-get --strict %s %s" % (self.tmpdir, package))
         if "=" in package:
@@ -111,13 +119,6 @@ class Packages:
                 return filepath
 
         return None
-    
-    def package_exists(self, package):
-        err = getstatus("pool-exists " + package)
-        if err:
-            return False
-        
-        return True
 
     def get_package_spec(self, name):
         name = parse_package_name(name)
@@ -135,7 +136,7 @@ class Packages:
                     if len(dep) > 1:
                         for d in dep:
                             depname = parse_package_name(d[0])
-                            if self.package_exists(depname):
+                            if self._package_exists(depname):
                                 break
                     else:
                         depname = parse_package_name(dep[0][0])
