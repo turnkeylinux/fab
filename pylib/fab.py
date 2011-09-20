@@ -259,7 +259,8 @@ def spec_install(pool, specinfo, chroot_path):
     pkgdir_path = join(chroot_path, "var/cache/apt/archives")
     
     p = Packages(pool, spec, pkgdir_path)
-
+    p.get_all_packages()
+    
     c = Chroot(chroot_path)
     c.mountpoints()
     c.apt_install(pkgdir_path)
