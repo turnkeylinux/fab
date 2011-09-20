@@ -68,7 +68,7 @@ class PackagesSpec:
                 return True
         else:
             for p in self.packages:
-                if name in p:
+                if p.startswith(name + "="):
                     return True
         return False
 

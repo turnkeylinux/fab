@@ -550,6 +550,46 @@ oldfab related notes
     
     we now have a dependency problem.
     
+HYPO: bug in plan-resolve?
+    Test: setup apt and try the install using apt-get
+    Result: yes, i was missing dependencies
+
+manually setup apt
+    mkdir -p /tmp/dists/rocky/binary-i386
+    ftparchive packages /tmp/dists/rocky/binary-i386/Packages  ... &gt; Packages.gz
+    /etc/sources.list : file:/// rocky fab
+    apt-get update
+    
+    updated code to do a: apt-get install &lt;packages&gt;
+    
+
+The following packages have unmet dependencies:
+  aspell-en: Depends: aspell (&gt;= 0.60.3-2) but it is not installable
+  build-essential: Depends: gcc (&gt;= 4:4.1.1) but it is not installable
+                   Depends: make but it is not installable
+  defoma: Depends: file but it is not installable
+  dpkg-dev: Depends: make but it is not installable
+  firefox: Depends: fontconfig but it is not installable
+  g++: Depends: gcc (&gt;= 4:4.1.2-1ubuntu1) but it is not installable
+       Depends: gcc-4.1 (&gt;= 4.1.2) but it is not installable
+  g++-4.1: Depends: gcc-4.1 (= 4.1.2-0ubuntu4) but it is not installable
+  hal: Depends: dbus (&gt;= 0.60-1) but it is not installable
+  liblaunchpad-integration0: Depends: launchpad-integration but it is not installable
+  libpango1.0-common: Depends: fontconfig (&gt;= 2.1.91) but it is not installable
+  libqt3-mt: Depends: fontconfig but it is not installable
+  xbase-clients: Depends: xrandr but it is not installable
+                 Depends: bitmap but it is not installable
+                 Depends: ico but it is not installable
+                 Depends: xf86dga but it is not installable
+E: Broken packages
+
+
+For some reason, the root.spec doesn't have all the packages we need....
+
+Found the issue: bug in the resolve code
+    package "abc" would not be added to the package set if a package containing "abc" was already in the set
+
+
 
 </t>
 <t tx="zaril.20110904173229">@nocolor
