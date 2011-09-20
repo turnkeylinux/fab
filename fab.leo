@@ -25,7 +25,7 @@
 <v t="loni.20110911164714.5"><vh>fab-plan-lint</vh></v>
 </v>
 <v t="loni.20110910182617" a="E"><vh>exemplary make flow</vh>
-<v t="loni.20110910182756" a="TV"><vh>bootstrap</vh></v>
+<v t="loni.20110910182756"><vh>bootstrap</vh></v>
 <v t="loni.20110910182756.1" a="E"><vh>root.spec</vh>
 <v t="loni.20110911164714.1" a="E"><vh>fab-plan-resolve</vh>
 <v t="loni.20110911164714"><vh>fab-cpp</vh></v>
@@ -56,7 +56,9 @@
 <v t="loni.20110912123550"><vh>fab-plan-resolve</vh>
 <v t="loni.20110916154247"><vh>issue: provides/virtual</vh></v>
 </v>
-<v t="loni.20110917153918"><vh>fab-spec-install</vh></v>
+<v t="loni.20110917153918" a="E"><vh>fab-spec-install</vh>
+<v t="loni.20110917232324" a="TV"><vh>mass install</vh></v>
+</v>
 </v>
 </v>
 </vnodes>
@@ -537,6 +539,17 @@ oldfab related notes
         umount -f devpts-chroot
         umount -f proc-chroot
         
+
+</t>
+<t tx="loni.20110917232324">mass installing via dpkg is failing
+    this is due to dpkg not preconfiguring what packages to install in what 
+    order, and generating tons of errors
+    
+    default max errors is 50, i gradually increased the max error amount upto 
+    100,000 with --abort-after, but it is still failing... - but different error
+    
+    we now have a dependency problem.
+    
 
 </t>
 <t tx="zaril.20110904173229">@nocolor

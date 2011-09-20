@@ -215,7 +215,7 @@ class Chroot:
 
     def install_packagedir(self, dir):
         self._insert_fakestartstop()
-        self.system_chroot("dpkg --install --recursive " + dir)
+        self.system_chroot("dpkg --abort-after=100000 -i -R " + dir)
         self._remove_fakestartstop()
 
 def plan_resolve(pool, plan, exclude, output):
