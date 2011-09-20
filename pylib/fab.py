@@ -218,7 +218,6 @@ class Chroot:
         self.system_chroot("dpkg --install --recursive " + dir)
         self._remove_fakestartstop()
 
-    
 def plan_resolve(pool, plan, exclude, output):
     spec = PackagesSpec(output)
     if exclude:
@@ -232,7 +231,7 @@ def spec_install(pool, specinfo, chroot_path):
     spec = PackagesSpec()
     spec.read(specinfo)
 
-    pkgdir = "/fab"
+    pkgdir = "fab"
     chroot_path = realpath(chroot_path)
     pkgdir_path = join(chroot_path, pkgdir)
     
