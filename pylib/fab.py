@@ -189,6 +189,12 @@ class Chroot:
         umount('devpts-chroot')
         umount('proc-chroot')
 
+    def system_chroot(self, command):
+        env = "/usr/bin/env -i HOME=/root TERM=${TERM} LC_ALL=C " \
+              "PATH=/usr/sbin:/usr/bin:/sbin:/bin DEBIAN_PRIORITY=critical"
+        
+        system("chroot %s %s %s" % (self.path, env, command))
+
     def _insert_fakestartstop(self):
         daemon = join(self.path, 'sbin/start-stop-daemon')
         if isfile('%s.REAL' % daemon): #already created
@@ -207,17 +213,35 @@ class Chroot:
         daemon = join(self.path, 'sbin/start-stop-daemon')
         system("mv %s.REAL %s" % (daemon, daemon))
 
-    def system_chroot(self, command):
-        env = "/usr/bin/env -i HOME=/root TERM=${TERM} LC_ALL=C " \
-              "PATH=/usr/sbin:/usr/bin:/sbin:/bin DEBIAN_PRIORITY=critical"
+    def _apt_sourcelist(self):
+        source = "deb file:/// local debs"
+        path = join(self.path, "etc/apt/sources.list")
+        file(path, "w").write(source)
+    
+    def _apt_refresh(self, pkgdir_path):
+        self._apt_sourcelist()
         
-        system("chroot %s %s %s" % (self.path, env, command))
-
-    def install_packagedir(self, dir):
+        pkgcache = "_dists_local_debs_binary-i386_Packages"
+        pkgcache_path = join(self.path, "var/lib/apt/lists", pkgcache)
+        
+        print "generating package index..."
+        system("apt-ftparchive packages %s > %s" % (pkgdir_path, pkgcache_path))
+        self.system_chroot("apt-cache gencaches")
+        
+    def apt_install(self, pkgdir_path):
+        self._apt_refresh(pkgdir_path)
+        
+        pkgnames = []
+        for filename in os.listdir(pkgdir_path):
+            if filename.endswith(".deb"):
+                name, version = filename.split("_")[:2]
+                pkgnames.append(name)
+            
         self._insert_fakestartstop()
-        self.system_chroot("dpkg --abort-after=100000 -i -R " + dir)
+        self.system_chroot("apt-get install -y --allow-unauthenticated %s" % 
+                           list2str(pkgnames))
         self._remove_fakestartstop()
-
+    
 def plan_resolve(pool, plan, exclude, output):
     spec = PackagesSpec(output)
     if exclude:
@@ -231,18 +255,16 @@ def spec_install(pool, specinfo, chroot_path):
     spec = PackagesSpec()
     spec.read(specinfo)
 
-    pkgdir = "fab"
     chroot_path = realpath(chroot_path)
-    pkgdir_path = join(chroot_path, pkgdir)
+    pkgdir_path = join(chroot_path, "var/cache/apt/archives")
     
     p = Packages(pool, spec, pkgdir_path)
-    p.get_all_packages()
 
     c = Chroot(chroot_path)
     c.mountpoints()
-    c.install_packagedir(pkgdir)
+    c.apt_install(pkgdir_path)
     c.umountpoints()
 
-    #system("rm -rf " + pkgdir_path)
+    #apt-get clean & remove index
 
 

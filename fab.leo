@@ -2,7 +2,7 @@
 <?xml-stylesheet ekr_test?>
 <leo_file>
 <leo_header file_format="2" tnodes="0" max_tnode_index="0" clone_windows="0"/>
-<globals body_outline_ratio="0.277583187391">
+<globals body_outline_ratio="0.257443082312">
 	<global_window_position top="0" left="0" height="709" width="1142"/>
 	<global_log_window_position top="0" left="0" height="0" width="0"/>
 </globals>
@@ -555,13 +555,17 @@ HYPO: bug in plan-resolve?
     Result: yes, i was missing dependencies
 
 manually setup apt
-    mkdir -p /tmp/dists/rocky/binary-i386
-    ftparchive packages /tmp/dists/rocky/binary-i386/Packages  ... &gt; Packages.gz
-    /etc/sources.list : file:/// rocky fab
-    apt-get update
+    cd root.build
+    mkdir -p dists/rocky/fab/binary-i386
+    apt-ftparchive packages fab/ | gzip -9 &gt; dists/rocky/fab/binary-i386/Packages.gz
+    echo "deb file:/// rocky fab" &gt; etc/apt/sources.list
+
+    chroot into root.build
+        apt-get update
+        PKGS=""; for p in $(apt-cache pkgnames); do PKGS="$PKGS $p"; done
+        apt-get install $PGKS
     
-    updated code to do a: apt-get install &lt;packages&gt;
-    
+    IDEA: put the packages directly into /var/cache/apt/archives/
 
 The following packages have unmet dependencies:
   aspell-en: Depends: aspell (&gt;= 0.60.3-2) but it is not installable
@@ -588,6 +592,65 @@ For some reason, the root.spec doesn't have all the packages we need....
 
 Found the issue: bug in the resolve code
     package "abc" would not be added to the package set if a package containing "abc" was already in the set
+
+-----------------
+
+dpkg can't seem to handle figuring out which packages to install in what order.
+it keeps on breaking...
+
+Errors were encountered while processing:
+ fab/xutils-dev_7.1.ds-6ubuntu1_i386.deb
+ fab/libxft2_2.1.12-1_i386.deb
+ fab/libxfixes3_4.0.3-1_i386.deb
+ fab/libx11-6_1.1.1-1ubuntu3_i386.deb
+ fab/xbitmaps_1.0.1-0ubuntu2_all.deb
+ fab/libxt6_1.0.5-1_i386.deb
+ fab/x11-common_7.2-0ubuntu11_i386.deb
+ fab/libdmx1_1.0.2-2build1_i386.deb
+ fab/libx11-data_1.1.1-1ubuntu3_all.deb
+ fab/xserver-xorg_7.2-0ubuntu11_all.deb
+
+we have to add some intellegence ontop of dpkg.
+manually hunting down which debs to install first, i am able to complete the installation 
+    Q: why does dpkg fail...?
+
+    Note: fixing dependencies with dpkg
+            dpkg -i --force-depends packages...
+            dpkg --configure --pending
+            &lt;repeat until no errors&gt;
+    
+    This is a horrible solution, why kludge fixing dependency problems if we can just install packages correctly?
+
+options:
+    * figure out the order ourselves
+        apt-python  - still have to implement apt related stuff
+        scratch     - reinvent the wheel
+        
+    * leverage a dpkg frontend
+        dselect     - interactive ui
+        aptitude    - interactive ui
+        apt
+            - seems to be the least worse option (manual test successful)
+
+leveraging apt will definately work, and wont take too long
+downside is that we will depend on apt
+
+at a later stage, we can develop a solution to figure out the the order, and use dpkg
+
+
+* apt implementation: refer to chanko
+    * pool-get outdir=${root.build}/var/cache/apt/archives
+    * index outdir and save directly to lists/_dists_local_debs_binary-i386_Packages
+    * create sources.list
+    * apt-get update
+    * get list of packages to install
+        * parse the spec
+        * apt-cache pkgnames
+    * apt-get install $PGKS
+
+
+    
+
 
 
 
