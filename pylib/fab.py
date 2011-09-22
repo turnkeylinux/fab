@@ -274,3 +274,11 @@ def spec_install(pool, specinfo, chroot_path):
 
     #apt-get clean & remove index
 
+def apply_removelist(rmlist, src, dst=None):
+    if not dst:
+        dst = get_tmpdir()
+
+    print rmlist
+    print src
+    print dst
+

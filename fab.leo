@@ -2,7 +2,7 @@
 <?xml-stylesheet ekr_test?>
 <leo_file>
 <leo_header file_format="2" tnodes="0" max_tnode_index="0" clone_windows="0"/>
-<globals body_outline_ratio="0.257443082312">
+<globals body_outline_ratio="0.289842381786">
 	<global_window_position top="0" left="0" height="709" width="1142"/>
 	<global_log_window_position top="0" left="0" height="0" width="0"/>
 </globals>
@@ -26,12 +26,12 @@
 </v>
 <v t="loni.20110910182617" a="E"><vh>exemplary make flow</vh>
 <v t="loni.20110910182756"><vh>bootstrap</vh></v>
-<v t="loni.20110910182756.1" a="E"><vh>root.spec</vh>
+<v t="loni.20110910182756.1"><vh>root.spec</vh>
 <v t="loni.20110911164714.1" a="E"><vh>fab-plan-resolve</vh>
 <v t="loni.20110911164714"><vh>fab-cpp</vh></v>
 </v>
 </v>
-<v t="loni.20110910182756.2" a="E"><vh>root.build</vh>
+<v t="loni.20110910182756.2"><vh>root.build</vh>
 <v t="loni.20110911164714.2"><vh>fab-spec-install</vh></v>
 </v>
 <v t="loni.20110910182756.3" a="E"><vh>root.patched</vh>
@@ -56,9 +56,11 @@
 <v t="loni.20110912123550"><vh>fab-plan-resolve</vh>
 <v t="loni.20110916154247"><vh>issue: provides/virtual</vh></v>
 </v>
-<v t="loni.20110917153918" a="E"><vh>fab-spec-install</vh>
-<v t="loni.20110917232324" a="TV"><vh>mass install</vh></v>
+<v t="loni.20110917153918"><vh>fab-spec-install</vh>
+<v t="loni.20110917232324"><vh>mass install</vh></v>
 </v>
+<v t="loni.20110919154516" a="TV"><vh>fab-apply-removelist</vh></v>
+<v t="loni.20110918220744"><vh>TODO</vh></v>
 </v>
 </v>
 </vnodes>
@@ -652,6 +654,41 @@ at a later stage, we can develop a solution to figure out the the order, and use
     
 
 
+
+
+</t>
+<t tx="loni.20110918220744">plan-resolve
+    provides / virtual packages
+    depends on version checking
+
+spec-install
+    Q: why are we getting a kernel related prompt
+        /lib/modules/2.6.20-15-386/kernel
+        linux-image-2.6.20-15-386
+
+</t>
+<t tx="loni.20110919154516">fab-apply-removelist &lt;removelist&gt; &lt;path&gt;
+
+Removes files and folders as specified by removelist from the path
+
+Arguments:
+  &lt;removelist&gt;          Path to read removelist from (- for stdin)
+                        Entries may be negated by prefixing a !
+  &lt;path&gt;                Path containing removelist entries (ie. chroot)
+
+
+-----------------------/
+
+
+fab-apply-removelist removelist root.patched
+   
+
+example removelist contents
+    /usr/share/locale/
+    !/usr/share/locale/en_GB/
+    
+the above would remove locale/* except for locale/en_GB
+note: the files removed are not deleted, but moved out of the path (ie. the chroot)
 
 
 </t>
