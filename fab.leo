@@ -59,7 +59,8 @@
 <v t="loni.20110917153918"><vh>fab-spec-install</vh>
 <v t="loni.20110917232324"><vh>mass install</vh></v>
 </v>
-<v t="loni.20110919154516" a="TV"><vh>fab-apply-removelist</vh></v>
+<v t="loni.20110919154516"><vh>fab-apply-removelist</vh></v>
+<v t="loni.20110920142423" a="TV"><vh>fab-apply-overlay</vh></v>
 <v t="loni.20110918220744"><vh>TODO</vh></v>
 </v>
 </v>
@@ -690,6 +691,31 @@ example removelist contents
 the above would remove locale/* except for locale/en_GB
 note: the files removed are not deleted, but moved out of the path (ie. the chroot)
 
+
+</t>
+<t tx="loni.20110920142423">fab-apply-overlay &lt;overlay&gt; &lt;path&gt;
+
+Applies overlay ontop of path
+
+Arguments:
+  &lt;overlay&gt;             Path to overlay
+  &lt;path&gt;                Path apply overlay ontop of (ie. chroot)
+
+
+-----------------------/
+
+
+fab-apply-overlay overlay root.patched
+
+from oldfab blueprint overrides:
+
+if [ -d ${BP_DIR}/overrides ]; then
+        cp -a ${BP_DIR}/overrides/* ${FABPROD}/chroot/
+fi
+
+
+Note: when using deck, just add it as another layer?
+      have option?
 
 </t>
 <t tx="zaril.20110904173229">@nocolor

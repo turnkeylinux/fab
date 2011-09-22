@@ -305,3 +305,8 @@ def apply_removelist(rmlist, srcpath, dstpath=None):
     for entry in rmlist['no']:
         _move(entry, dstpath, srcpath)
 
+def apply_overlay(overlay, dstpath):
+    print overlay
+    print dstpath
+
+
