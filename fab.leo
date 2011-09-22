@@ -62,6 +62,9 @@
 <v t="loni.20110919154516"><vh>fab-apply-removelist</vh></v>
 <v t="loni.20110920142423"><vh>fab-apply-overlay</vh></v>
 <v t="loni.20110920150432"><vh>fab-chroot</vh></v>
+<v t="loni.20110920175636"><vh>old vs. new plans</vh>
+<v t="loni.20110920183538"><vh>notes</vh></v>
+</v>
 <v t="loni.20110918220744" a="TV"><vh>TODO</vh></v>
 </v>
 </v>
@@ -659,17 +662,29 @@ at a later stage, we can develop a solution to figure out the the order, and use
 
 
 </t>
-<t tx="loni.20110918220744">bootstrap
+<t tx="loni.20110918220744">fabricate a working product with Makefile
+
+bootsplash ?
+
+reminder: if we override casper.conf, we must regenerate initrd
+
+spec-install
+    Q: why are we getting a kernel related prompt
+        /lib/modules/2.6.20-15-386/kernel
+        linux-image-2.6.20-15-386
+        
+bootstrap
     throw away bootstrap creation functionality
 
 plan-resolve
     provides / virtual packages
     depends on version checking
 
-spec-install
-    Q: why are we getting a kernel related prompt
-        /lib/modules/2.6.20-15-386/kernel
-        linux-image-2.6.20-15-386
+
+
+IDEA:
+    when i write the spec-analysis code,
+    it might be enough to drop apt support for the spec-install and directly use dpkg
 
 </t>
 <t tx="loni.20110919154516">fab-apply-removelist &lt;removelist&gt; &lt;path&gt;
@@ -732,6 +747,64 @@ Arguments:
                         If no command is specified, an interactive shell is assumed
                         
 ----------------------------/
+
+</t>
+<t tx="loni.20110920175636">the following diff was done on rocky backstage, after "recommended packages" where removed
+
+buildingblocks vs. common-plans
+-------------------------------
+only in buildingblocks
+    fvwm
+    feh
+    hal
+    nano
+    apt-utils
+    debconf-utils
+    ucf
+    fcron
+    slocate
+
+only in common-plans
+    kbd
+
+
+blueprint vs. plan
+------------------
+only in buildingblocks
+    kbd
+    
+only in plan
+    fvwm
+    feh
+    fcron
+    apt-utils
+    debconf-utils
+    ucf
+    hal
+    gnupg
+
+
+summary
+-------
+after canceling out...
+
+
+only in buildingblocks
+    nano
+    slocate
+
+only in plan
+    gnupg (we have it in buildingblocks bootstrap, leaving it for now...)
+
+</t>
+<t tx="loni.20110920183538">remove dependencies from plans? 
+    usplash
+    fvwm
+
+usplash-theme-backstage -&gt; usplash-theme-turnkey
+
+add to console
+    nano (we need a basic text editor in the console)
 
 </t>
 <t tx="zaril.20110904173229">@nocolor
