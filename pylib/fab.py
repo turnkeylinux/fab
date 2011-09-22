@@ -3,9 +3,20 @@ import os
 import apt_pkg
 import apt_inst
 from os.path import *
+from datetime import datetime
 
 from utils import *
 
+def get_datetime():
+    return datetime.now().strftime("%Y%m%d.%H%M%S")
+
+def get_tmpdir():
+    tmpdir = os.getenv('FAB_TMPDIR')
+    if not tmpdir:
+        tmpdir = "/var/tmp"
+
+    tmpdir = join(tmpdir, "fab-" + get_datetime())
+    return realpath(tmpdir)
 
 def parse_deb_filename(filename):
     """Parses package filename -> (name, version)"""
@@ -85,19 +96,14 @@ class PackagesSpec:
 
 class Packages:
     def __init__(self, pool, spec, outdir=None):
-        self.tmpdir = os.getenv('FAB_TMPDIR')
-        if not self.tmpdir:
-            self.tmpdir = "/var/tmp/fab"
-
         if outdir:
             self.outdir = outdir
         else:
-            self.outdir = self.tmpdir
+            self.outdir = get_tmpdir()
 
-        for dir in [self.outdir, self.tmpdir]:
-            if not isdir(dir):
-                mkdir_parents(dir)
-                
+        if not isdir(self.outdir):
+            mkdir_parents(self.outdir)
+        
         if not isabs(pool):
             poolpath = os.getenv('FAB_POOL_PATH')
             if poolpath:
@@ -236,7 +242,7 @@ class Chroot:
             if filename.endswith(".deb"):
                 name, version = filename.split("_")[:2]
                 pkgnames.append(name)
-            
+        
         self._insert_fakestartstop()
         self.system_chroot("apt-get install -y --allow-unauthenticated %s" % 
                            list2str(pkgnames))
@@ -267,5 +273,4 @@ def spec_install(pool, specinfo, chroot_path):
     c.umountpoints()
 
     #apt-get clean & remove index
-
 
