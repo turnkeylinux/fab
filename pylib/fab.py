@@ -219,22 +219,23 @@ class Chroot:
         daemon = join(self.path, 'sbin/start-stop-daemon')
         system("mv %s.REAL %s" % (daemon, daemon))
 
+    def _apt_indexpath(self):
+        return join(self.path,
+                    "var/lib/apt/lists",
+                    "_dists_local_debs_binary-i386_Packages")
+
     def _apt_sourcelist(self):
         source = "deb file:/// local debs"
         path = join(self.path, "etc/apt/sources.list")
         file(path, "w").write(source)
     
     def _apt_refresh(self, pkgdir_path):
-        self._apt_sourcelist()
-        
-        pkgcache = "_dists_local_debs_binary-i386_Packages"
-        pkgcache_path = join(self.path, "var/lib/apt/lists", pkgcache)
+        self._apt_sourcelist()       
         
         print "generating package index..."
-        system("apt-ftparchive packages %s > %s" % (pkgdir_path, pkgcache_path))
+        system("apt-ftparchive packages %s > %s" % (pkgdir_path, 
+                                                    self._apt_indexpath()))
         self.system_chroot("apt-cache gencaches")
-        
-        system("rm -f " + pkgcache_path)
         
     def apt_install(self, pkgdir_path):
         self._apt_refresh(pkgdir_path)
@@ -253,6 +254,7 @@ class Chroot:
     
     def apt_clean(self):
         self.system_chroot("apt-get clean")
+        system("rm -f " + self._apt_indexpath)
         
 def plan_resolve(pool, plan, exclude, output):
     spec = PackagesSpec(output)
