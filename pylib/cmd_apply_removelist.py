@@ -27,6 +27,23 @@ from utils import *
 def usage():
     print >> sys.stderr, "Syntax: %s [-options] <removelist> <srcpath>" % sys.argv[0]
 
+def parse_list(raw):
+    list = {'yes': [],
+            'no':  []}
+    
+    for line in raw.split("\n"):
+        line = re.sub(r'#.*', '', line)
+        line = line.strip()
+        if not line:
+            continue
+        m = re.match("!(.*)", line)
+        if m:
+            list['no'].append(m.group(1))
+        else:
+            list['yes'].append(line)
+
+    return list
+
 def main():
     try:
         opts, args = getopt.gnu_getopt(sys.argv[1:], "", 
@@ -45,7 +62,9 @@ def main():
     else:
         input = file(args[0], "r")
 
-    rmlist = read_filehandle(input)
+    raw = read_filehandle(input)
+    rmlist = parse_list(raw)
+    
     srcpath = args[1]
 
     if not isdir(srcpath):
