@@ -60,7 +60,8 @@
 <v t="loni.20110917232324"><vh>mass install</vh></v>
 </v>
 <v t="loni.20110919154516"><vh>fab-apply-removelist</vh></v>
-<v t="loni.20110920142423" a="TV"><vh>fab-apply-overlay</vh></v>
+<v t="loni.20110920142423"><vh>fab-apply-overlay</vh></v>
+<v t="loni.20110920150432" a="TV"><vh>fab-chroot</vh></v>
 <v t="loni.20110918220744"><vh>TODO</vh></v>
 </v>
 </v>
@@ -716,6 +717,18 @@ fi
 
 Note: when using deck, just add it as another layer?
       have option?
+
+</t>
+<t tx="loni.20110920150432">fab-chroot &lt;chroot&gt; [command]
+
+Executes command in chroot
+
+Arguments:
+  &lt;chroot&gt;              Path to chroot
+  command               Command to execute in chroot
+                        If no command is specified, an interactive shell is assumed
+                        
+----------------------------/
 
 </t>
 <t tx="zaril.20110904173229">@nocolor
