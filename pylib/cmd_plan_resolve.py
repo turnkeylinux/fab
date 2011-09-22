@@ -1,5 +1,5 @@
 #!/usr/bin/python
-"""Resolve plan into spec using the latest packages from a given pool
+"""Resolve plan into spec using latest packages from pool
 
 Arguments:
   <plan>            Path to read plan from (- for stdin)

@@ -25,7 +25,10 @@ PATH_LIBEXEC="libexec"
 
 # this variable allows you to optionally specify the order commands
 # are printed in Commands.usage()
-COMMANDS_USAGE_ORDER = []
+COMMANDS_USAGE_ORDER = ['cpp', 'chroot', '',
+
+                        'plan-resolve', 'spec-install',
+                        'apply-removelist', 'apply-overlay']
 
 # this function is designed to work when running in-place source
 # and when running code through a pycompiled installation with execproxy

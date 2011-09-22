@@ -1,9 +1,9 @@
 #!/usr/bin/python
-"""Applies overlay ontop of path
+"""Apply overlay ontop of given path
 
 Arguments:
   <overlay>         Path to overlay
-  <path>            Path apply overlay ontop of (ie. chroot)
+  <path>            Path to apply overlay ontop of (ie. chroot)
 
 """
 

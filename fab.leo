@@ -31,7 +31,7 @@
 <v t="loni.20110911164714"><vh>fab-cpp</vh></v>
 </v>
 </v>
-<v t="loni.20110910182756.2"><vh>root.build</vh>
+<v t="loni.20110910182756.2" a="E"><vh>root.build</vh>
 <v t="loni.20110911164714.2"><vh>fab-spec-install</vh></v>
 </v>
 <v t="loni.20110910182756.3" a="E"><vh>root.patched</vh>
@@ -61,8 +61,8 @@
 </v>
 <v t="loni.20110919154516"><vh>fab-apply-removelist</vh></v>
 <v t="loni.20110920142423"><vh>fab-apply-overlay</vh></v>
-<v t="loni.20110920150432" a="TV"><vh>fab-chroot</vh></v>
-<v t="loni.20110918220744"><vh>TODO</vh></v>
+<v t="loni.20110920150432"><vh>fab-chroot</vh></v>
+<v t="loni.20110918220744" a="TV"><vh>TODO</vh></v>
 </v>
 </v>
 </vnodes>
@@ -659,7 +659,10 @@ at a later stage, we can develop a solution to figure out the the order, and use
 
 
 </t>
-<t tx="loni.20110918220744">plan-resolve
+<t tx="loni.20110918220744">bootstrap
+    throw away bootstrap creation functionality
+
+plan-resolve
     provides / virtual packages
     depends on version checking
 

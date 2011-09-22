@@ -1,5 +1,5 @@
 #!/usr/bin/python
-"""Removes files and folders as specified by removelist from the srcpath
+"""Remove files and folders according to removelist
 
 Arguments:
   <removelist>      Path to read removelist from (- for stdin)
