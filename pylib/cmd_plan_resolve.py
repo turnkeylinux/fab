@@ -57,7 +57,7 @@ def main():
     if not len(args) == 2:
         usage()
     
-    cmd_cpp = ['./fab-cpp', '-']
+    cmd_cpp = ['fab-cpp', '-']
     opt_cpp = ['-Ulinux']
     opt_out = None
     opt_exclude = None
