@@ -306,7 +306,6 @@ def apply_removelist(rmlist, srcpath, dstpath=None):
         _move(entry, dstpath, srcpath)
 
 def apply_overlay(overlay, dstpath):
-    print overlay
-    print dstpath
+    system("cp -a %s/* %s/" % (overlay, dstpath))
 
 
