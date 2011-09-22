@@ -17,7 +17,7 @@ def get_tmpdir():
 
     tmpdir = join(tmpdir, "fab-" + get_datetime())
     return realpath(tmpdir)
-
+            
 def parse_deb_filename(filename):
     """Parses package filename -> (name, version)"""
 
@@ -234,6 +234,8 @@ class Chroot:
         system("apt-ftparchive packages %s > %s" % (pkgdir_path, pkgcache_path))
         self.system_chroot("apt-cache gencaches")
         
+        system("rm -f " + pkgcache_path)
+        
     def apt_install(self, pkgdir_path):
         self._apt_refresh(pkgdir_path)
         
@@ -243,11 +245,15 @@ class Chroot:
                 name, version = filename.split("_")[:2]
                 pkgnames.append(name)
         
+        pkgnames.sort()
         self._insert_fakestartstop()
         self.system_chroot("apt-get install -y --allow-unauthenticated %s" % 
                            list2str(pkgnames))
         self._remove_fakestartstop()
     
+    def apt_clean(self):
+        self.system_chroot("apt-get clean")
+        
 def plan_resolve(pool, plan, exclude, output):
     spec = PackagesSpec(output)
     if exclude:
@@ -270,9 +276,8 @@ def spec_install(pool, specinfo, chroot_path):
     c = Chroot(chroot_path)
     c.mountpoints()
     c.apt_install(pkgdir_path)
+    c.apt_clean()
     c.umountpoints()
-
-    #apt-get clean & remove index
 
 def apply_removelist(rmlist, src, dst=None):
     if not dst:
