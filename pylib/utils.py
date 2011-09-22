@@ -12,6 +12,9 @@ def fatal(s):
     print >> sys.stderr, "FATAL: " + str(s)
     sys.exit(1)
 
+def warning(s):
+    print >> sys.stderr, "WARNING: " + str(s)
+
 def mkdir_parents(path, mode=0777):
     """mkdir 'path' recursively (I.e., equivalent to mkdir -p)"""
     path = str(path)

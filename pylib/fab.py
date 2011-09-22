@@ -279,11 +279,29 @@ def spec_install(pool, specinfo, chroot_path):
     c.apt_clean()
     c.umountpoints()
 
-def apply_removelist(rmlist, src, dst=None):
-    if not dst:
-        dst = get_tmpdir()
+def apply_removelist(rmlist, srcpath, dstpath=None):
+    def _move(entry, srcpath, dstpath):
+        entry = re.sub("^/","", entry)
+        src = join(srcpath, entry)
+        dst = join(dstpath, dirname(entry))
+    
+        if exists(src):
+            mkdir_parents(dst)
+            if isdir(src):
+                system("mv -f %s/* %s/" % (dirname(src), dst))
+            else:
+                system("mv -f %s %s/" % (src, dst))
+        else:
+            warning("entry does not exist: " + entry)
 
-    print rmlist
-    print src
-    print dst
+    if not dstpath:
+        dstpath = get_tmpdir()
+
+    """move entries out of srcpath"""
+    for entry in rmlist['yes']:
+        _move(entry, srcpath, dstpath)
+
+    """move entries back into srcpath"""
+    for entry in rmlist['no']:
+        _move(entry, dstpath, srcpath)
 
