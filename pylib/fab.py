@@ -86,8 +86,8 @@ class PackagesSpec:
     def print_spec(self, spec):
         if self.output:
             open(self.output, "a").write(spec + "\n")
-        else:
-            print spec
+        
+        print spec
     
     def print_specs(self):
         for p in self.packages:
