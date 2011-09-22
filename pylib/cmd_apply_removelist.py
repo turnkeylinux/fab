@@ -1,11 +1,14 @@
 #!/usr/bin/python
-"""Removes files and folders as specified by removelist from the path
+"""Removes files and folders as specified by removelist from the srcpath
 
 Arguments:
   <removelist>      Path to read removelist from (- for stdin)
                     Entries may be negated by prefixing a `!'
-  <path>            Path containing removelist entries (ie. chroot)
+  <srcpath>         Path containing removelist entries (ie. chroot)
 
+Options:
+  --dstpath=        Path to directory which will store removed items
+                    If not specified, FAB_TMPDIR will be used
 """
 
 
@@ -22,11 +25,12 @@ from utils import *
 
 @help.usage(__doc__)
 def usage():
-    print >> sys.stderr, "Syntax: %s <removelist> <path>" % sys.argv[0]
+    print >> sys.stderr, "Syntax: %s [-options] <removelist> <srcpath>" % sys.argv[0]
 
 def main():
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "", [])
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "", 
+                                       ['dstpath='])
     except getopt.GetoptError, e:
         usage(e)
 
@@ -42,12 +46,17 @@ def main():
         input = file(args[0], "r")
 
     rmlist = read_filehandle(input)
-    path = args[1]
-    
-    if not isdir(path):
-        fatal("path does not exist: " + path)
+    srcpath = args[1]
 
-    fab.apply_removelist(rmlist, path)
+    if not isdir(srcpath):
+        fatal("srcpath does not exist: " + srcpath)
+
+    opt_dstpath = None
+    for opt, val in opts:
+        if opt == '--dstpath':
+            opt_removedir.append(val)
+
+    fab.apply_removelist(rmlist, srcpath, opt_dstpath)
 
         
 if __name__=="__main__":
