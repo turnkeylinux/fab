@@ -279,11 +279,15 @@ def spec_install(pool, specinfo, chroot_path):
     c.apt_clean()
     c.umountpoints()
 
-def chroot_execute(chroot_path, command):
+def chroot_execute(chroot_path, command, mountpoints=True):
     c = Chroot(chroot_path)
-    c.mountpoints()
+    if mountpoints:
+        c.mountpoints()
+    
     c.system_chroot(command)
-    c.umountpoints()
+    
+    if mountpoints:
+        c.umountpoints()
 
 def apply_removelist(rmlist, srcpath, dstpath=None):
     def _move(entry, srcpath, dstpath):
