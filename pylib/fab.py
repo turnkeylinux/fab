@@ -192,8 +192,8 @@ class Chroot:
         mount('devpts-chroot', '%s/dev/pts' % self.path, '-tdevpts')
 
     def umountpoints(self):
-        umount('devpts-chroot')
-        umount('proc-chroot')
+        umount(join(self.path, 'dev/pts'))
+        umount(join(self.path, 'proc'))
 
     def system_chroot(self, command):
         env = "/usr/bin/env -i HOME=/root TERM=${TERM} LC_ALL=C " \
