@@ -62,6 +62,12 @@ class PackagesSpec:
     def __init__(self, output=None):
         self.packages = set()
         self.output = output
+    
+    def _add(self, spec):
+        spec = re.sub(r'#.*', '', spec)
+        spec = spec.strip()
+        if spec:
+            self.packages.add(spec)
         
     def add(self, name, version, quiet=True):
         spec = name + "=" + version
@@ -75,12 +81,10 @@ class PackagesSpec:
     def read(self, input):
         if isfile(input):
             for line in open(input, "r").readlines():
-                if line:
-                    self.packages.add(line.strip())
+                self._add(line)
         else:
             for line in input.split("\n"):
-                if line:
-                    self.packages.add(line.strip())
+                self._add(line)
     
     def exists(self, name, version=None):
         if version:
