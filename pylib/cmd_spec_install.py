@@ -1,11 +1,6 @@
 #!/usr/bin/python
 """Install packages into chroot according to spec
 
-Install packages from pool into chroot according to spec
-Install spec packages from pool into chroot
-
-Installs packages from given pool in chroot according to the spec
-
 Arguments:
   <spec>            Path to read spec from (- for stdin)
   <pool>            Relative or absolute pool path
