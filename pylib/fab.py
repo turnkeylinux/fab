@@ -45,7 +45,10 @@ def parse_package_name(name):
 
     elif (name == "libapt-pkg-libc6.4-6-3.53"):
         return "apt"
-   
+
+    elif (name == "awk"):
+        return "mawk"
+    
     else:
         return name
 
