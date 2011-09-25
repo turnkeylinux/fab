@@ -4,6 +4,9 @@
 Arguments:
   <chroot>          Path to chroot
 
+Options:
+  --strict          Fatal error if chroot does not exist
+
 """
 
 
@@ -24,9 +27,15 @@ def usage():
 
 def main():
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "", [])
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "", 
+                                       ['strict'])
     except getopt.GetoptError, e:
         usage(e)
+
+    opt_strict = False
+    for opt, val in opts:
+        if opt == '--strict':
+            opt_strict = True
 
     if not len(args) == 1:
         usage()
@@ -34,8 +43,13 @@ def main():
     chroot = args[0]
     
     if not isdir(chroot):
-        fatal("chroot does not exist: " + chroot)
-
+        msg = "chroot does not exist: " + chroot
+        if opt_strict:
+            fatal(msg)
+        else:
+            warning(msg)
+            sys.exit(0)
+            
     fab.Chroot(chroot).umountpoints()
 
 
