@@ -254,7 +254,7 @@ class Chroot:
     
     def apt_clean(self):
         self.system_chroot("apt-get clean")
-        system("rm -f " + self._apt_indexpath)
+        system("rm -f " + self._apt_indexpath())
         
 def plan_resolve(pool, plan, exclude, output):
     spec = PackagesSpec(output)
