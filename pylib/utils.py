@@ -84,5 +84,5 @@ def list2str(list):
     lstr = ""
     for l in list:
         lstr = lstr + l + " "
-    return lstr
+    return lstr.rstrip()
 
