@@ -25,7 +25,7 @@ PATH_LIBEXEC="libexec"
 
 # this variable allows you to optionally specify the order commands
 # are printed in Commands.usage()
-COMMANDS_USAGE_ORDER = ['cpp', 'chroot', '',
+COMMANDS_USAGE_ORDER = ['cpp', 'chroot', 'chroot-umount', '',
 
                         'plan-resolve', 'spec-install',
                         'apply-removelist', 'apply-overlay']
