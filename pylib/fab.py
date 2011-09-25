@@ -284,16 +284,19 @@ def plan_resolve(pool, plan, exclude, output):
     p = Packages(pool, spec)
     for name in plan:
         p.get_package_spec(name)
-    
-def spec_install(pool, specinfo, chroot_path):
+
+def spec_get(pool, specinfo, outdir):
     spec = PackagesSpec()
     spec.read(specinfo)
-
+    
+    p = Packages(pool, spec, outdir)
+    p.get_all_packages()
+    
+def spec_install(pool, specinfo, chroot_path):
     chroot_path = realpath(chroot_path)
     pkgdir_path = join(chroot_path, "var/cache/apt/archives")
     
-    p = Packages(pool, spec, pkgdir_path)
-    p.get_all_packages()
+    spec_get(pool, specinfo, pkgdir_path)
     
     c = Chroot(chroot_path)
     c.mountpoints()
