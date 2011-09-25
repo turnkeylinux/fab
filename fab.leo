@@ -65,6 +65,7 @@
 <v t="loni.20110920175636"><vh>old vs. new plans</vh>
 <v t="loni.20110920183538"><vh>notes</vh></v>
 </v>
+<v t="loni.20110923145602"><vh>kernel image install anomaly</vh></v>
 <v t="loni.20110918220744" a="TV"><vh>TODO</vh></v>
 </v>
 </v>
@@ -664,14 +665,7 @@ at a later stage, we can develop a solution to figure out the the order, and use
 </t>
 <t tx="loni.20110918220744">fabricate a working product with Makefile
 
-bootsplash ?
-
 reminder: if we override casper.conf, we must regenerate initrd
-
-spec-install
-    Q: why are we getting a kernel related prompt
-        /lib/modules/2.6.20-15-386/kernel
-        linux-image-2.6.20-15-386
         
 bootstrap
     throw away bootstrap creation functionality
@@ -680,6 +674,9 @@ plan-resolve
     provides / virtual packages
     depends on version checking
 
+update projects/bootplash (maybe rename to bootsplashes)
+    we only need to keep the source images
+    update readme (fab/cdroot holds default, but can be changed by cdroot.overlay)
 
 
 IDEA:
@@ -806,6 +803,37 @@ usplash-theme-backstage -&gt; usplash-theme-turnkey
 add to console
     nano (we need a basic text editor in the console)
 
+</t>
+<t tx="loni.20110923145602">spec-install
+
+Interactive Prompt:
+
+If /lib/modules/2.6.20-15-386/kernel belongs to old install
+of linux-image-2.6.20-15-386, then this is your last chance to
+abort the installation of this kernel image (nothing has been 
+changed yet).
+
+If you know what you are doing, and if you feel that this image
+should be installed despite this anomaly, Please answer n to
+the question.
+
+Otherwise, I suggest you move /lib/modules/2.6.20-15-386/kernel
+out of the way, perhaps to
+/lib/modules/2.6.20-15-386.kernel.old or something, and then
+try re-installing this image.
+
+Stop install since the kernel-image is already installed?
+
+Yes/No ??
+
+
+Q: Offending package: ?
+    linux-image-2.6.20-15-386
+
+    Nope: thats where we get the error, but the package aufs-modules-2.6.20-15-386
+    was the culprit, it was unpacked before linux-image*
+
+IDEA: install the linux-image* packages first before any others
 </t>
 <t tx="zaril.20110904173229">@nocolor
 </t>

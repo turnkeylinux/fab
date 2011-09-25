@@ -48,7 +48,13 @@ def parse_package_name(name):
    
     else:
         return name
-        
+
+def preinstall_package(name):
+    if name.startswith("linux-image"):
+        return True
+    
+    return False
+    
 class PackagesSpec:
     def __init__(self, output=None):
         self.packages = set()
@@ -241,15 +247,22 @@ class Chroot:
         self._apt_refresh(pkgdir_path)
         
         pkgnames = []
+        pre_pkgnames = []
         for filename in os.listdir(pkgdir_path):
             if filename.endswith(".deb"):
                 name, version = filename.split("_")[:2]
-                pkgnames.append(name)
+                if preinstall_package(name):
+                    pre_pkgnames.append(name)
+                else:
+                    pkgnames.append(name)
         
-        pkgnames.sort()
         self._insert_fakestartstop()
-        self.system_chroot("apt-get install -y --allow-unauthenticated %s" % 
-                           list2str(pkgnames))
+        
+        for pkglist in [pre_pkgnames, pkgnames]:
+            pkglist.sort()
+            self.system_chroot("apt-get install -y --allow-unauthenticated %s" %
+                               list2str(pkglist))
+        
         self._remove_fakestartstop()
     
     def apt_clean(self):
