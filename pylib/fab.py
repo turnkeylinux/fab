@@ -17,38 +17,6 @@ def get_tmpdir():
     tmpdir = join(tmpdir, "fab-" + get_datetime())
     return realpath(tmpdir)
             
-def parse_deb_filename(filename):
-    """Parses package filename -> (name, version)"""
-
-    if not filename.endswith(".deb"):
-        raise Error("not a package `%s'" % filename)
-
-    name, version = filename.split("_")[:2]
-
-    return name, version
-
-def parse_package_name(name):
-    #TODO: solve the provides/virtual issue properly
-    virtuals = {'awk':                       'mawk',
-                'perl5':                     'perl',
-                'perlapi-5.8.7':             'perl-base',
-                'perlapi-5.8.8':             'perl-base',
-                'mail-transport-agent':      'postfix',
-                'libapt-pkg-libc6.4-6-3.53': 'apt',
-                'aufs-modules':              'aufs-modules-2.6.20-15-386'
-               }
-
-    if name in virtuals:
-        return virtuals[name]
-    
-    return name
-
-def preinstall_package(name):
-    if name.startswith("linux-image"):
-        return True
-    
-    return False
-    
 class PackagesSpec:
     def __init__(self, output=None):
         self.packages = set()
@@ -155,14 +123,14 @@ class Packages:
             if not isfile(filepath) or not filename.endswith(".deb"):
                 continue
 
-            cached_name, cached_version = parse_deb_filename(filename)
+            cached_name, cached_version = deb.parse_filename(filename)
             if name == cached_name and (version is None or version == cached_version):
                 return filepath
 
         return None
 
     def get_package_spec(self, name):
-        name = parse_package_name(name)
+        name = deb.parse_name(name)
         if not self.spec.exists(name):
             package_path = self.get_package(name)
             
@@ -176,11 +144,11 @@ class Packages:
                     #TODO: depends on version
                     if len(dep) > 1:
                         for d in dep:
-                            depname = parse_package_name(d[0])
+                            depname = deb.parse_name(d[0])
                             if self._package_exists(depname):
                                 break
                     else:
-                        depname = parse_package_name(dep[0][0])
+                        depname = deb.parse_name(dep[0][0])
                     
                     self.get_package_spec(depname)
 
@@ -249,7 +217,7 @@ class Chroot:
         for filename in os.listdir(pkgdir_path):
             if filename.endswith(".deb"):
                 name, version = filename.split("_")[:2]
-                if preinstall_package(name):
+                if deb.is_preinstall(name):
                     pre_pkgnames.append(name)
                 else:
                     pkgnames.append(name)
