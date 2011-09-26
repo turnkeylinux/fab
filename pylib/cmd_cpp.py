@@ -5,8 +5,10 @@ Arguments:
   <plan>         Path to read plan from (- for stdin)
                  If path/to/plan, dir of plan will be searched for header files
 
-Options:
-  --cpp=         Arbitrary CPP definitions to effect plan preprocessing
+Optional arbitrary CPP definitions to effect plan preprocessing:
+  -D <name>      Predefine name as a macro, with definition 1
+  -U <name>      Cancel any previous definition of name
+  -I <dir>       Include dir to add to list of dirs searched for header files
 
 """
 
@@ -25,8 +27,7 @@ def usage():
 
 def main():
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "",
-                                       ['cpp='])
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "I:D:U:", [])
     except getopt.GetoptError, e:
         usage(e)
     
@@ -36,22 +37,26 @@ def main():
     if not args:
         usage()
 
-    opt_cpp = []
+    cpp_opts = []
     inc = os.getenv('FAB_PLAN_INCLUDE_PATH')
     if inc:
-        opt_cpp.append("-I" + inc)
+        cpp_opts.append("-I" + inc)
     
     if args[0] == '-':
         fh = sys.stdin
     else:
         fh = file(args[0], "r")
-        opt_cpp.append("-I" + dirname(args[0]))
+        cpp_opts.append("-I" + dirname(args[0]))
     
     for opt, val in opts:
-        if opt == '--cpp':
-            opt_cpp.append(val)
+        if opt == '-I':
+            cpp_opts.append("-I" + val)
+        elif opt == '-D':
+            cpp_opts.append("-D" + val)
+        elif opt == '-U':
+            cpp_opts.append("-U" + val)
 
-    cmd = opt_cpp
+    cmd = cpp_opts
     cmd.insert(0, "cpp")
     system_pipe(cmd, fh.read())
 
