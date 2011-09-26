@@ -332,11 +332,11 @@ def apply_removelist(rmlist, srcpath, dstpath=None):
     if not dstpath:
         dstpath = get_tmpdir()
 
-    """move entries out of srcpath"""
+    # move entries out of srcpath
     for entry in rmlist['yes']:
         _move(entry, srcpath, dstpath)
 
-    """move entries back into srcpath"""
+    # move entries back into srcpath
     for entry in rmlist['no']:
         _move(entry, dstpath, srcpath)
 
