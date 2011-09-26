@@ -37,28 +37,26 @@ def main():
     if not args:
         usage()
 
-    cpp_opts = []
+    cmd_cpp = ['cpp']
     inc = os.getenv('FAB_PLAN_INCLUDE_PATH')
     if inc:
-        cpp_opts.append("-I" + inc)
+        cmd_cpp.append("-I" + inc)
     
     if args[0] == '-':
         fh = sys.stdin
     else:
         fh = file(args[0], "r")
-        cpp_opts.append("-I" + dirname(args[0]))
+        cmd_cpp.append("-I" + dirname(args[0]))
     
     for opt, val in opts:
         if opt == '-I':
-            cpp_opts.append("-I" + val)
+            cmd_cpp.append("-I" + val)
         elif opt == '-D':
-            cpp_opts.append("-D" + val)
+            cmd_cpp.append("-D" + val)
         elif opt == '-U':
-            cpp_opts.append("-U" + val)
+            cmd_cpp.append("-U" + val)
 
-    cmd = cpp_opts
-    cmd.insert(0, "cpp")
-    system_pipe(cmd, fh.read())
+    system_pipe(cmd_cpp, fh.read())
 
         
 if __name__=="__main__":
