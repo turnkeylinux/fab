@@ -11,7 +11,7 @@ Options:
                     If not specified, FAB_TMPDIR will be used
 """
 
-improt os
+import os
 import re
 import sys
 import getopt
