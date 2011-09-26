@@ -30,27 +30,19 @@ def parse_deb_filename(filename):
 
 def parse_package_name(name):
     #TODO: solve the provides/virtual issue properly
-    if (name == "perlapi-5.8.7" or
-        name == "perlapi-5.8.8"):
-        return "perl-base"
-    
-    elif (name == "perl5"):
-        return "perl"
+    virtuals = {'awk':                       'mawk',
+                'perl5':                     'perl',
+                'perlapi-5.8.7':             'perl-base',
+                'perlapi-5.8.8':             'perl-base',
+                'mail-transport-agent':      'postfix',
+                'libapt-pkg-libc6.4-6-3.53': 'apt',
+                'aufs-modules':              'aufs-modules-2.6.20-15-386'
+               }
 
-    elif (name == "aufs-modules"):
-        return "aufs-modules-2.6.20-15-386"
+    if name in virtuals:
+        return virtuals[name]
     
-    elif (name == "mail-transport-agent"):
-        return "postfix"
-
-    elif (name == "libapt-pkg-libc6.4-6-3.53"):
-        return "apt"
-
-    elif (name == "awk"):
-        return "mawk"
-    
-    else:
-        return name
+    return name
 
 def preinstall_package(name):
     if name.startswith("linux-image"):
