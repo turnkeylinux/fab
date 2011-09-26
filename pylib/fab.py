@@ -268,7 +268,7 @@ class Chroot:
         for pkglist in [pre_pkgnames, pkgnames]:
             pkglist.sort()
             self.system_chroot("apt-get install -y --allow-unauthenticated %s" %
-                               list2str(pkglist))
+                               " ".join(pkglist))
         
         self._remove_fakestartstop()
     

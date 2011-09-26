@@ -74,9 +74,3 @@ def umount(device):
         print "umounting: " + device
         system("umount", "-f", device)
 
-def list2str(list):
-    lstr = ""
-    for l in list:
-        lstr = lstr + l + " "
-    return lstr.rstrip()
-
