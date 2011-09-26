@@ -9,7 +9,11 @@ Arguments:
 Options:
   --exclude=        Path to spec of packages not to be resolved (ie. bootstrap)
   --output=         Path to spec-output (default is stdout)
-  --cpp=            Arbitrary CPP definitions to effect plan preprocessing
+
+Optional arbitrary CPP definitions to effect plan preprocessing:
+  -D <name>         Predefine name as a macro, with definition 1
+  -U <name>         Cancel any previous definition of name
+  -I <dir>          Include dir to add to list of dirs searched for header files
 
 """
 
@@ -46,7 +50,7 @@ def calculate_plan(raw):
 
 def main():
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "",
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "I:D:U:",
                                        ['exclude=', 'output=', 'cpp='])
     except getopt.GetoptError, e:
         usage(e)
@@ -57,34 +61,34 @@ def main():
     if not len(args) == 2:
         usage()
     
-    cmd_cpp = ['fab-cpp', '-']
-    opt_cpp = ['-Ulinux']
+    cmd_cpp = ['fab-cpp', '-', '-Ulinux']
     opt_out = None
     opt_exclude = None
 
     inc = os.getenv('FAB_PLAN_INCLUDE_PATH')
     if inc:
-        opt_cpp.append("-I" + inc)
+        cmd_cpp.append("-I" + inc)
     
     if args[0] == '-':
         fh = sys.stdin
     else:
         fh = file(args[0], "r")
-        opt_cpp.append("-I" + dirname(args[0]))
+        cmd_cpp.append("-I" + dirname(args[0]))
 
     pool = args[1]
     
     for opt, val in opts:
-        if opt == '--cpp':
-            opt_cpp.append(val)
+        if opt == '-I':
+            cmd_cpp.append("-I" + val)
+        elif opt == '-D':
+            cmd_cpp.append("-D" + val)
+        elif opt == '-U':
+            cmd_cpp.append("-U" + val)
         elif opt == '--output':
             opt_out = val
         elif opt == '--exclude':
             opt_exclude = val
 
-    for o in opt_cpp:
-        cmd_cpp.append("--cpp=" + o)
-    
     out, err = system_pipe(cmd_cpp, fh.read(), quiet=True)
     plan = calculate_plan(out)
 
