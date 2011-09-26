@@ -1,10 +1,9 @@
 
 import os
-import apt_pkg
-import apt_inst
 from os.path import *
 from datetime import datetime
 
+import deb
 from utils import *
 
 def get_datetime():
@@ -166,13 +165,13 @@ class Packages:
         name = parse_package_name(name)
         if not self.spec.exists(name):
             package_path = self.get_package(name)
-
-            control = apt_inst.debExtractControl(open(package_path))
-            package = apt_pkg.ParseSection(control)
+            
+            control = deb.extract_control(package_path)
+            package = deb.parse_control(control)
 
             self.spec.add(name, package['Version'], quiet=False)
             if package.has_key('Depends'):
-                for dep in apt_pkg.ParseDepends(package['Depends']):
+                for dep in deb.parse_depends(package['Depends']):
                     # eg. [('initramfs-tools', '0.40ubuntu11', '>='),(...),
                     #TODO: depends on version
                     if len(dep) > 1:
