@@ -42,9 +42,9 @@ def main():
         opt_cpp.append("-I" + inc)
     
     if args[0] == '-':
-        input = sys.stdin
+        fh = sys.stdin
     else:
-        input = file(args[0], "r")
+        fh = file(args[0], "r")
         opt_cpp.append("-I" + dirname(args[0]))
     
     for opt, val in opts:
@@ -53,7 +53,7 @@ def main():
 
     cmd = opt_cpp
     cmd.insert(0, "cpp")
-    system_pipe(cmd, read_filehandle(input))
+    system_pipe(cmd, fh.read())
 
         
 if __name__=="__main__":

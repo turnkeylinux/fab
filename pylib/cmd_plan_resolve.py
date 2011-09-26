@@ -67,9 +67,9 @@ def main():
         opt_cpp.append("-I" + inc)
     
     if args[0] == '-':
-        input = sys.stdin
+        fh = sys.stdin
     else:
-        input = file(args[0], "r")
+        fh = file(args[0], "r")
         opt_cpp.append("-I" + dirname(args[0]))
 
     pool = args[1]
@@ -85,7 +85,7 @@ def main():
     for o in opt_cpp:
         cmd_cpp.append("--cpp=" + o)
     
-    out, err = system_pipe(cmd_cpp, read_filehandle(input), quiet=True)
+    out, err = system_pipe(cmd_cpp, fh.read(), quiet=True)
     plan = calculate_plan(out)
 
     fab.plan_resolve(pool, plan, opt_exclude, opt_out)

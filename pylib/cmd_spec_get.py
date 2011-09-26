@@ -37,18 +37,17 @@ def main():
         usage()
     
     if args[0] == '-':
-        input = sys.stdin
+        fh = sys.stdin
     else:
-        input = file(args[0], "r")
+        fh = file(args[0], "r")
 
-    spec = read_filehandle(input)
     pool = args[1]
     outdir = realpath(args[2])
     
     if not isdir(outdir):
         fatal("outdir does not exist: " + outdir)
 
-    fab.spec_get(pool, spec, outdir)
+    fab.spec_get(pool, fh.read(), outdir)
 
         
 if __name__=="__main__":

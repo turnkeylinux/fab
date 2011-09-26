@@ -37,18 +37,17 @@ def main():
         usage()
     
     if args[0] == '-':
-        input = sys.stdin
+        fh = sys.stdin
     else:
-        input = file(args[0], "r")
+        fh = file(args[0], "r")
 
-    spec = read_filehandle(input)
     pool = args[1]
     chroot = args[2]
     
     if not isdir(chroot):
         fatal("chroot does not exist: " + chroot)
 
-    fab.spec_install(pool, spec, chroot)
+    fab.spec_install(pool, fh.read(), chroot)
 
         
 if __name__=="__main__":

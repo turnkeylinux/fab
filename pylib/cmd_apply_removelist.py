@@ -58,12 +58,11 @@ def main():
         usage()
     
     if args[0] == '-':
-        input = sys.stdin
+        fh = sys.stdin
     else:
-        input = file(args[0], "r")
+        fh = file(args[0], "r")
 
-    raw = read_filehandle(input)
-    rmlist = parse_list(raw)
+    rmlist = parse_list(fh.read())
     
     srcpath = args[1]
 
