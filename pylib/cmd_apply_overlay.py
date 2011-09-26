@@ -7,16 +7,13 @@ Arguments:
 
 """
 
-import re
 import os
 import sys
-import help
 import getopt
-from os.path import *
 
 import fab
-from utils import *
-
+import help
+from utils import fatal
 
 @help.usage(__doc__)
 def usage():
@@ -35,7 +32,7 @@ def main():
     dstpath = args[1]
 
     for dir in [overlay, dstpath]:
-        if not isdir(dir):
+        if not os.path.isdir(dir):
             fatal("does not exist: " + dir)
 
     fab.apply_overlay(overlay, dstpath)

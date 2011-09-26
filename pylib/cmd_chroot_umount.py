@@ -10,15 +10,13 @@ Options:
 """
 
 
-import re
 import os
 import sys
-import help
 import getopt
-from os.path import *
 
 import fab
-from utils import *
+import help
+from utils import fatal, warning
 
 
 @help.usage(__doc__)
@@ -42,7 +40,7 @@ def main():
     
     chroot = args[0]
     
-    if not isdir(chroot):
+    if not os.path.isdir(chroot):
         msg = "chroot does not exist: " + chroot
         if opt_strict:
             fatal(msg)

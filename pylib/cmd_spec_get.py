@@ -9,15 +9,13 @@ Arguments:
 
 """
 
-import re
 import os
 import sys
-import help
 import getopt
-from os.path import *
 
 import fab
-from utils import *
+import help
+from utils import fatal
 
 
 @help.usage(__doc__)
@@ -42,9 +40,9 @@ def main():
         fh = file(args[0], "r")
 
     pool = args[1]
-    outdir = realpath(args[2])
+    outdir = os.path.realpath(args[2])
     
-    if not isdir(outdir):
+    if not os.path.isdir(outdir):
         fatal("outdir does not exist: " + outdir)
 
     fab.spec_get(pool, fh.read(), outdir)

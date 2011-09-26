@@ -9,15 +9,14 @@ Arguments:
 
 """
 
-import re
+
 import os
 import sys
-import help
 import getopt
-from os.path import *
 
 import fab
-from utils import *
+import help
+from utils import fatal
 
 
 @help.usage(__doc__)
@@ -44,7 +43,7 @@ def main():
     pool = args[1]
     chroot = args[2]
     
-    if not isdir(chroot):
+    if not os.path.isdir(chroot):
         fatal("chroot does not exist: " + chroot)
 
     fab.spec_install(pool, fh.read(), chroot)

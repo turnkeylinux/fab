@@ -11,17 +11,14 @@ Options:
                     If not specified, FAB_TMPDIR will be used
 """
 
-
+improt os
 import re
-import os
 import sys
-import help
 import getopt
-from os.path import *
 
 import fab
-from utils import *
-
+import help
+from utils import fatal
 
 @help.usage(__doc__)
 def usage():
@@ -63,10 +60,9 @@ def main():
         fh = file(args[0], "r")
 
     rmlist = parse_list(fh.read())
-    
     srcpath = args[1]
 
-    if not isdir(srcpath):
+    if not os.path.isdir(srcpath):
         fatal("srcpath does not exist: " + srcpath)
 
     opt_dstpath = None
