@@ -66,6 +66,7 @@ def main():
         elif opt == '--exclude':
             opt_exclude = val
 
+    cmd_cpp.append("-Ulinux")
     out, err = system_pipe(cmd_cpp, fh.read(), quiet=True)
     plan = calculate_plan(out)
 
