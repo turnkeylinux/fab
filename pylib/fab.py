@@ -89,7 +89,7 @@ class Packages:
         self.spec = spec
 
     @staticmethod
-    def _package_exists(package):
+    def _package_in_pool(package):
         err = getstatus("pool-exists " + package)
         if err:
             return False
@@ -139,16 +139,16 @@ class Packages:
 
             self.spec.add(name, package['Version'], quiet=False)
             if package.has_key('Depends'):
-                for dep in deb.parse_depends(package['Depends']):
-                    # eg. [('initramfs-tools', '0.40ubuntu11', '>='),(...),
+                for depend in deb.parse_depends(package['Depends']):
+                    #eg. ('initramfs-tools', '0.40ubuntu11', '>=')
                     #TODO: depends on version
-                    if len(dep) > 1:
-                        for d in dep:
-                            depname = deb.parse_name(d[0])
-                            if self._package_exists(depname):
+                    if "|" in depend[0]:
+                        for depname in depend[0].split("|"):
+                            depname = deb.parse_name(depname.strip())
+                            if self._package_in_pool(depname):
                                 break
                     else:
-                        depname = deb.parse_name(dep[0][0])
+                        depname = deb.parse_name(depend[0])
                     
                     self.get_package_spec(depname)
 
