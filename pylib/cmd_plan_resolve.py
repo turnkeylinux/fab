@@ -46,7 +46,7 @@ def main():
         usage()
     
     cmd_cpp, args, opts = cpp_opts.parse(sys.argv[1:],
-                                         ['exclude=', 'output=', 'cpp='])
+                                         ['exclude=', 'output='])
     
     if not len(args) == 2:
         usage()
