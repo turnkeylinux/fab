@@ -9,9 +9,9 @@ def parse_control(content):
         for line in content.split("\n")
             if not line.startswith(" ") ])
 
-def parse_depends(content):
+def parse_depends(content, delimeter=","):
     depends = []
-    for d in content.split(","):
+    for d in content.split(delimeter):
         m = re.match("(.*) \((.*) (.*)\)", d.strip())
         if m:
             depends.append((m.group(1), m.group(3), m.group(2)))

@@ -143,8 +143,8 @@ class Packages:
                     #eg. ('initramfs-tools', '0.40ubuntu11', '>=')
                     #TODO: depends on version
                     if "|" in depend[0]:
-                        for depname in depend[0].split("|"):
-                            depname = deb.parse_name(depname.strip())
+                        for d in deb.parse_depends(depend[0], "|"):
+                            depname = deb.parse_name(d[0])
                             if self._package_in_pool(depname):
                                 break
                     else:
