@@ -1,4 +1,5 @@
 
+import re
 import os
 from os.path import *
 from datetime import datetime
@@ -160,8 +161,8 @@ class Chroot:
         self.path = path
     
     def mountpoints(self):
-        mount('proc-chroot',   '%s/proc'    % self.path, '-tproc')
-        mount('devpts-chroot', '%s/dev/pts' % self.path, '-tdevpts')
+        mount('proc-chroot',   join(self.path, 'proc'),    '-tproc')
+        mount('devpts-chroot', join(self.path, 'dev/pts'), '-tdevpts')
 
     def umountpoints(self):
         umount(join(self.path, 'dev/pts'))
