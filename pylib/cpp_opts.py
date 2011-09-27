@@ -11,7 +11,7 @@ import getopt
 
 def parse(argv, longopts=[]):
     cmd_cpp = ['cpp']
-    long_optval = []
+    extra_opts = []
     
     try:
         opts, args = getopt.gnu_getopt(argv, "I:D:U:", longopts)
@@ -36,11 +36,11 @@ def parse(argv, longopts=[]):
             cmd_cpp.append("-D" + val)
         elif opt == '-U':
             cmd_cpp.append("-U" + val)
-        elif opt in longopts:
-            long_optval.append([opt, val])
+        else:
+            extra_opts.append([opt, val])
     
     if longopts:
-        return cmd_cpp, args, long_optval
+        return cmd_cpp, args, extra_opts
     
     return cmd_cpp, args
 
