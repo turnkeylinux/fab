@@ -2,8 +2,8 @@
 <?xml-stylesheet ekr_test?>
 <leo_file>
 <leo_header file_format="2" tnodes="0" max_tnode_index="0" clone_windows="0"/>
-<globals body_outline_ratio="0.289842381786">
-	<global_window_position top="0" left="0" height="709" width="1142"/>
+<globals body_outline_ratio="0.398423817863">
+	<global_window_position top="0" left="5" height="709" width="1142"/>
 	<global_log_window_position top="0" left="0" height="0" width="0"/>
 </globals>
 <preferences/>
@@ -66,7 +66,9 @@
 <v t="loni.20110920183538"><vh>notes</vh></v>
 </v>
 <v t="loni.20110923145602"><vh>kernel image install anomaly</vh></v>
+<v t="loni.20110928121323"><vh>optimize makefile with deck</vh></v>
 <v t="loni.20110918220744" a="TV"><vh>TODO</vh></v>
+<v t="loni.20110928132411"><vh>next release</vh></v>
 </v>
 </v>
 </vnodes>
@@ -663,25 +665,17 @@ at a later stage, we can develop a solution to figure out the the order, and use
 
 
 </t>
-<t tx="loni.20110918220744">fabricate a working product with Makefile
-
-reminder: if we override casper.conf, we must regenerate initrd
-        
-bootstrap
-    throw away bootstrap creation functionality
-
-plan-resolve
-    provides / virtual packages
+<t tx="loni.20110918220744">plan-resolve
     depends on version checking
+    provides / virtual packages
 
-update projects/bootplash (maybe rename to bootsplashes)
-    we only need to keep the source images
-    update readme (fab/cdroot holds default, but can be changed by cdroot.overlay)
+documentation
 
 
-IDEA:
-    when i write the spec-analysis code,
-    it might be enough to drop apt support for the spec-install and directly use dpkg
+
+
+
+
 
 </t>
 <t tx="loni.20110919154516">fab-apply-removelist &lt;removelist&gt; &lt;path&gt;
@@ -834,6 +828,50 @@ Q: Offending package: ?
     was the culprit, it was unpacked before linux-image*
 
 IDEA: install the linux-image* packages first before any others
+</t>
+<t tx="loni.20110928121323">* deck uses useraufs, useraufs errors out saying it can't be run by root
+
+Q: should we remove the dependency of root, and either fakechroot or suid fab?
+A: no, fakechroot is a deadend, and fab shouldn't be suid
+   useraufs can be configured to allow root
+   
+   /etc/useraufs.conf
+      allow_user root
+      allow_dir /turnkey/fab
+
+Problem: deck errors out saying that it can't be run by root
+GOTCHA: useraufs was installed to usr/bin, and the updated version is installed to /usr/local/bin - deck was using the older version, while manual testing was using the new version - damn waste of time...
+
+
+IDEA: maybe deck bootstrap/rocky directly to root.build ?
+
+
+Q: why are we decking bootstrap/rocky to bootstrap, then bootstrap to root.build?
+    we aren't making any changes to the bootstrap
+    
+    maybe do the deck directly
+    maybe create the bootstrap.spec from the bootstrap itself?
+        why? we create it before creating the bootstrap...
+        
+        </t>
+<t tx="loni.20110928132411">store specs and related info for re-fab'ing
+
+bootstrap
+    * minimize plans
+    * leverage fab-plan-resolving of base to add packages to required
+    * remove debootstrap dependency
+
+apt -&gt; dpkg
+    * use dpkg instead of apt when installing packages
+    * ideas:
+            * debootstrap scripts
+            * spec analysis code
+
+spec-analysis
+    * same idea as oldfab/package-analysis
+    
+
+
 </t>
 <t tx="zaril.20110904173229">@nocolor
 </t>
