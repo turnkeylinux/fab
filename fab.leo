@@ -2,7 +2,7 @@
 <?xml-stylesheet ekr_test?>
 <leo_file>
 <leo_header file_format="2" tnodes="0" max_tnode_index="0" clone_windows="0"/>
-<globals body_outline_ratio="0.398423817863">
+<globals body_outline_ratio="0.341506129597">
 	<global_window_position top="0" left="5" height="709" width="1142"/>
 	<global_log_window_position top="0" left="0" height="0" width="0"/>
 </globals>
@@ -10,7 +10,12 @@
 <find_panel_settings/>
 <vnodes>
 <v t="zaril.20110904173229" a="E"><vh>Project</vh>
-<v t="zaril.20110904173337" a="E"><vh>design</vh>
+<v t="loni.20111001190214" a="E"><vh>documentation</vh>
+<v t="loni.20111001190214.1"><vh>initial release</vh></v>
+</v>
+<v t="loni.20111001190214.2" a="E"><vh>development log</vh>
+<v t="loni.20111001190214.3"><vh>v0.5 - initial release</vh>
+<v t="zaril.20110904173337"><vh>design</vh>
 <v t="zaril.20110904173337.1"><vh>brainstorming</vh></v>
 <v t="zaril.20110904173337.3"><vh>terminology</vh></v>
 <v t="zaril.20110904173519"><vh>high-level sketch</vh></v>
@@ -24,27 +29,27 @@
 <v t="loni.20110910191100.1"><vh>fab-apply-overlay</vh></v>
 <v t="loni.20110911164714.5"><vh>fab-plan-lint</vh></v>
 </v>
-<v t="loni.20110910182617" a="E"><vh>exemplary make flow</vh>
+<v t="loni.20110910182617"><vh>exemplary make flow</vh>
 <v t="loni.20110910182756"><vh>bootstrap</vh></v>
 <v t="loni.20110910182756.1"><vh>root.spec</vh>
 <v t="loni.20110911164714.1" a="E"><vh>fab-plan-resolve</vh>
 <v t="loni.20110911164714"><vh>fab-cpp</vh></v>
 </v>
 </v>
-<v t="loni.20110910182756.2" a="E"><vh>root.build</vh>
+<v t="loni.20110910182756.2"><vh>root.build</vh>
 <v t="loni.20110911164714.2"><vh>fab-spec-install</vh></v>
 </v>
-<v t="loni.20110910182756.3" a="E"><vh>root.patched</vh>
+<v t="loni.20110910182756.3"><vh>root.patched</vh>
 <v t="loni.20110911164714.3"><vh>fab-apply-removelist</vh></v>
 <v t="loni.20110910191100.1"><vh>fab-apply-overlay</vh></v>
 </v>
-<v t="loni.20110910182756.4" a="E"><vh>cdroot</vh>
+<v t="loni.20110910182756.4"><vh>cdroot</vh>
 <v t="loni.20110910191100.1"><vh>fab-apply-overlay</vh></v>
 </v>
 <v t="loni.20110910182756.5"><vh>product.iso</vh></v>
 </v>
 </v>
-<v t="zaril.20110904181421" a="E"><vh>implementation</vh>
+<v t="zaril.20110904181421"><vh>implementation</vh>
 <v t="zaril.20110904173337.5"><vh>design exercise: port backstage to fab redesign</vh>
 <v t="zaril.20110904173337.6"><vh>explore make</vh>
 <v t="zaril.20110904173337.7"><vh>test: directory targets</vh></v>
@@ -67,8 +72,9 @@
 </v>
 <v t="loni.20110923145602"><vh>kernel image install anomaly</vh></v>
 <v t="loni.20110928121323"><vh>optimize makefile with deck</vh></v>
-<v t="loni.20110918220744" a="TV"><vh>TODO</vh></v>
-<v t="loni.20110928132411"><vh>next release</vh></v>
+</v>
+</v>
+<v t="loni.20110928132411" a="V"><vh>TODO</vh></v>
 </v>
 </v>
 </vnodes>
@@ -665,19 +671,6 @@ at a later stage, we can develop a solution to figure out the the order, and use
 
 
 </t>
-<t tx="loni.20110918220744">plan-resolve
-    depends on version checking
-    provides / virtual packages
-
-documentation
-
-
-
-
-
-
-
-</t>
 <t tx="loni.20110919154516">fab-apply-removelist &lt;removelist&gt; &lt;path&gt;
 
 Removes files and folders as specified by removelist from the path
@@ -854,7 +847,17 @@ Q: why are we decking bootstrap/rocky to bootstrap, then bootstrap to root.build
         why? we create it before creating the bootstrap...
         
         </t>
-<t tx="loni.20110928132411">store specs and related info for re-fab'ing
+<t tx="loni.20110928132411">plan-resolve
+    depends on version checking
+    provides / virtual packages
+
+product recipe := a light bundle of data from which a product can be recreated from source
+    a product recipe is created during the creation of a new product
+        by recording the outputs of the build
+            bootstrap spec
+            root spec
+            root patch
+            product format configuration
 
 bootstrap
     * minimize plans
@@ -873,6 +876,80 @@ spec-analysis
 
 
 </t>
+<t tx="loni.20111001190214"></t>
+<t tx="loni.20111001190214.1">FAB: product fabrication framework
+
+This version of Fab is actually the second generation framework, the first being referred to as oldfab.
+
+The word "Fab" originates from the microelectronics industry. A fab, or fabrication plant is a factory where devices (eg. integrated circuits) are manufactured for one of more customers. A fab is semantically connected to the most cutting edge technological factories in existence (Silicon chip foundries) - hence the relationship to TurnKey ;)
+
+A fab is a very tightly controlled environment (clean room), but instead of keeping out physical impurities (e.g., dust and dirt), the turnkey Fab is used in fabricating systems while tightly controlling "logical" impurities (e.g., security threats, malware, etc.)
+
+These release notes only contain a high-level overview, please refer to the design notes for detailed information, and help from the commands themeselves.
+
+OVERVIEW
+--------
+The fab provides 'toolchain' utilities, which allows us to build products and collaborate on them using the same workflow and tools used on software projects.
+
+Building is performed per-product, each in its own directory. We leverage 'make' to implement the 'build pipeline', git and covin for revision control and collaboration.
+
+The output of a product is the product itself, and a recipe (very small footprint compared to the product) which can be use to automatically reproduce the product bit for bit.
+                   
+
+TERMINOLOGY
+-----------
+
+product: the final product used by the end-user
+    the product is generated by formatting the "patched root"
+
+root.patched: the chroot'able root filesystem of a product
+    patched manually or automatically
+    can be re-created automatically by applying the root patch as an overlay to `the root'
+
+root.build: the chroot'able root filesystem of a product
+    built by applying the "root.spec" on the bootstrap
+
+bootstrap: the minimal chroot'able filesystem used to bootstrap the root
+    built from a "bootstrap.spec"
+
+spec: a set of (package name, package version tuples)
+    a spec is created from a plan against a specific pool
+    the same plan will generate different specs against different pools
+
+plan: set of package names
+    root plan
+        the recursable plan from which the root.spec is created
+        recursable means we lookup the dependencies of listed packages recursively
+    
+    bootstrap plan
+        the non-recursable plan from which we create the bootstrap spec
+        non-recursable means no recursion of the plan (this is planned to change)
+
+CLI
+---
+
+Fab has 4 basic commands,
+    plan-resolve        Resolve plan into spec using latest packages from pool
+    spec-install        Install packages into chroot according to spec
+    apply-removelist    Remove files and folders according to removelist
+    apply-overlay       Apply overlay ontop of given path
+
+4 internal/advanced commands,
+    cpp                 Pre-process a plan
+    chroot              Executes command in chroot
+    chroot-umount       Umount chroot virtual filesystems if mounted
+    spec-get            Get packages according to spec
+        
+and can be configured via 3 environment variables,
+    FAB_PLAN_INCLUDE_PATH   Global include path for plan preprocessing
+    FAB_POOL_PATH           Lookup path for a relative pool path
+    FAB_TMPDIR              Temporary storage (defaults to /var/tmp)
+
+
+
+</t>
+<t tx="loni.20111001190214.2"></t>
+<t tx="loni.20111001190214.3"></t>
 <t tx="zaril.20110904173229">@nocolor
 </t>
 <t tx="zaril.20110904173337"></t>
