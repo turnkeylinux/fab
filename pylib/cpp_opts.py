@@ -1,7 +1,10 @@
-"""Optional arbitrary CPP definitions to effect plan preprocessing:
-  -D <name>      Predefine name as a macro, with definition 1
-  -U <name>      Cancel any previous definition of name
-  -I <dir>       Include dir to add to list of dirs searched for header files
+"""Optional arbitrary CPP options to effect plan preprocessing:
+  -D <name[=def]>  Predefine name as a macro, with supplied definition
+                   If definition is not supplied, default is 1
+  -U <name>        Cancel any previous definition of name
+  -I <dir>         Include dir to add to list of dirs searched for header files
+
+  Refer to cpp documentation (eg. man cpp) for options full description
 
 """
 
