@@ -170,7 +170,9 @@ class Chroot:
 
     def system_chroot(self, command):
         env = "/usr/bin/env -i HOME=/root TERM=${TERM} LC_ALL=C " \
-              "PATH=/usr/sbin:/usr/bin:/sbin:/bin DEBIAN_PRIORITY=critical"
+              "PATH=/usr/sbin:/usr/bin:/sbin:/bin " \
+              "DEBIAN_FRONTEND=noninteractive " \
+              "DEBIAN_PRIORITY=critical"
         
         system("chroot %s %s %s" % (self.path, env, command))
 
