@@ -7,7 +7,7 @@ Arguments:
 Options:
   command           Command to execute in chroot
                     If no command is specified, an interactive shell is assumed
-  --nomount         Do not mount virtual filesystems in chroot
+  --mount           Mount virtual filesystems in chroot
 """
 
 
@@ -26,14 +26,14 @@ def usage():
 def main():
     try:
         opts, args = getopt.gnu_getopt(sys.argv[1:], "", 
-                                       ['nomount'])
+                                       ['mount'])
     except getopt.GetoptError, e:
         usage(e)
 
-    opt_mountpoints = True
+    opt_mountpoints = False
     for opt, val in opts:
-        if opt == '--nomount':
-            opt_mountpoints = False
+        if opt == '--mount':
+            opt_mountpoints = True
 
     if len(args) == 1:
         args.append("/bin/bash")

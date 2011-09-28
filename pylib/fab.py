@@ -264,7 +264,7 @@ def spec_install(pool, specinfo, chroot_path):
     c.apt_clean()
     c.umountpoints()
 
-def chroot_execute(chroot_path, command, mountpoints=True):
+def chroot_execute(chroot_path, command, mountpoints=False):
     c = Chroot(chroot_path)
     if mountpoints:
         c.mountpoints()
