@@ -7,6 +7,5 @@ Standards-Version: 3.6.1
 
 Package: fab
 Architecture: any
-Depends: python (>= 2.4)
-Description: <insert up to 60 chars short description>
- <insert long description, indented with spaces>
+Depends: python (>= 2.4), cpp
+Description: product fabrication framework
