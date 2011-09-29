@@ -2,7 +2,7 @@
 <?xml-stylesheet ekr_test?>
 <leo_file>
 <leo_header file_format="2" tnodes="0" max_tnode_index="0" clone_windows="0"/>
-<globals body_outline_ratio="0.341506129597">
+<globals body_outline_ratio="0.343257443082">
 	<global_window_position top="0" left="5" height="709" width="1142"/>
 	<global_log_window_position top="0" left="0" height="0" width="0"/>
 </globals>
@@ -14,12 +14,12 @@
 <v t="loni.20111001190214.1"><vh>initial release</vh></v>
 </v>
 <v t="loni.20111001190214.2" a="E"><vh>development log</vh>
-<v t="loni.20111001190214.3"><vh>v0.5 - initial release</vh>
-<v t="zaril.20110904173337"><vh>design</vh>
+<v t="loni.20111001190214.3" a="E"><vh>v0.5 - initial release</vh>
+<v t="zaril.20110904173337" a="E"><vh>design</vh>
 <v t="zaril.20110904173337.1"><vh>brainstorming</vh></v>
 <v t="zaril.20110904173337.3"><vh>terminology</vh></v>
 <v t="zaril.20110904173519"><vh>high-level sketch</vh></v>
-<v t="zaril.20110904173337.4"><vh>cli syntax + psuedo-logic</vh>
+<v t="zaril.20110904173337.4" a="E"><vh>cli syntax + psuedo-logic</vh>
 <v t="loni.20110911164714"><vh>fab-cpp</vh></v>
 <v t="loni.20110911164714.1"><vh>fab-plan-resolve</vh>
 <v t="loni.20110911164714"><vh>fab-cpp</vh></v>
@@ -74,7 +74,10 @@
 <v t="loni.20110928121323"><vh>optimize makefile with deck</vh></v>
 </v>
 </v>
-<v t="loni.20110928132411" a="V"><vh>TODO</vh></v>
+<v t="loni.20111009174710" a="E"><vh>unreleased</vh>
+<v t="loni.20111009174710.1" a="TV"><vh>plan-resolve include bootstrap</vh></v>
+</v>
+<v t="loni.20110928132411"><vh>TODO</vh></v>
 </v>
 </v>
 </vnodes>
@@ -950,6 +953,31 @@ and can be configured via 3 environment variables,
 </t>
 <t tx="loni.20111001190214.2"></t>
 <t tx="loni.20111001190214.3"></t>
+<t tx="loni.20111009174710"></t>
+<t tx="loni.20111009174710.1">rational:
+    the product plan might include newer package versions of those already installed in the bootstrap
+    we might be getting rid of the "bootstrap" down the line
+    the root.spec should include every package in the product.
+
+
+Syntax: plan-resolve [-options] &lt;plan&gt; &lt;pool&gt;
+Resolve plan into spec using latest packages from pool
+
+Arguments:
+  &lt;plan&gt;            Path to read plan from (- for stdin)
+  &lt;pool&gt;            Relative or absolute pool path
+                    If relative, pool path is looked up in FAB_POOL_PATH
+
+Options:
+  --exclude=        Path to spec of packages not to be resolved
+  --output=         Path to spec-output (default is stdout)
+  --chroot=         Path to chroot installed with packages to append to &lt;plan&gt;
+
+
+Q: how do i get a list of only package names installed in a chroot?
+A: dpkg-query --show -f="${Package}\n"
+
+</t>
 <t tx="zaril.20110904173229">@nocolor
 </t>
 <t tx="zaril.20110904173337"></t>

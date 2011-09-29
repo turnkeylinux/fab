@@ -168,13 +168,17 @@ class Chroot:
         umount(join(self.path, 'dev/pts'))
         umount(join(self.path, 'proc'))
 
-    def system_chroot(self, command):
+    def system_chroot(self, command, get_stdout=False):
         env = "/usr/bin/env -i HOME=/root TERM=${TERM} LC_ALL=C " \
               "PATH=/usr/sbin:/usr/bin:/sbin:/bin " \
               "DEBIAN_FRONTEND=noninteractive " \
               "DEBIAN_PRIORITY=critical"
         
-        system("chroot %s %s %s" % (self.path, env, command))
+        cmd = "chroot %s %s %s" % (self.path, env, command)
+        if get_stdout:
+            return getoutput(cmd)
+        
+        system(cmd)
 
     def _insert_fakestartstop(self):
         daemon = join(self.path, 'sbin/start-stop-daemon')
@@ -266,15 +270,17 @@ def spec_install(pool, specinfo, chroot_path):
     c.apt_clean()
     c.umountpoints()
 
-def chroot_execute(chroot_path, command, mountpoints=False):
+def chroot_execute(chroot_path, command, mountpoints=False, get_stdout=False):
     c = Chroot(chroot_path)
     if mountpoints:
         c.mountpoints()
     
-    c.system_chroot(command)
+    out = c.system_chroot(command, get_stdout)
     
     if mountpoints:
         c.umountpoints()
+    
+    return out
 
 def apply_removelist(rmlist, srcpath, dstpath=None):
     def _move(entry, srcpath, dstpath):

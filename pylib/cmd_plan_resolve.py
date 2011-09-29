@@ -7,11 +7,13 @@ Arguments:
                     If relative, pool path is looked up in FAB_POOL_PATH
 
 Options:
-  --exclude=        Path to spec of packages not to be resolved (ie. bootstrap)
+  --exclude=        Path to spec of packages not to be resolved
   --output=         Path to spec-output (default is stdout)
-
+  --chroot=         Path to chroot installed with packages to append to <plan>
+  
 """
 
+import os
 import re
 import sys
 
@@ -46,7 +48,7 @@ def main():
         usage()
     
     cmd_cpp, args, opts = cpp_opts.parse(sys.argv[1:],
-                                         ['exclude=', 'output='])
+                                         ['exclude=', 'output=', 'chroot='])
     
     if not len(args) == 2:
         usage()
@@ -60,15 +62,26 @@ def main():
 
     opt_out = None
     opt_exclude = None
+    opt_chroot = None
     for opt, val in opts:
         if opt == '--output':
             opt_out = val
         elif opt == '--exclude':
             opt_exclude = val
+        elif opt == '--chroot':
+            opt_chroot = val
 
     cmd_cpp.append("-Ulinux")
     out, err = system_pipe(cmd_cpp, fh.read(), quiet=True)
     plan = calculate_plan(out)
+
+    if opt_chroot:
+        if not os.path.isdir(opt_chroot):
+            fatal("chroot does not exist: " + opt_chroot)
+        
+        out = fab.chroot_execute(opt_chroot, "dpkg-query --show -f='${Package}\n'", get_stdout=True)
+        for entry in out.split("\n"):
+            plan.add(entry)
 
     fab.plan_resolve(pool, plan, opt_exclude, opt_out)
 
