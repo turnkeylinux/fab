@@ -1,3 +1,4 @@
+import os
 from os.path import *
 import commands
 
@@ -8,10 +9,13 @@ def get_version():
     if lexists(version_file):
         return file(version_file).readline().strip()
 
-    version_script = join(install_path, "scripts", "version.sh")
-    status, output = commands.getstatusoutput(version_script)
+    orig_cwd = os.getcwd()
+
+    os.chdir(install_path)
+    status, output = commands.getstatusoutput("autoversion HEAD")
+    os.chdir(orig_cwd)
+    
     if status != 0:
         return "?"
 
-    return output.strip().split('\n')[0]
-
+    return output
