@@ -14,12 +14,12 @@
 <v t="loni.20111001190214.1"><vh>initial release</vh></v>
 </v>
 <v t="loni.20111001190214.2" a="E"><vh>development log</vh>
-<v t="loni.20111001190214.3" a="E"><vh>v0.5 - initial release</vh>
-<v t="zaril.20110904173337" a="E"><vh>design</vh>
+<v t="loni.20111001190214.3"><vh>v0.5 - initial release</vh>
+<v t="zaril.20110904173337"><vh>design</vh>
 <v t="zaril.20110904173337.1"><vh>brainstorming</vh></v>
 <v t="zaril.20110904173337.3"><vh>terminology</vh></v>
 <v t="zaril.20110904173519"><vh>high-level sketch</vh></v>
-<v t="zaril.20110904173337.4" a="E"><vh>cli syntax + psuedo-logic</vh>
+<v t="zaril.20110904173337.4"><vh>cli syntax + psuedo-logic</vh>
 <v t="loni.20110911164714"><vh>fab-cpp</vh></v>
 <v t="loni.20110911164714.1"><vh>fab-plan-resolve</vh>
 <v t="loni.20110911164714"><vh>fab-cpp</vh></v>
@@ -75,7 +75,8 @@
 </v>
 </v>
 <v t="loni.20111009174710" a="E"><vh>unreleased</vh>
-<v t="loni.20111009174710.1" a="TV"><vh>plan-resolve include bootstrap</vh></v>
+<v t="loni.20111009174710.1"><vh>plan-resolve include bootstrap</vh></v>
+<v t="loni.20111010161023" a="TV"><vh>plan-resolve - interactive calculation</vh></v>
 </v>
 <v t="loni.20110928132411"><vh>TODO</vh></v>
 </v>
@@ -977,6 +978,24 @@ Options:
 Q: how do i get a list of only package names installed in a chroot?
 A: dpkg-query --show -f="${Package}\n"
 
+</t>
+<t tx="loni.20111010161023">current algorithm: global calculation
+    create set of 'yes' and 'no', then subtracts
+    
+    pro: allows for declaring "retractions" anywhere in the plan, and them sticking
+    con: does not allow for inheritance behaviour
+
+
+new algorithm: interative calculation
+    work on one set, add and remove to/from it
+    
+    pro: allows for redeclaring a package that has been retracted
+         useful for modifying included plan segments
+    con: retractions will only take effect depending on their ordering
+    
+IDEA:
+    issue warnings if attempting to "retract" a package that is not declared
+    
 </t>
 <t tx="zaril.20110904173229">@nocolor
 </t>

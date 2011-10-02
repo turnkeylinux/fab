@@ -20,28 +20,34 @@ import sys
 import help
 import fab
 import cpp_opts
-from utils import system_pipe
+from utils import system_pipe, warning
 
 
 @help.usage(__doc__ + cpp_opts.__doc__)
 def usage():
     print >> sys.stderr, "Syntax: %s [-options] <plan> <pool>" % sys.argv[0]
 
-def calculate_plan(raw):
-    yes = set()
-    no = set()
-    for line in raw.split("\n"):
-        line = re.sub(r'#.*', '', line)
-        line = line.strip()
-        if not line:
+def calculate_plan(declarations):
+    packages = set()
+    for declaration in declarations.splitlines():
+        declaration = re.sub(r'#.*', '', declaration)
+        declaration = declaration.strip()
+        if not declaration:
             continue
-        m = re.match("!(.*)", line)
-        if m:
-            no.add(m.group(1))
-        else:
-            yes.add(line)
+        
+        if declaration.startswith("!"):
+            package = declaration[1:]
 
-    return yes - no
+            if package in packages:
+                packages.remove(package)
+            else:
+                warning("retraction failed. package was not declared: " + package)
+
+        else:
+            package = declaration
+            packages.add(package)
+    
+    return packages
 
 def main():
     if not len(sys.argv) > 1:
