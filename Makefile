@@ -79,7 +79,8 @@ _install: execproxy
 	-install -m 755 libexec/* $(PATH_INSTALL_LIBEXEC)
 
 	install -m 644 version.pyo wrapper.pyo $(PATH_INSTALL)
-	autoversion HEAD > $(PATH_INSTALL)/version.txt
+	([ -f debian/changelog ] && (dpkg-parsechangelog | awk '/^Version/ {print $$2 }') || \
+		autoversion HEAD) > $(PATH_INSTALL)/version.txt
 
 #	install -m 4755 _$(progname) $(PATH_BIN)/$(progname) # install SUID 
 	install -m 755 _$(progname) $(PATH_BIN)/$(progname)
