@@ -19,6 +19,7 @@ def get_tmpdir():
     return realpath(tmpdir)
             
 class PackagesSpec:
+    """class for creating and controlling a packages spec"""
     def __init__(self, output=None):
         self.packages = set()
         self.output = output
@@ -30,15 +31,24 @@ class PackagesSpec:
             self.packages.add(spec)
         
     def add(self, name, version, quiet=True):
+        """add package name=version to spec"""
         spec = name + "=" + version
         self.packages.add(spec)
         if not quiet:
             self.print_spec(spec)
     
     def get(self):
+        """return packages set"""
         return self.packages
     
     def read(self, input):
+        """add packages to spec from input
+        
+        input: (packages seperated by newlines)
+            file
+            string
+        
+        """
         if isfile(input):
             for line in open(input, "r").readlines():
                 self._add(line)
@@ -47,6 +57,7 @@ class PackagesSpec:
                 self._add(line)
     
     def exists(self, name, version=None):
+        """return True/False if package exists in spec"""
         if version:
             if name + "=" + version in self.packages:
                 return True
@@ -57,12 +68,14 @@ class PackagesSpec:
         return False
 
     def print_spec(self, spec):
+        """print package spec"""
         if self.output:
             open(self.output, "a").write(spec + "\n")
         
         print spec
     
     def print_specs(self):
+        """print all package specs"""
         for p in self.packages:
             self.print_spec(p)
     
