@@ -2,8 +2,8 @@
 <?xml-stylesheet ekr_test?>
 <leo_file>
 <leo_header file_format="2" tnodes="0" max_tnode_index="0" clone_windows="0"/>
-<globals body_outline_ratio="0.343257443082">
-	<global_window_position top="0" left="5" height="709" width="1142"/>
+<globals body_outline_ratio="0.386164623468">
+	<global_window_position top="0" left="0" height="709" width="1142"/>
 	<global_log_window_position top="0" left="0" height="0" width="0"/>
 </globals>
 <preferences/>
@@ -12,6 +12,11 @@
 <v t="zaril.20110904173229" a="E"><vh>Project</vh>
 <v t="loni.20111001190214" a="E"><vh>documentation</vh>
 <v t="loni.20111001190214.1"><vh>initial release</vh></v>
+<v t="loni.20111101195055" a="ETV"><vh>notes on fabrication setup</vh>
+<v t="loni.20111101202620"><vh>apps</vh></v>
+<v t="loni.20111101202620.1"><vh>configuration files</vh></v>
+<v t="loni.20111101204604"><vh>apt-proxy</vh></v>
+</v>
 </v>
 <v t="loni.20111001190214.2" a="E"><vh>development log</vh>
 <v t="loni.20111001190214.3"><vh>v0.5 - initial release</vh>
@@ -76,7 +81,8 @@
 </v>
 <v t="loni.20111009174710" a="E"><vh>unreleased</vh>
 <v t="loni.20111009174710.1"><vh>plan-resolve include bootstrap</vh></v>
-<v t="loni.20111010161023" a="TV"><vh>plan-resolve - interactive calculation</vh></v>
+<v t="loni.20111010161023"><vh>plan-resolve - interactive calculation</vh></v>
+<v t="loni.20111010171200"><vh>caching</vh></v>
 </v>
 <v t="loni.20110928132411"><vh>TODO</vh></v>
 </v>
@@ -997,6 +1003,114 @@ IDEA:
     issue warnings if attempting to "retract" a package that is not declared
     
 </t>
+<t tx="loni.20111010171200">Q: what is taking the most amount of time?
+    getting packages from pool?
+        from my tests, it takes approx. 0.6sec per package
+        
+    peeking into packages to get their version and dependencies
+        minimalistic. with caching we could maybe shave off a fraction of a second.
+        the bottlenect is pool-get at the moment.
+
+
+    </t>
+<t tx="loni.20111101195055">There are several apps involved in the fabrication process, each has its own job, and does it well. Each app is well documented, and will not be repeated here.
+
+These notes are an attempt to explain how they all come together to form the fabrication infrastructure, and provide a high-level overview on how they use each other.
+
+Everything is configurable.
+The below notes are exemplary, and describe rocky/backstage (release/product).
+
+#create fabrication folders
+mkdir -p /turnkey/fab/products
+mkdir -p /turnkey/fab/buildroots
+mkdir -p /turnkey/fab/deckdebuilds
+mkdir -p /turnkey/fab/pools/rocky
+
+#register projects from stash
+cd stashes/alon
+covin-register-dest /turnkey/fab/bootstraps
+covin-register-dest /turnkey/fab/cdroots
+covin-register-dest /turnkey/fab/common-plans
+covin-register-dest /turnkey/fab/pools/rocky/rocky.chanko
+covin-register-dest /turnkey/fab/products/backstage
+
+#setup pool (and subpool)
+    initialize /turnkey/fab/pools/rocky/rocky.chanko as a pool and register arena
+    initialize /turnkey/fab/pools/rocky as pool, and register stocks
+        register rocky.chanko as a stock (subpool)
+
+#update configuration files
+    useraufs.conf
+    deckdebuild.conf
+
+#create the bootstrap
+    cd /turnkey/fab/bootstrap
+    make
+    
+#setup buildroot
+    cp -a /turnkey/fab/bootstraps/rocky /turnkey/fab/buildroots/
+    if using apt-proxy (recommended)
+        configure on host
+        point buildroots/rocky's sources.list to use proxy (127.0.0.1:9999)
+    chroot buildroots/rocky
+        apt-get update
+        apt-get install fakeroot build-essetial debhelper cdbs dpatch autotools-dev
+
+#fab a product
+    cd /turnkey/fab/products/backstage
+    make
+
+
+</t>
+<t tx="loni.20111101202620">private depends:
+    fab
+    pool
+    deck
+    deckdebuild
+    useraufs
+    verseek
+
+private recommends:
+    chanko
+    sumo
+
+world depends:
+    pbuilder                        # deckdebuild
+    debootstrap (+ rocky script)    # used to create bootstrap
+
+world recommends:
+    apt-proxy
+
+</t>
+<t tx="loni.20111101202620.1">/etc/useraufs.conf
+    allow_user loni         # replace with your username
+    allow_user root
+    allow_dir /turnkey/fab
+    
+/etc/deckdebuild.conf
+    vardir /turnkey/fab/deckdebuilds
+</t>
+<t tx="loni.20111101204604">/etc/apt-proxy/apt-proxy-v2.conf
+	address = 127.0.0.1
+	min_refresh_delay = 86400s # how often we refresh Packages/Sources (instead of 1s)
+	max_versions = 10 # how many different versions of packages to cache
+
+rocky $ cat /etc/apt/sources.list
+
+deb http://127.0.0.1:9999/ubuntu feisty main universe
+deb http://127.0.0.1:9999/ubuntu feisty-backports main universe
+
+
+
+full feisty stuff
+-----------------
+deb http://127.0.0.1:9999/ubuntu feisty main restricted universe multiverse
+deb http://127.0.0.1:9999/ubuntu feisty-updates main restricted
+deb http://127.0.0.1:9999/ubuntu feisty-security main restricted
+deb http://127.0.0.1:9999/ubuntu feisty-backports main restricted
+
+deb-src http://127.0.0.1:9999/ubuntu feisty main restricted universe multiverse
+deb-src http://127.0.0.1:9999/ubuntu feisty-updates main restricted</t>
 <t tx="zaril.20110904173229">@nocolor
 </t>
 <t tx="zaril.20110904173337"></t>
