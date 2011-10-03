@@ -8,9 +8,11 @@ import deb
 from utils import *
 
 def get_datetime():
+    """return unique string created by current data and time"""
     return datetime.now().strftime("%Y%m%d.%H%M%S")
 
 def get_tmpdir():
+    """return unique temporary directory path"""
     tmpdir = os.getenv('FAB_TMPDIR')
     if not tmpdir:
         tmpdir = "/var/tmp"
@@ -81,6 +83,7 @@ class PackagesSpec:
     
 
 class Packages:
+    """class for getting packages from pool according to a spec"""
     def __init__(self, pool, spec, outdir=None):
         if outdir:
             self.outdir = outdir
@@ -104,6 +107,7 @@ class Packages:
 
     @staticmethod
     def _package_in_pool(package):
+        """return True/False if package exists in the pool"""
         err = getstatus("pool-exists " + package)
         if err:
             return False
@@ -119,11 +123,13 @@ class Packages:
         system("pool-get --strict %s %s" % (outdir, package))
         
     def get_all_packages(self):
+        """get all packages in spec"""
         for package in self.spec.get():
             print "getting: " + package
             self._get(package, self.outdir)
     
     def get_package(self, package):
+        """get package and return filepath"""
         self._get(package, self.outdir)
         if "=" in package:
             name, version = package.split("=", 1)
@@ -144,6 +150,7 @@ class Packages:
         return None
 
     def get_package_spec(self, name):
+        """get package `name' and its dependencies recursively"""
         name = deb.parse_name(name)
         if not self.spec.exists(name):
             package_path = self.get_package(name)
