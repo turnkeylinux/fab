@@ -154,6 +154,7 @@ class Packages:
                     self.get_package_spec(depname)
 
 class Chroot:
+    """class for interacting with a fab chroot"""
     def __init__(self, path):
         if os.getuid() != 0:
             fatal("root privileges required for chroot")
@@ -161,14 +162,17 @@ class Chroot:
         self.path = path
     
     def mountpoints(self):
+        """mount proc and dev/pts into chroot"""
         mount('proc-chroot',   join(self.path, 'proc'),    '-tproc')
         mount('devpts-chroot', join(self.path, 'dev/pts'), '-tdevpts')
 
     def umountpoints(self):
+        """umount proc and dev/pts from chroot"""
         umount(join(self.path, 'dev/pts'))
         umount(join(self.path, 'proc'))
 
     def system_chroot(self, command, get_stdout=False):
+        """execute system command in chroot"""
         env = "/usr/bin/env -i HOME=/root TERM=${TERM} LC_ALL=C " \
               "PATH=/usr/sbin:/usr/bin:/sbin:/bin " \
               "DEBIAN_FRONTEND=noninteractive " \
@@ -181,6 +185,7 @@ class Chroot:
         system(cmd)
 
     def _insert_fakestartstop(self):
+        """insert fake start-stop-daemon into chroot"""
         daemon = join(self.path, 'sbin/start-stop-daemon')
         if isfile('%s.REAL' % daemon): #already created
             return
@@ -195,20 +200,24 @@ class Chroot:
         os.chmod(daemon, 0755)
 
     def _remove_fakestartstop(self):
+        """remove fake start-stop daemon from chroot"""
         daemon = join(self.path, 'sbin/start-stop-daemon')
         system("mv %s.REAL %s" % (daemon, daemon))
 
     def _apt_indexpath(self):
+        """return package index path"""
         return join(self.path,
                     "var/lib/apt/lists",
                     "_dists_local_debs_binary-i386_Packages")
 
     def _apt_sourcelist(self):
+        """configure apt for local index generation and package installation"""
         source = "deb file:/// local debs"
         path = join(self.path, "etc/apt/sources.list")
         file(path, "w").write(source)
     
     def _apt_refresh(self, pkgdir_path):
+        """generate index cache of packages in pkgdir_path"""
         self._apt_sourcelist()       
         
         print "generating package index..."
@@ -217,6 +226,7 @@ class Chroot:
         self.system_chroot("apt-cache gencaches")
         
     def apt_install(self, pkgdir_path):
+        """install pkgdir_path/*.deb packages into chroot"""
         self._apt_refresh(pkgdir_path)
         
         pkgnames = []
@@ -239,6 +249,7 @@ class Chroot:
         self._remove_fakestartstop()
     
     def apt_clean(self):
+        """clean apt cache in chroot"""
         self.system_chroot("apt-get clean")
         system("rm -f " + self._apt_indexpath())
         
