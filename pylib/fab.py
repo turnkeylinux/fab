@@ -339,7 +339,10 @@ def apply_removelist(rmlist, srcpath, dstpath=None):
     for entry in rmlist['no']:
         _move(entry, dstpath, srcpath)
 
-def apply_overlay(overlay, dstpath):
-    system("cp -a %s/* %s/" % (overlay, dstpath))
+def apply_overlay(overlay, dstpath, preserve=False):
+    opts = "-dR"
+    if preserve:
+        opts += "p"
+    system("cp %s %s/* %s/" % (opts, overlay, dstpath))
 
 
