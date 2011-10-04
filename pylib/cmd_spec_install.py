@@ -25,7 +25,7 @@ def usage():
 
 def main():
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "")
+        opts, args = getopt.getopt(sys.argv[1:], "")
     except getopt.GetoptError, e:
         usage(e)
 

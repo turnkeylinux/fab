@@ -26,8 +26,8 @@ def usage():
 
 def main():
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "", 
-                                       ['mount'])
+        opts, args = getopt.getopt(sys.argv[1:], "", 
+                                   ['mount'])
     except getopt.GetoptError, e:
         usage(e)
 

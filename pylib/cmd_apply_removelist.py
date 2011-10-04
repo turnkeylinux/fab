@@ -43,8 +43,8 @@ def parse_list(raw):
 
 def main():
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "", 
-                                       ['dstpath='])
+        opts, args = getopt.getopt(sys.argv[1:], "", 
+                                   ['dstpath='])
     except getopt.GetoptError, e:
         usage(e)
 
