@@ -22,7 +22,7 @@ import sys
 import help
 import fab
 import cpp_opts
-from utils import system_pipe, warning
+from utils import system_pipe, warning, fatal
 
 
 @help.usage(__doc__ + cpp_opts.__doc__)
