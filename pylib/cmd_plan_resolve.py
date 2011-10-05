@@ -6,10 +6,13 @@ Arguments:
   <pool>            Relative or absolute pool path
                     If relative, pool path is looked up in FAB_POOL_PATH
 
+Optional Arguments:
+  bootstrap         Extract list of installed packages from the bootstrap and
+                    append to the plan
+
 Options:
   --output=         Path to spec-output (default is stdout)
-  --chroot=         Path to chroot installed with packages to append to <plan>
-  
+
 """
 
 import os
@@ -24,7 +27,7 @@ from utils import system_pipe, warning
 
 @help.usage(__doc__ + cpp_opts.__doc__)
 def usage():
-    print >> sys.stderr, "Syntax: %s [-options] <plan> <pool>" % sys.argv[0]
+    print >> sys.stderr, "Syntax: %s [-options] <plan> <pool> [ /path/to/bootstrap ]" % sys.argv[0]
 
 def calculate_plan(declarations):
     packages = set()
@@ -53,9 +56,9 @@ def main():
         usage()
     
     cmd_cpp, args, opts = cpp_opts.parse(sys.argv[1:],
-                                         ['output=', 'chroot='])
+                                         ['output='])
     
-    if not len(args) == 2:
+    if not len(args) in [2, 3]:
         usage()
     
     if args[0] == '-':
@@ -64,24 +67,25 @@ def main():
         fh = file(args[0], "r")
 
     pool = args[1]
+    
+    bootstrap = None
+    if len(args) == 3:
+        bootstrap = args[2]
 
     opt_out = None
-    opt_chroot = None
     for opt, val in opts:
         if opt == '--output':
             opt_out = val
-        elif opt == '--chroot':
-            opt_chroot = val
 
     cmd_cpp.append("-Ulinux")
     out, err = system_pipe(cmd_cpp, fh.read(), quiet=True)
     plan = calculate_plan(out)
 
-    if opt_chroot:
-        if not os.path.isdir(opt_chroot):
-            fatal("chroot does not exist: " + opt_chroot)
+    if bootstrap:
+        if not os.path.isdir(bootstrap):
+            fatal("bootstrap does not exist: " + bootstrap)
         
-        out = fab.chroot_execute(opt_chroot, "dpkg-query --show -f='${Package}\n'", get_stdout=True)
+        out = fab.chroot_execute(bootstrap, "dpkg-query --show -f='${Package}\n'", get_stdout=True)
         for entry in out.split("\n"):
             plan.add(entry)
 
