@@ -273,10 +273,8 @@ class Chroot:
         self.system_chroot("apt-get clean")
         system("rm -f " + self._apt_indexpath())
         
-def plan_resolve(pool, plan, exclude, output):
+def plan_resolve(pool, plan, output):
     spec = PackagesSpec(output)
-    if exclude:
-        spec.read(exclude)
     
     p = Packages(pool, spec)
     for name in plan:

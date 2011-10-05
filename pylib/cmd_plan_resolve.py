@@ -7,7 +7,6 @@ Arguments:
                     If relative, pool path is looked up in FAB_POOL_PATH
 
 Options:
-  --exclude=        Path to spec of packages not to be resolved
   --output=         Path to spec-output (default is stdout)
   --chroot=         Path to chroot installed with packages to append to <plan>
   
@@ -54,7 +53,7 @@ def main():
         usage()
     
     cmd_cpp, args, opts = cpp_opts.parse(sys.argv[1:],
-                                         ['exclude=', 'output=', 'chroot='])
+                                         ['output=', 'chroot='])
     
     if not len(args) == 2:
         usage()
@@ -67,13 +66,10 @@ def main():
     pool = args[1]
 
     opt_out = None
-    opt_exclude = None
     opt_chroot = None
     for opt, val in opts:
         if opt == '--output':
             opt_out = val
-        elif opt == '--exclude':
-            opt_exclude = val
         elif opt == '--chroot':
             opt_chroot = val
 
@@ -89,7 +85,7 @@ def main():
         for entry in out.split("\n"):
             plan.add(entry)
 
-    fab.plan_resolve(pool, plan, opt_exclude, opt_out)
+    fab.plan_resolve(pool, plan, opt_out)
 
         
 if __name__=="__main__":
