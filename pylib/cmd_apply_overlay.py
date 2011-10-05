@@ -24,8 +24,8 @@ def usage():
 
 def main():
     try:
-        opts, args = getopt.getopt(sys.argv[1:],
-                                   ['preserve'])
+        opts, args = getopt.gnu_getopt(sys.argv[1:],
+                                       ['preserve'])
     except getopt.GetoptError, e:
         usage(e)
 

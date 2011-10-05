@@ -25,16 +25,16 @@ def usage():
 
 def main():
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "")
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "")
     except getopt.GetoptError, e:
         usage(e)
 
     if sys.argv.count("-") == 1:
         args.insert(0, "-")
-    
+
     if not len(args) == 3:
         usage()
-    
+
     if args[0] == '-':
         fh = sys.stdin
     else:

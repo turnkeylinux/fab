@@ -17,7 +17,7 @@ def parse(argv, longopts=[]):
     extra_opts = []
     
     try:
-        opts, args = getopt.getopt(argv, "I:D:U:", longopts)
+        opts, args = getopt.gnu_getopt(argv, "I:D:U:", longopts)
     except getopt.GetoptError, e:
         print >> sys.stderr, e
         sys.exit(1)
