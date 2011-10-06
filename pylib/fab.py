@@ -19,25 +19,25 @@ def get_tmpdir():
 
     tmpdir = join(tmpdir, "fab-" + get_datetime())
     return realpath(tmpdir)
-            
+
 class PackagesSpec:
     """class for creating and controlling a packages spec"""
     def __init__(self, output=None):
         self.packages = set()
         self.output = output
     
-    def _add(self, spec):
-        spec = re.sub(r'#.*', '', spec)
-        spec = spec.strip()
-        if spec:
-            self.packages.add(spec)
+    def _add(self, package):
+        package = re.sub(r'#.*', '', package)
+        package = package.strip()
+        if package:
+            self.packages.add(package)
         
     def add(self, name, version, quiet=True):
         """add package name=version to spec"""
-        spec = name + "=" + version
-        self.packages.add(spec)
+        package = name + "=" + version
+        self.packages.add(package)
         if not quiet:
-            self.print_spec(spec)
+            self.print_package(package)
     
     def get(self):
         """return packages set"""
@@ -69,17 +69,17 @@ class PackagesSpec:
                     return True
         return False
 
-    def print_spec(self, spec):
-        """print package spec"""
+    def print_package(self, package):
+        """print package"""
         if self.output:
-            open(self.output, "a").write(spec + "\n")
+            open(self.output, "a").write(package + "\n")
         
-        print spec
+        print package
     
-    def print_specs(self):
-        """print all package specs"""
+    def print_packages(self):
+        """print all packages in the spec"""
         for p in self.packages:
-            self.print_spec(p)
+            self.print_package(p)
     
 
 class Packages:
