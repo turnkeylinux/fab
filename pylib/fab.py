@@ -20,6 +20,14 @@ def get_tmpdir():
     tmpdir = join(tmpdir, "fab-" + get_datetime())
     return realpath(tmpdir)
 
+def rm_epoch(package):
+    if ":" in package:
+        name, version = package.split("=")
+        version = re.sub('.:', '', version)
+        package = name + "=" + version
+
+    return package
+
 class PackagesSpec:
     """class for creating and controlling a packages spec"""
     def __init__(self, output=None):
@@ -30,6 +38,7 @@ class PackagesSpec:
         package = re.sub(r'#.*', '', package)
         package = package.strip()
         if package:
+            package = rm_epoch(package)
             self.packages.add(package)
         
     def add(self, name, version, quiet=True):
@@ -42,6 +51,14 @@ class PackagesSpec:
     def get(self):
         """return packages set"""
         return self.packages
+    
+    def getstr(self, delimeter="\n"):
+        """return spec as delimeted string"""
+        spec = ""
+        for package in self.packages:
+            spec += package + delimeter
+        
+        return spec.strip()
     
     def read(self, input):
         """add packages to spec from input
@@ -116,18 +133,15 @@ class Packages:
 
     @staticmethod
     def _get(package, outdir):
-        if ":" in package:
-            name, version = package.split("=")
-            version = re.sub('.:', '', version)
-            package = name + "=" + version
+        package = rm_epoch(package)
         system("pool-get --strict %s %s" % (outdir, package))
         
     def get_all_packages(self):
-        """get all packages in spec"""
-        for package in self.spec.get():
-            print "getting: " + package
-            self._get(package, self.outdir)
-    
+        cmd = ["pool-get", "--strict", "-i-", self.outdir]
+        out, err = system_pipe(cmd, self.spec.getstr(delimeter="\n"))
+        if err:
+            raise Error("pool-get returned error: " + err, out)
+        
     def get_package(self, package):
         """get package and return filepath"""
         self._get(package, self.outdir)
