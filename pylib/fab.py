@@ -34,13 +34,6 @@ class PackagesSpec:
         self.packages = set()
         self.output = output
     
-    def _add(self, package):
-        package = re.sub(r'#.*', '', package)
-        package = package.strip()
-        if package:
-            package = rm_epoch(package)
-            self.packages.add(package)
-        
     def add(self, name, version, quiet=True):
         """add package name=version to spec"""
         package = name + "=" + version
@@ -53,7 +46,7 @@ class PackagesSpec:
         return self.packages
     
     def getstr(self, delimeter="\n"):
-        """return spec as delimeted string"""
+        """return packages as delimeted string"""
         spec = ""
         for package in self.packages:
             spec += package + delimeter
@@ -62,19 +55,20 @@ class PackagesSpec:
     
     def read(self, input):
         """add packages to spec from input
-        
-        input: (packages seperated by newlines)
-            file
-            string
-        
+        input := file | string (packages seperated by newlines)
         """
         if isfile(input):
-            for line in open(input, "r").readlines():
-                self._add(line)
+            entries = open(input, "r").readlines()
         else:
-            for line in input.split("\n"):
-                self._add(line)
-    
+            entries = input.split("\n")
+        
+        for entry in entries:
+            entry = re.sub(r'#.*', '', entry)
+            entry = entry.strip()
+            if entry:
+                entry = rm_epoch(entry)
+                self.packages.add(entry)
+            
     def exists(self, name, version=None):
         """return True/False if package exists in spec"""
         if version:
@@ -87,7 +81,7 @@ class PackagesSpec:
         return False
 
     def print_package(self, package):
-        """print package"""
+        """print package to stdout and append to output file (if specified)"""
         if self.output:
             open(self.output, "a").write(package + "\n")
         
