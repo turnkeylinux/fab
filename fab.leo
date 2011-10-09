@@ -11,12 +11,7 @@
 <vnodes>
 <v t="zaril.20110904173229" a="E"><vh>Project</vh>
 <v t="loni.20111001190214" a="E"><vh>documentation</vh>
-<v t="loni.20111001190214.1"><vh>initial release</vh></v>
-<v t="loni.20111101195055" a="E"><vh>notes on fabrication setup</vh>
-<v t="loni.20111101202620"><vh>apps</vh></v>
-<v t="loni.20111101202620.1"><vh>configuration files</vh></v>
-<v t="loni.20111101204604"><vh>apt-proxy</vh></v>
-</v>
+<v t="loni.20111001190214.1" a="TV"><vh>initial release</vh></v>
 </v>
 <v t="loni.20111001190214.2" a="E"><vh>development log</vh>
 <v t="loni.20111001190214.3"><vh>v0.5 - initial release</vh>
@@ -82,13 +77,18 @@
 <v t="loni.20111009174710" a="E"><vh>unreleased</vh>
 <v t="loni.20111009174710.1"><vh>plan-resolve include bootstrap</vh></v>
 <v t="loni.20111010161023"><vh>plan-resolve - interactive calculation</vh></v>
-<v t="loni.20111010171200"><vh>caching</vh></v>
-<v t="loni.20111121155941" a="E"><vh>optimizations</vh>
+<v t="loni.20111121155941"><vh>optimizations</vh>
 <v t="loni.20111121155941.1"><vh>spec-get</vh></v>
-<v t="loni.20111121155941.2" a="TV"><vh>plan-resolve</vh></v>
+<v t="loni.20111121155941.2"><vh>plan-resolve</vh>
+<v t="loni.20111121182213"><vh>caching</vh></v>
 </v>
 </v>
-<v t="loni.20110928132411"><vh>TODO</vh></v>
+</v>
+</v>
+<v t="loni.20110928132411" a="E"><vh>bugs/wishlist</vh>
+<v t="loni.20111121182213.1"><vh>handling dependencies in virtual packages</vh></v>
+<v t="loni.20111121190436"><vh>resume support</vh></v>
+<v t="loni.20111121190620"><vh>cleanup</vh></v>
 </v>
 </v>
 </vnodes>
@@ -862,8 +862,11 @@ Q: why are we decking bootstrap/rocky to bootstrap, then bootstrap to root.build
         
         </t>
 <t tx="loni.20110928132411">plan-resolve
-    depends on version checking
-    provides / virtual packages
+    depends on version checking (see fab.resolve_package)
+    handle provides / virtual packages (see child node: handling dependencies...)
+
+caching
+    optimize plan-resolve by caching package dependencies
 
 product recipe := a light bundle of data from which a product can be recreated from source
     a product recipe is created during the creation of a new product
@@ -873,21 +876,23 @@ product recipe := a light bundle of data from which a product can be recreated f
             root patch
             product format configuration
 
-bootstrap
-    * minimize plans
-    * leverage fab-plan-resolving of base to add packages to required
-    * remove debootstrap dependency
-
 apt -&gt; dpkg
     * use dpkg instead of apt when installing packages
+    * using apt-ftparchive is very inefficient
     * ideas:
             * debootstrap scripts
             * spec analysis code
 
+
+
 spec-analysis
     * same idea as oldfab/package-analysis
     
+plan-lint: plan annotation
 
+usb booting
+
+remove rm_epochs when liraz's pool code accepts them
 
 </t>
 <t tx="loni.20111001190214"></t>
@@ -1007,114 +1012,6 @@ IDEA:
     issue warnings if attempting to "retract" a package that is not declared
     
 </t>
-<t tx="loni.20111010171200">Q: what is taking the most amount of time?
-    getting packages from pool?
-        from my tests, it takes approx. 0.6sec per package
-        
-    peeking into packages to get their version and dependencies
-        minimalistic. with caching we could maybe shave off a fraction of a second.
-        the bottlenect is pool-get at the moment.
-
-
-    </t>
-<t tx="loni.20111101195055">There are several apps involved in the fabrication process, each has its own job, and does it well. Each app is well documented, and will not be repeated here.
-
-These notes are an attempt to explain how they all come together to form the fabrication infrastructure, and provide a high-level overview on how they use each other.
-
-Everything is configurable.
-The below notes are exemplary, and describe rocky/backstage (release/product).
-
-#create fabrication folders
-mkdir -p /turnkey/fab/products
-mkdir -p /turnkey/fab/buildroots
-mkdir -p /turnkey/fab/deckdebuilds
-mkdir -p /turnkey/fab/pools/rocky
-
-#register projects from stash
-cd stashes/alon
-covin-register-dest /turnkey/fab/bootstraps
-covin-register-dest /turnkey/fab/cdroots
-covin-register-dest /turnkey/fab/common-plans
-covin-register-dest /turnkey/fab/pools/rocky/rocky.chanko
-covin-register-dest /turnkey/fab/products/backstage
-
-#setup pool (and subpool)
-    initialize /turnkey/fab/pools/rocky/rocky.chanko as a pool and register arena
-    initialize /turnkey/fab/pools/rocky as pool, and register stocks
-        register rocky.chanko as a stock (subpool)
-
-#update configuration files
-    useraufs.conf
-    deckdebuild.conf
-
-#create the bootstrap
-    cd /turnkey/fab/bootstrap
-    make
-    
-#setup buildroot
-    cp -a /turnkey/fab/bootstraps/rocky /turnkey/fab/buildroots/
-    if using apt-proxy (recommended)
-        configure on host
-        point buildroots/rocky's sources.list to use proxy (127.0.0.1:9999)
-    chroot buildroots/rocky
-        apt-get update
-        apt-get install fakeroot build-essetial debhelper cdbs dpatch autotools-dev
-
-#fab a product
-    cd /turnkey/fab/products/backstage
-    make
-
-
-</t>
-<t tx="loni.20111101202620">private depends:
-    fab
-    pool
-    deck
-    deckdebuild
-    useraufs
-    verseek
-
-private recommends:
-    chanko
-    sumo
-
-world depends:
-    pbuilder                        # deckdebuild
-    debootstrap (+ rocky script)    # used to create bootstrap
-
-world recommends:
-    apt-proxy
-
-</t>
-<t tx="loni.20111101202620.1">/etc/useraufs.conf
-    allow_user loni         # replace with your username
-    allow_user root
-    allow_dir /turnkey/fab
-    
-/etc/deckdebuild.conf
-    vardir /turnkey/fab/deckdebuilds
-</t>
-<t tx="loni.20111101204604">/etc/apt-proxy/apt-proxy-v2.conf
-	address = 127.0.0.1
-	min_refresh_delay = 86400s # how often we refresh Packages/Sources (instead of 1s)
-	max_versions = 10 # how many different versions of packages to cache
-
-rocky $ cat /etc/apt/sources.list
-
-deb http://127.0.0.1:9999/ubuntu feisty main universe
-deb http://127.0.0.1:9999/ubuntu feisty-backports main universe
-
-
-
-full feisty stuff
------------------
-deb http://127.0.0.1:9999/ubuntu feisty main restricted universe multiverse
-deb http://127.0.0.1:9999/ubuntu feisty-updates main restricted
-deb http://127.0.0.1:9999/ubuntu feisty-security main restricted
-deb http://127.0.0.1:9999/ubuntu feisty-backports main restricted
-
-deb-src http://127.0.0.1:9999/ubuntu feisty main restricted universe multiverse
-deb-src http://127.0.0.1:9999/ubuntu feisty-updates main restricted</t>
 <t tx="loni.20111121155941"></t>
 <t tx="loni.20111121155941.1">BEFORE
 $ time fab-spec-get spec-noepochs /turnkey/fab/pools/rocky packages/
@@ -1218,7 +1115,151 @@ sys     0m2.816s
 
 
 
+
 </t>
+<t tx="loni.20111121182213">we can further optimize by caching package dependencies?
+    </t>
+<t tx="loni.20111121182213.1">email:
+    handling dependencies in virtual packages
+
+Its best not to include virtual packages in plans directly. They are however
+brought in via dependencies. So how do you resolve them without hardwiring
+arbitrary mappings?
+
+How about this, you add the virtuals to a deferred list. You `handle' the
+virtual packages at the end, after all other packages, and the way you handle
+them is to verify that one of the non-virtual packages we already processed
+`provides' the virtual package, otherwise you raise an exception.
+
+This way the plan itself specifies which real package to use to satisfy a
+virtual package rather than getting this information from some external mapping.
+On the other hand, if the plan's developer neglected to `provide' the virtual
+package, then an exception is raised stating exactly which virtual is not
+provided so that the plan developer can fix this.
+
+To do this you need to be maintain a cache of the control fields extracted from
+the packages you are resolving. If you store this cache on the filesystem,
+you'll be able to reuse it later when you are installing the spec, so you don'
+have to wait for apt-ftparchive to re-extract the control fields from the
+packages yet again - which is only necessary because you're using apt instead of
+invoking dpkg (yes I understand your rational - documented in the Leo workflow)
+
+
+
+
+
+
+
+</t>
+<t tx="loni.20111121190436">At least your suggestion is safe, though I don't like how it adds redundant
+cruft to the Makefile (you need to use that little trick over and over again on
+all sections of the Makefile).
+
+Ultimately, while your suggestion does take care of the safety issue, its still
+not optimal because you will still be redoing that Makefile step from the
+beginning. This can take a while depending on the size of the job and when the
+error happens (beginning, middle, one step before the end?).
+
+As I mentioned in the optimization HOWTO, one way to optimize a process is to
+figure out how to reach the same result in less steps.
+
+What if instead you enabled safe transparent auto-resume/continue support for
+plan-resolve and spec-install? It will add some complexity but I think its more
+than worth it. If a failure happens in your product build (e.g., package FTBFS 
+(Fails To Build From Source)),
+you can fix it and immediately get on with the product build. You don't have to
+wait until you rereach that error to know if your fix worked or not. This
+should shorten the development cycle. Especially if you implement this in
+addition to other performance optimizations (e.g., caching of repeated operations).
+
+In principle both of these commands (plan-resolve and spec-install) spend their
+time looping a list of batched "transactions", and having successfully completed
+a given transaction, move on to the next.
+
+So you could, at least in some cases, safely skip all of those successfully
+completed transactions instead of starting over and redoing all the steps from
+the very first transaction. To do that you need to save some state such that if
+they are rerun with the same inputs after being prematurely aborted, they will
+fast-forward through all the successfully completed transactions to the
+transaction that failed.
+
+Some implementation considerations:
+* we need to safely handle changing inputs so if for example the plan or spec
+changes, the resume state is invalid, and we discard it and start from the
+beginning. In particular, for plan-resolve this means we check the validity of
+the finalized transaction list (I.e., after preprocessing and after handling of
+packages from --chroot)
+
+* You don't actually need to save the input contents to determine
+whether they have changed since the last aborted operation. You only need a hash
+of the inputs. This simplifies the contents of the resume state object to
+include only two simple parameters:
+	1) hash of inputs
+	2) last successfully completed transaction
+
+* allow continue support/autoresume to be turned off: --noresume
+
+Which should be the default (I.e., resume or noresume)?
+
+From a quick consideration, I think safe resume support would be a reasonable
+default mode of operation with a couple of exceptions (described below)
+
+If you discover it isn't safe, you could require the user to explicitly turn on
+auto-resume with the --resume option
+
+* for plan-resolve, if the output is not to a file, we can't resume safely,
+because there is no way to ensure we are appending to the output pipe (you can
+do that with a file by opening it in append mode).
+
+In other words, the user might be executing plan-resolve and piping it to a file
+or program in a way that is inconsistent with resume logic. So by default, if
+the output is not a file, we should disable resume support.
+
+In other words, for plan-resolve the default is whatever is safe depending on
+the circumstances. If we're outputting the resolved plan to a file, the default
+is to resume unless the user asks for --noresume (I.e., its the most convenient
+safe thing to do). On the other hand, if we're outputting the resolved plan to a
+pipe (e.g., stdout), then the default is to not resume unless the user asks
+explicitly to --resume because thats the only safe thing to do.
+
+Naturally, both options and their defaults should be carefully described in the
+embedded documentation.
+
+* for spec-install, I think having `resume' as the default would be safe
+assuming the spec hasn't changed of course (otherwise the resume state is
+invalid). If this is true, you don't actually need --resume option here at all,
+just --noresume.
+
+* suggestion for the location and format of the resume state file
+
+location:
+	statefile = join(dirname(output), ".%s:RESUME" % basename(output))
+
+e.g.,
+	if output=="rocky.spec":
+		statefile=".rocky.spec:RESUME"
+
+format := "&lt;input-hash&gt; &lt;resume-from-index&gt;"
+	e.g.,
+		d456306e2be4decb08ecc34f9c05f448 1
+		If resume-from-index is 1, we skip the first transaction (0).
+
+&lt;input-hash&gt; := hash of inputs
+&lt;resume-from-index&gt; := index of the transaction we resume from
+	the first valid value is 1
+
+* the resume state file needs to be updated with every successful transaction.
+the first
+
+* the resume state needs to be deleted when the last transaction finishes
+
+If you accept the proposal, you can add it to the Leo and implement it. Comments
+welcome.
+
+</t>
+<t tx="loni.20111121190620">found on the web, and made a note of it (PsiLinux ?)
+
+(11) Clean up. The installation contains a load of excessive baggage that wastes considerable disk space - this is why the *.ipk version of PsiLinux is nice. When the dust has settled above you will find that your system takes up about 70 MB of space. You can delete much of the dpkg baggage, however. Once you are happy that all of the required *.deb files are installed, you can delete them from /var/cache/apt/archive; this will clear 21 MB of space. Places for other deletions or gzip-tions are: /usr/lib/gconv, /var/lib/apt/lists-files, /var/lib/dpkg/info files, /usr/share/locale, /usr/share/zoneinfo, /usr/man/* (foreign languages). Some libraries or files are duplicated, e.g., /usr/share/unidata/Unicode* files and /sbin/fsck* files - you can make links to avoid this. Other places to look are the /usr/share/doc files - you will find a lot of README, TODO, etc. files that can be deleted. I should think in all some 30+ MB of space can be cleared up.</t>
 <t tx="zaril.20110904173229">@nocolor
 </t>
 <t tx="zaril.20110904173337"></t>
