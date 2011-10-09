@@ -1,5 +1,8 @@
 import re
-from utils import fatal, getoutput
+from utils import getoutput
+
+class Error(Exception):
+    pass
 
 def extract_control(path):
     return getoutput("ar -p %s control.tar.gz | zcat | tar -O -xf - ./control 2>/dev/null" % path)
@@ -23,7 +26,7 @@ def parse_depends(content):
     
 def parse_filename(filename):
     if not filename.endswith(".deb"):
-        fatal("not a package `%s'" % filename)
+        raise Error("not a package `%s'" % filename)
 
     name, version = filename.split("_")[:2]
 

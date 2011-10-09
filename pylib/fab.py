@@ -28,6 +28,9 @@ def rm_epoch(package):
 
     return package
 
+class Error(Exception):
+    pass
+
 class PackagesSpec:
     """class for creating and controlling a packages spec
        package:
@@ -98,7 +101,7 @@ class Packages:
         if isdir(join(pool, ".pool")):
             os.environ['POOL_DIR'] = pool
         else:
-            fatal("pool does not exist" + pool)
+            raise Error("pool does not exist" + pool)
         
         self.spec = spec
 
@@ -163,7 +166,7 @@ class Chroot:
     """class for interacting with a fab chroot"""
     def __init__(self, path):
         if os.getuid() != 0:
-            fatal("root privileges required for chroot")
+            raise Error("root privileges required for chroot")
 
         self.path = path
     
