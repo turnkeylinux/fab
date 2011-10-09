@@ -29,29 +29,23 @@ def rm_epoch(package):
     return package
 
 class PackagesSpec:
-    """class for creating and controlling a packages spec"""
+    """class for creating and controlling a packages spec
+       package:
+           key: name
+           value: name=version
+    """
+    
     def __init__(self, output=None):
-        self.packages = set()
+        self.packages = {}
         self.output = output
     
-    def add(self, name, version, quiet=True):
+    def add(self, name, version):
         """add package name=version to spec"""
         package = name + "=" + version
-        self.packages.add(package)
-        if not quiet:
-            self.print_package(package)
+        self.packages[name] = package
     
     def get(self):
-        """return packages set"""
-        return self.packages
-    
-    def getstr(self, delimeter="\n"):
-        """return packages as delimeted string"""
-        spec = ""
-        for package in self.packages:
-            spec += package + delimeter
-        
-        return spec.strip()
+        return self.packages.values()
     
     def read(self, input):
         """add packages to spec from input
@@ -67,32 +61,24 @@ class PackagesSpec:
             entry = entry.strip()
             if entry:
                 entry = rm_epoch(entry)
-                self.packages.add(entry)
+                name, version = entry.split("=")
+                self.packages[name] = entry
             
-    def exists(self, name, version=None):
-        """return True/False if package exists in spec"""
-        if version:
-            if name + "=" + version in self.packages:
-                return True
-        else:
-            for p in self.packages:
-                if p.startswith(name + "="):
-                    return True
+    def exists(self, name):
+        """return True if package `name' exists in spec"""
+        if name in self.packages.keys():
+            return True
+        
         return False
 
-    def print_package(self, package):
-        """print package to stdout and append to output file (if specified)"""
-        if self.output:
-            open(self.output, "a").write(package + "\n")
-        
-        print package
-    
-    def print_packages(self):
-        """print all packages in the spec"""
-        for p in self.packages:
-            self.print_package(p)
-    
+    def print_spec(self):
+        """print spec to stdout (and output file if specified"""
+        spec = "\n".join(self.packages.values())
+        print spec
 
+        if self.output:
+            open(self.output, "w").write(spec)
+        
 class Packages:
     """class for getting packages from pool according to a spec"""
     def __init__(self, pool, spec, outdir=None):
@@ -137,11 +123,11 @@ class Packages:
         
     def get_spec_packages(self):
         cmd = ["pool-get", "--strict", "-i-", self.outdir]
-        out, err = system_pipe(cmd, self.spec.getstr(delimeter="\n"))
+        out, err = system_pipe(cmd, "\n".join(self.spec.get()))
         if err:
             raise Error("pool-get returned error: " + err, out)
 
-    def resolve(self, name):
+    def resolve_package(self, name):
         """resolve package and its dependencies recursively, update spec"""
         name = deb.parse_name(name)
         if not self.spec.exists(name):
@@ -151,7 +137,7 @@ class Packages:
             control = deb.extract_control(self.packages[name])
             package = deb.parse_control(control)
 
-            self.spec.add(name, package['Version'], quiet=False)
+            self.spec.add(name, package['Version'])
             if package.has_key('Depends'):
                 for depend in deb.parse_depends(package['Depends']):
                     #eg. ('initramfs-tools', '0.40ubuntu11', '>=')
@@ -164,7 +150,14 @@ class Packages:
                     else:
                         depname = deb.parse_name(depend[0])
                     
-                    self.resolve(depname)
+                    self.resolve_package(depname)
+
+    def resolve_plan(self, plan):
+        self.dump_all_packages()
+        for name in plan:
+            self.resolve_package(name)
+        
+        self.spec.print_spec()
 
 class Chroot:
     """class for interacting with a fab chroot"""
@@ -270,10 +263,7 @@ def plan_resolve(pool, plan, output):
     spec = PackagesSpec(output)
     
     p = Packages(pool, spec)
-    p.dump_all_packages()
-    
-    for name in plan:
-        p.resolve(name)
+    p.resolve_plan(plan)
 
 def spec_get(pool, specinfo, outdir):
     spec = PackagesSpec()

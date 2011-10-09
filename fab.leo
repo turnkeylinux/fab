@@ -1207,6 +1207,17 @@ user    0m5.400s
 sys     0m3.276s
 
 
+---------------------------------------------
+
+further optimizations (refactoring of code)
+
+real    0m7.609s
+user    0m4.728s
+sys     0m2.816s
+
+
+
+
 </t>
 <t tx="zaril.20110904173229">@nocolor
 </t>
