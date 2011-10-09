@@ -126,42 +126,34 @@ class Packages:
         return True
 
     @staticmethod
-    def _get(package, outdir):
-        package = rm_epoch(package)
-        system("pool-get --strict %s %s" % (outdir, package))
+    def _find_package(name, path):
+        """search `path' for package that resembles `name', return filepath"""
+        for filename in os.listdir(path):
+            filepath = join(path, filename)
+            
+            if not isfile(filepath) or not filename.endswith(".deb"):
+                continue
+            
+            pkgname, pkgver = deb.parse_filename(filename)
+            if name == pkgname:
+                return filepath
         
-    def get_all_packages(self):
+        raise Error("could not find %s in %s" % (name, path))
+    
+    def dump_all_packages(self):
+        system("pool-get %s" % self.outdir)
+        
+    def get_spec_packages(self):
         cmd = ["pool-get", "--strict", "-i-", self.outdir]
         out, err = system_pipe(cmd, self.spec.getstr(delimeter="\n"))
         if err:
             raise Error("pool-get returned error: " + err, out)
-        
-    def get_package(self, package):
-        """get package and return filepath"""
-        self._get(package, self.outdir)
-        if "=" in package:
-            name, version = package.split("=", 1)
-        else:
-            name = package
-            version = None
 
-        for filename in os.listdir(self.outdir):
-            filepath = join(self.outdir, filename)
-
-            if not isfile(filepath) or not filename.endswith(".deb"):
-                continue
-
-            cached_name, cached_version = deb.parse_filename(filename)
-            if name == cached_name and (version is None or version == cached_version):
-                return filepath
-
-        return None
-
-    def get_package_spec(self, name):
-        """get package `name' and its dependencies recursively"""
+    def resolve(self, name):
+        """resolve package and its dependencies recursively, update spec"""
         name = deb.parse_name(name)
         if not self.spec.exists(name):
-            package_path = self.get_package(name)
+            package_path = self._find_package(name, self.outdir)
             
             control = deb.extract_control(package_path)
             package = deb.parse_control(control)
@@ -179,7 +171,7 @@ class Packages:
                     else:
                         depname = deb.parse_name(depend[0])
                     
-                    self.get_package_spec(depname)
+                    self.resolve(depname)
 
 class Chroot:
     """class for interacting with a fab chroot"""
@@ -285,15 +277,17 @@ def plan_resolve(pool, plan, output):
     spec = PackagesSpec(output)
     
     p = Packages(pool, spec)
+    p.dump_all_packages()
+    
     for name in plan:
-        p.get_package_spec(name)
+        p.resolve(name)
 
 def spec_get(pool, specinfo, outdir):
     spec = PackagesSpec()
     spec.read(specinfo)
     
     p = Packages(pool, spec, outdir)
-    p.get_all_packages()
+    p.get_spec_packages()
     
 def spec_install(pool, specinfo, chroot_path):
     chroot_path = realpath(chroot_path)

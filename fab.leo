@@ -2,8 +2,8 @@
 <?xml-stylesheet ekr_test?>
 <leo_file>
 <leo_header file_format="2" tnodes="0" max_tnode_index="0" clone_windows="0"/>
-<globals body_outline_ratio="0.386164623468">
-	<global_window_position top="0" left="0" height="709" width="1142"/>
+<globals body_outline_ratio="0.277583187391">
+	<global_window_position top="0" left="5" height="709" width="1142"/>
 	<global_log_window_position top="0" left="0" height="0" width="0"/>
 </globals>
 <preferences/>
@@ -12,7 +12,7 @@
 <v t="zaril.20110904173229" a="E"><vh>Project</vh>
 <v t="loni.20111001190214" a="E"><vh>documentation</vh>
 <v t="loni.20111001190214.1"><vh>initial release</vh></v>
-<v t="loni.20111101195055" a="ETV"><vh>notes on fabrication setup</vh>
+<v t="loni.20111101195055" a="E"><vh>notes on fabrication setup</vh>
 <v t="loni.20111101202620"><vh>apps</vh></v>
 <v t="loni.20111101202620.1"><vh>configuration files</vh></v>
 <v t="loni.20111101204604"><vh>apt-proxy</vh></v>
@@ -83,6 +83,10 @@
 <v t="loni.20111009174710.1"><vh>plan-resolve include bootstrap</vh></v>
 <v t="loni.20111010161023"><vh>plan-resolve - interactive calculation</vh></v>
 <v t="loni.20111010171200"><vh>caching</vh></v>
+<v t="loni.20111121155941" a="E"><vh>optimizations</vh>
+<v t="loni.20111121155941.1"><vh>spec-get</vh></v>
+<v t="loni.20111121155941.2" a="TV"><vh>plan-resolve</vh></v>
+</v>
 </v>
 <v t="loni.20110928132411"><vh>TODO</vh></v>
 </v>
@@ -1111,6 +1115,87 @@ deb http://127.0.0.1:9999/ubuntu feisty-backports main restricted
 
 deb-src http://127.0.0.1:9999/ubuntu feisty main restricted universe multiverse
 deb-src http://127.0.0.1:9999/ubuntu feisty-updates main restricted</t>
+<t tx="loni.20111121155941"></t>
+<t tx="loni.20111121155941.1">BEFORE
+$ time fab-spec-get spec-noepochs /turnkey/fab/pools/rocky packages/
+real    0m27.099s
+user    0m15.465s
+sys     0m9.293s
+
+AFTER
+$ time ../fab-spec-get spec /turnkey/fab/pools/rocky packages/
+real    0m0.206s
+user    0m0.136s
+sys     0m0.060s
+
+
+140 times faster!!!
+
+OPTIMIZATION: call pool-get with spec (instead of each package seperately)
+</t>
+<t tx="loni.20111121155941.2">plan-resolve (synapse, sumo, pool)
+
+BEFORE
+real    0m19.148s
+user    0m11.101s
+sys     0m6.764s
+
+not executing pool-get (pretending it was already executed)
+real    0m2.591s
+user    0m1.156s
+sys     0m0.768s
+
+its taking a long time because pool-get each package seperately.
+
+IDEA:
+    dump the whole pool with the latest packages, then calculate the plan   
+    we can further optimize by caching package dependencies, so we dont have to unpack and parse debs.
+    
+    getting the whole pool:
+
+    $ time POOL_DIR=/turnkey/fab/pools/rocky pool-get tmp
+
+    real    0m0.200s
+    user    0m0.128s
+    sys     0m0.060s
+
+    the downside: we might be building packages we don't need to resolve the plan
+        this can become a pain when the packages we dont need are big, and take a long time to build
+        eg. kernel, firefox
+        
+        but, this depends on the pool stock registrations
+
+
+AFTER
+real    0m3.546s
+user    0m1.580s
+sys     0m1.112s
+
+
+5.5 times faster!!!
+
+OPTIMATION: dump all packages in pool first, then resolve the plan
+
+
+
+
+plan resolve on the entire backstage plan
+
+BEFORE
+real    1m29.078s
+user    0m51.559s
+sys     0m32.438s
+
+
+AFTER
+real    0m18.576s
+user    0m7.456s
+sys     0m4.752s
+
+
+5 times faster!!!
+
+</t>
 <t tx="zaril.20110904173229">@nocolor
 </t>
 <t tx="zaril.20110904173337"></t>
