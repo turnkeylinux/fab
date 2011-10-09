@@ -2,7 +2,7 @@ import re
 from utils import fatal, getoutput
 
 def extract_control(path):
-    return getoutput("ar -p %s control.tar.gz | zcat | tar -O -xf - control ./control 2>/dev/null" % path)
+    return getoutput("ar -p %s control.tar.gz | zcat | tar -O -xf - ./control 2>/dev/null" % path)
 
 def parse_control(content):
     return dict([ re.split("\s*:\s+", line, 1)

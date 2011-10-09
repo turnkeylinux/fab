@@ -186,7 +186,7 @@ class Chroot:
         
         cmd = "chroot %s %s %s" % (self.path, env, command)
         if get_stdout:
-            return getoutput(cmd)
+            return getoutput(cmd, raise_err=False)
         
         system(cmd)
 

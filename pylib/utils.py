@@ -50,9 +50,12 @@ def getstatus(command):
     (s,o) = commands.getstatusoutput(command)
     return s
 
-def getoutput(command):
-    (s,o) = commands.getstatusoutput(command)
-    return o
+def getoutput(command, raise_err=True):
+    (err, out) = commands.getstatusoutput(command)
+    if err and raise_err:
+        raise Error("command failed: " + command, err)
+    
+    return out
 
 def is_mounted(dir):
     mounts = file("/proc/mounts").read()
