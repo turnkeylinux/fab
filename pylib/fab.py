@@ -139,11 +139,11 @@ class Packages:
 
             self.spec.add(name, package['Version'])
             if package.has_key('Depends'):
-                for depend in deb.parse_depends(package['Depends']):
+                for depend in deb.parse_depends(package['Depends'].split(",")):
                     #eg. ('initramfs-tools', '0.40ubuntu11', '>=')
                     #TODO: depends on version
                     if "|" in depend[0]:
-                        for d in deb.parse_depends(depend[0], "|"):
+                        for d in deb.parse_depends(depend[0].split("|")):
                             depname = deb.parse_name(d[0])
                             if self._package_in_pool(depname):
                                 break
