@@ -1177,8 +1177,6 @@ sys     0m1.112s
 OPTIMATION: dump all packages in pool first, then resolve the plan
 
 
-
-
 plan resolve on the entire backstage plan
 
 BEFORE
@@ -1194,6 +1192,20 @@ sys     0m4.752s
 
 
 5 times faster!!!
+
+-------------------------------------------
+
+further optimizations
+
+instead of reading the dumped packages from the filesystems each time we want to check for a package
+read in the list, and then just query it
+
+AFTER
+
+real    0m11.796s
+user    0m5.400s
+sys     0m3.276s
+
 
 </t>
 <t tx="zaril.20110904173229">@nocolor

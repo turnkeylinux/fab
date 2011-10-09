@@ -125,23 +125,15 @@ class Packages:
         
         return True
 
-    @staticmethod
-    def _find_package(name, path):
-        """search `path' for package that resembles `name', return filepath"""
-        for filename in os.listdir(path):
-            filepath = join(path, filename)
-            
-            if not isfile(filepath) or not filename.endswith(".deb"):
-                continue
-            
-            pkgname, pkgver = deb.parse_filename(filename)
-            if name == pkgname:
-                return filepath
-        
-        raise Error("could not find %s in %s" % (name, path))
-    
     def dump_all_packages(self):
+        self.packages = {}
         system("pool-get %s" % self.outdir)
+        for filename in os.listdir(self.outdir):
+            filepath = join(self.outdir, filename)
+            
+            if isfile(filepath) and filename.endswith(".deb"):
+                pkgname, pkgver = deb.parse_filename(filename)
+                self.packages[pkgname] = filepath
         
     def get_spec_packages(self):
         cmd = ["pool-get", "--strict", "-i-", self.outdir]
@@ -153,9 +145,10 @@ class Packages:
         """resolve package and its dependencies recursively, update spec"""
         name = deb.parse_name(name)
         if not self.spec.exists(name):
-            package_path = self._find_package(name, self.outdir)
+            if not self.packages.has_key(name):
+                raise Error("package `%s' not available in dump" % name)
             
-            control = deb.extract_control(package_path)
+            control = deb.extract_control(self.packages[name])
             package = deb.parse_control(control)
 
             self.spec.add(name, package['Version'], quiet=False)
