@@ -5,7 +5,7 @@ from os.path import *
 from datetime import datetime
 
 import deb
-from utils import *
+import utils
 
 def get_datetime():
     """return unique string created by current data and time"""
@@ -91,7 +91,7 @@ class Packages:
             self.outdir = get_tmpdir()
 
         if not isdir(self.outdir):
-            mkdir_parents(self.outdir)
+            utils.mkdir_parents(self.outdir)
         
         if not isabs(pool):
             poolpath = os.getenv('FAB_POOL_PATH')
@@ -108,7 +108,7 @@ class Packages:
     @staticmethod
     def _package_in_pool(package):
         """return True/False if package exists in the pool"""
-        err = getstatus("pool-exists " + package)
+        err = utils.getstatus("pool-exists " + package)
         if err:
             return False
         
@@ -116,7 +116,7 @@ class Packages:
 
     def dump_all_packages(self):
         self.packages = {}
-        system("pool-get %s" % self.outdir)
+        utils.system("pool-get %s" % self.outdir)
         for filename in os.listdir(self.outdir):
             filepath = join(self.outdir, filename)
             
@@ -126,7 +126,7 @@ class Packages:
         
     def get_spec_packages(self):
         cmd = ["pool-get", "--strict", "-i-", self.outdir]
-        out, err = system_pipe(cmd, "\n".join(self.spec.get()))
+        out, err = utils.system_pipe(cmd, "\n".join(self.spec.get()))
         if err:
             raise Error("pool-get returned error: " + err, out)
 
@@ -172,13 +172,13 @@ class Chroot:
     
     def mountpoints(self):
         """mount proc and dev/pts into chroot"""
-        mount('proc-chroot',   join(self.path, 'proc'),    '-tproc')
-        mount('devpts-chroot', join(self.path, 'dev/pts'), '-tdevpts')
+        utils.mount('proc-chroot',   join(self.path, 'proc'),    '-tproc')
+        utils.mount('devpts-chroot', join(self.path, 'dev/pts'), '-tdevpts')
 
     def umountpoints(self):
         """umount proc and dev/pts from chroot"""
-        umount(join(self.path, 'dev/pts'))
-        umount(join(self.path, 'proc'))
+        utils.umount(join(self.path, 'dev/pts'))
+        utils.umount(join(self.path, 'proc'))
 
     def system_chroot(self, command, get_stdout=False):
         """execute system command in chroot"""
@@ -189,9 +189,9 @@ class Chroot:
         
         cmd = "chroot %s %s %s" % (self.path, env, command)
         if get_stdout:
-            return getoutput(cmd, raise_err=False)
+            return utils.getoutput(cmd, raise_err=False)
         
-        system(cmd)
+        utils.system(cmd)
 
     def _insert_fakestartstop(self):
         """insert fake start-stop-daemon into chroot"""
@@ -199,7 +199,7 @@ class Chroot:
         if isfile('%s.REAL' % daemon): #already created
             return
         
-        system("mv %s %s.REAL" % (daemon, daemon))
+        utils.system("mv %s %s.REAL" % (daemon, daemon))
         
         fake = "#!/bin/sh\n" \
                "echo\n" \
@@ -211,7 +211,7 @@ class Chroot:
     def _remove_fakestartstop(self):
         """remove fake start-stop daemon from chroot"""
         daemon = join(self.path, 'sbin/start-stop-daemon')
-        system("mv %s.REAL %s" % (daemon, daemon))
+        utils.system("mv %s.REAL %s" % (daemon, daemon))
 
     def _apt_indexpath(self):
         """return package index path"""
@@ -230,7 +230,7 @@ class Chroot:
         self._apt_sourcelist()       
         
         print "generating package index..."
-        system("apt-ftparchive packages %s > %s" % (pkgdir_path, 
+        utils.system("apt-ftparchive packages %s > %s" % (pkgdir_path, 
                                                     self._apt_indexpath()))
         self.system_chroot("apt-cache gencaches")
         
@@ -260,7 +260,7 @@ class Chroot:
     def apt_clean(self):
         """clean apt cache in chroot"""
         self.system_chroot("apt-get clean")
-        system("rm -f " + self._apt_indexpath())
+        utils.system("rm -f " + self._apt_indexpath())
         
 def plan_resolve(pool, plan, output):
     spec = PackagesSpec(output)
@@ -306,13 +306,13 @@ def apply_removelist(rmlist, srcpath, dstpath=None):
         dst = join(dstpath, dirname(entry))
     
         if exists(src):
-            mkdir_parents(dst)
+            utils.mkdir_parents(dst)
             if isdir(src):
-                system("mv -f %s/* %s/" % (dirname(src), dst))
+                utils.system("mv -f %s/* %s/" % (dirname(src), dst))
             else:
-                system("mv -f %s %s/" % (src, dst))
+                utils.system("mv -f %s %s/" % (src, dst))
         else:
-            warning("entry does not exist: " + entry)
+            utils.warning("entry does not exist: " + entry)
 
     if not dstpath:
         dstpath = get_tmpdir()
@@ -329,6 +329,6 @@ def apply_overlay(overlay, dstpath, preserve=False):
     opts = "-dR"
     if preserve:
         opts += "p"
-    system("cp %s %s/* %s/" % (opts, overlay, dstpath))
+    utils.system("cp %s %s/* %s/" % (opts, overlay, dstpath))
 
 
