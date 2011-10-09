@@ -91,7 +91,7 @@ class Packages:
             self.outdir = get_tmpdir()
 
         if not isdir(self.outdir):
-            utils.mkdir_parents(self.outdir)
+            utils.mkdir(self.outdir)
         
         if not isabs(pool):
             poolpath = os.getenv('FAB_POOL_PATH')
@@ -306,7 +306,7 @@ def apply_removelist(rmlist, srcpath, dstpath=None):
         dst = join(dstpath, dirname(entry))
     
         if exists(src):
-            utils.mkdir_parents(dst)
+            utils.mkdir(dst)
             if isdir(src):
                 utils.system("mv -f %s/* %s/" % (dirname(src), dst))
             else:
