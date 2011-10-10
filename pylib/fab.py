@@ -65,7 +65,10 @@ class PackagesSpec:
             entry = entry.strip()
             if entry:
                 entry = rm_epoch(entry)
-                name, version = entry.split("=")
+                try:
+                    name, version = entry.split("=")
+                except ValueError:
+                    name = entry
                 self.packages[name] = entry
             
     def exists(self, name):
