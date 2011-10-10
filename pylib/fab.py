@@ -90,9 +90,6 @@ class Packages:
         else:
             self.outdir = get_tmpdir()
 
-        if not isdir(self.outdir):
-            utils.mkdir(self.outdir)
-        
         if not isabs(pool):
             poolpath = os.getenv('FAB_POOL_PATH')
             if poolpath:
@@ -104,63 +101,50 @@ class Packages:
             raise Error("pool does not exist" + pool)
         
         self.spec = spec
-
-    @staticmethod
-    def _package_in_pool(package):
-        """return True/False if package exists in the pool"""
-        err = utils.getstatus("pool-exists " + package)
-        if err:
-            return False
-        
-        return True
-
-    def dump_all_packages(self):
         self.packages = {}
-        utils.system("pool-get %s" % self.outdir)
+
+    def get_packages(self, packages):
+        """get list of packages from pool"""
+        if not isdir(self.outdir):
+            utils.mkdir(self.outdir)
+
+        cmd = ["pool-get", "--strict", "-i-", self.outdir]
+        out, err = utils.system_pipe(cmd, "\n".join(packages))
+        if err:
+            raise Error("error: " + err, cmd, out)
+
+    def _read_packages(self):
+        """get paths of all packages in outdir, update packages dictionary
+           package:
+               key: name
+               value: path
+        """
         for filename in os.listdir(self.outdir):
             filepath = join(self.outdir, filename)
             
             if isfile(filepath) and filename.endswith(".deb"):
                 pkgname, pkgver = deb.parse_filename(filename)
                 self.packages[pkgname] = filepath
-        
-    def get_spec_packages(self):
-        cmd = ["pool-get", "--strict", "-i-", self.outdir]
-        out, err = utils.system_pipe(cmd, "\n".join(self.spec.get()))
-        if err:
-            raise Error("pool-get returned error: " + err, out)
-
-    def resolve_package(self, name):
-        """resolve package and its dependencies recursively, update spec"""
-        name = deb.parse_name(name)
-        if not self.spec.exists(name):
-            if not self.packages.has_key(name):
-                raise Error("package `%s' not available in dump" % name)
-            
-            control = deb.extract_control(self.packages[name])
-            package = deb.parse_control(control)
-
-            self.spec.add(name, package['Version'])
-            if package.has_key('Depends'):
-                for depend in deb.parse_depends(package['Depends'].split(",")):
-                    #eg. ('initramfs-tools', '0.40ubuntu11', '>=')
-                    #TODO: depends on version
-                    if "|" in depend[0]:
-                        for d in deb.parse_depends(depend[0].split("|")):
-                            depname = deb.parse_name(d[0])
-                            if self._package_in_pool(depname):
-                                break
-                    else:
-                        depname = deb.parse_name(depend[0])
-                    
-                    self.resolve_package(depname)
 
     def resolve_plan(self, plan):
-        self.dump_all_packages()
-        for name in plan:
-            self.resolve_package(name)
+        """resolve plan and its dependencies recursively, return spec"""
+        toresolve = plan
+        while toresolve:
+            self.get_packages(toresolve)
+            self._read_packages()
+            depends = set()
+            for pkg in toresolve:
+                ver, deps = deb.info(self.packages[pkg])
+                self.spec.add(pkg, ver)
+                depends.update(deps)
         
-        self.spec.print_spec()
+            depends.difference_update(set(self.spec.packages.keys()))
+            toresolve = depends
+        
+    def get_spec_packages(self):
+        """get packages according to spec"""
+        self.get_packages(self.spec.get())
+
 
 class Chroot:
     """class for interacting with a fab chroot"""
@@ -264,9 +248,10 @@ class Chroot:
         
 def plan_resolve(pool, plan, output):
     spec = PackagesSpec(output)
-    
     p = Packages(pool, spec)
+    
     p.resolve_plan(plan)
+    p.spec.print_spec()
 
 def spec_get(pool, specinfo, outdir):
     spec = PackagesSpec()

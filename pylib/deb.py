@@ -1,8 +1,19 @@
+import os
 import re
-from utils import getoutput
+from utils import getoutput, getstatus
 
 class Error(Exception):
     pass
+
+def _package_exists(package):
+    """return True if package exists in the pool"""
+    if not os.getenv('POOL_DIR'):
+        raise Error("POOL_DIR not set")
+    err = getstatus("pool-exists " + package)
+    if err:
+        return False
+    
+    return True
 
 def extract_control(path):
     return getoutput("ar -p %s control.tar.gz | zcat | tar -O -xf - ./control 2>/dev/null" % path)
@@ -11,6 +22,29 @@ def parse_control(content):
     return dict([ re.split("\s*:\s+", line, 1)
         for line in content.split("\n")
             if not line.startswith(" ") ])
+
+def info(path):
+    deps = set()
+    
+    control = extract_control(path)
+    package = parse_control(control)
+
+    ver = package['Version']
+    if package.has_key('Depends'):
+        for depend in parse_depends(package['Depends'].split(",")):
+            #eg. ('initramfs-tools', '0.40ubuntu11', '>=')
+            #TODO: depends on version
+            if "|" in depend[0]:
+                for d in parse_depends(depend[0].split("|")):
+                    depname = parse_name(d[0])
+                    if _package_exists(depname):
+                        break
+            else:
+                depname = parse_name(depend[0])
+            
+            deps.add(depname)
+    
+    return ver, deps
 
 def parse_depends(content):
     """content := array (eg. stuff.split(','))"""
