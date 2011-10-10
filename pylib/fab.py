@@ -21,14 +21,6 @@ def get_tmpdir():
     tmpdir = join(tmpdir, "fab-" + get_datetime())
     return realpath(tmpdir)
 
-def rm_epoch(package):
-    if ":" in package:
-        name, version = package.split("=")
-        version = re.sub('.:', '', version)
-        package = name + "=" + version
-
-    return package
-
 class Error(Exception):
     pass
 
@@ -64,7 +56,6 @@ class PackagesSpec:
             entry = re.sub(r'#.*', '', entry)
             entry = entry.strip()
             if entry:
-                entry = rm_epoch(entry)
                 try:
                     name, version = entry.split("=")
                 except ValueError:
