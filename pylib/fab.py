@@ -9,7 +9,8 @@ import utils
 
 def get_datetime():
     """return unique string created by current data and time"""
-    return datetime.now().strftime("%Y%m%d.%H%M%S")
+    dt = datetime.now()
+    return dt.strftime("%Y%m%d.%H%M%S.") + str(dt.microsecond/1000)
 
 def get_tmpdir():
     """return unique temporary directory path"""
@@ -130,6 +131,7 @@ class Packages:
         """resolve plan and its dependencies recursively, return spec"""
         toresolve = plan
         while toresolve:
+            self.outdir = get_tmpdir()
             self.get_packages(toresolve)
             self._read_packages()
             depends = set()
