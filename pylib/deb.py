@@ -1,6 +1,8 @@
 import os
 import re
-from utils import getoutput, getstatus
+
+import debinfo
+from utils import getstatus
 
 class Error(Exception):
     pass
@@ -15,23 +17,14 @@ def _package_exists(package):
     
     return True
 
-def extract_control(path):
-    return getoutput("ar -p %s control.tar.gz | zcat | tar -O -xf - ./control 2>/dev/null" % path)
-
-def parse_control(content):
-    return dict([ re.split("\s*:\s+", line, 1)
-        for line in content.split("\n")
-            if not line.startswith(" ") ])
-
 def info(path):
     deps = set()
     
-    control = extract_control(path)
-    package = parse_control(control)
+    control_fields = debinfo.get_control_fields(path)
 
-    ver = package['Version']
-    if package.has_key('Depends'):
-        for depend in parse_depends(package['Depends'].split(",")):
+    version = control_fields['Version']
+    if control_fields.has_key('Depends'):
+        for depend in parse_depends(control_fields['Depends'].split(",")):
             #eg. ('initramfs-tools', '0.40ubuntu11', '>=')
             #TODO: depends on version
             if "|" in depend[0]:
@@ -44,7 +37,7 @@ def info(path):
             
             deps.add(depname)
     
-    return ver, deps
+    return version, deps
 
 def parse_depends(content):
     """content := array (eg. stuff.split(','))"""
