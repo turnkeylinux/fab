@@ -2,6 +2,7 @@ import os
 import re
 
 import debinfo
+import debversion
 from utils import getstatus
 
 class Error(Exception):
@@ -17,26 +18,46 @@ def _package_exists(package):
     
     return True
 
+def checkversion(package, version):
+    """compare package := name(relation)ver and version by relation"""
+    relations = {'<<': [-1],
+                 '<=': [-1,0],
+                 '=':  [0],
+                 '>=': [0,1],
+                 '>>': [1]
+                }
+
+    #gotcha: can't use relations.keys() due to ordering
+    for relation in ('>=', '>>', '<=', '<<', '='):
+        if relation in package:
+            name, ver = package.split(relation)
+            if debversion.compare(version, ver) in relations[relation]:
+                return True
+
+            raise Error("dependency version error: ", package, version)
+
 def info(path):
     deps = set()
-    
     control_fields = debinfo.get_control_fields(path)
 
     version = control_fields['Version']
     if control_fields.has_key('Depends'):
         for depend in parse_depends(control_fields['Depends'].split(",")):
-            #eg. ('initramfs-tools', '0.40ubuntu11', '>=')
-            #TODO: depends on version
             if "|" in depend[0]:
                 for d in parse_depends(depend[0].split("|")):
                     depname = parse_name(d[0])
+                    dep = depname + d[2] + d[1]
+
+                    # gotcha: if package exists, but not the specified version
+                    # an error will be raised in checkversion
                     if _package_exists(depname):
                         break
             else:
                 depname = parse_name(depend[0])
-            
-            deps.add(depname)
-    
+                dep = depname + depend[2] + depend[1]
+
+            deps.add(dep)
+
     return version, deps
 
 def parse_depends(content):
@@ -55,9 +76,7 @@ def parse_filename(filename):
     if not filename.endswith(".deb"):
         raise Error("not a package `%s'" % filename)
 
-    name, version = filename.split("_")[:2]
-
-    return name, version
+    return filename.split("_")[:2]
 
 def parse_name(name):
     #TODO: solve the provides/virtual issue properly

@@ -103,8 +103,18 @@ class Packages:
         if not isdir(self.outdir):
             utils.mkdir(self.outdir)
 
+        toget = []
+        for pkg in packages:
+            name = pkg
+            for relation in ('>>', '>=', '<=', '<<'):
+                if relation in pkg:
+                    name, version = pkg.split(relation)
+                    break
+
+            toget.append(name)
+
         cmd = ["pool-get", "--strict", "-i-", self.outdir]
-        out, err = utils.system_pipe(cmd, "\n".join(packages))
+        out, err = utils.system_pipe(cmd, "\n".join(toget))
         if err:
             raise Error("error: " + err, cmd, out)
 
@@ -122,7 +132,8 @@ class Packages:
                 self.packages[pkgname] = filepath
 
     def resolve_plan(self, plan):
-        """resolve plan and its dependencies recursively, return spec"""
+        """resolve plan and its dependencies recursively, update spec"""
+        resolved = set()
         toresolve = plan
         while toresolve:
             self.outdir = get_tmpdir()
@@ -130,13 +141,25 @@ class Packages:
             self._read_packages()
             depends = set()
             for pkg in toresolve:
-                ver, deps = deb.info(self.packages[pkg])
-                self.spec.add(pkg, ver)
+                name = pkg
+                for relation in ('>=', '>>', '<=', '<<', '='):
+                    if relation in pkg:
+                        name, v = pkg.split(relation)
+                        break
+
+                ver, deps = deb.info(self.packages[name])
+                deb.checkversion(pkg, ver)
+                self.spec.add(name, ver)
+
+                resolved.add(pkg)
+                resolved.add(name)
+                resolved.add(name + "=" + ver)
+
                 depends.update(deps)
-        
-            depends.difference_update(set(self.spec.packages.keys()))
+
             toresolve = depends
-        
+            toresolve.difference_update(resolved)
+
     def get_spec_packages(self):
         """get packages according to spec"""
         self.get_packages(self.spec.get())
