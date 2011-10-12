@@ -1,25 +1,17 @@
 
 import re
 import os
+import tempfile
 from os.path import *
-from datetime import datetime
 
 import deb
 import utils
 
-def get_datetime():
-    """return unique string created by current data and time"""
-    dt = datetime.now()
-    return dt.strftime("%Y%m%d.%H%M%S.") + str(dt.microsecond/1000)
-
 def get_tmpdir():
     """return unique temporary directory path"""
-    tmpdir = os.getenv('FAB_TMPDIR')
-    if not tmpdir:
-        tmpdir = "/var/tmp"
-
-    tmpdir = join(tmpdir, "fab-" + get_datetime())
-    return realpath(tmpdir)
+    tmpdir = os.getenv('FAB_TMPDIR', default='/var/tmp')
+    utils.mkdir(tmpdir)
+    return tempfile.mkdtemp(prefix="fab", dir=tmpdir)
 
 class Error(Exception):
     pass
