@@ -2,7 +2,7 @@
 <?xml-stylesheet ekr_test?>
 <leo_file>
 <leo_header file_format="2" tnodes="0" max_tnode_index="0" clone_windows="0"/>
-<globals body_outline_ratio="0.277583187391">
+<globals body_outline_ratio="0.368651488616">
 	<global_window_position top="0" left="5" height="709" width="1142"/>
 	<global_log_window_position top="0" left="0" height="0" width="0"/>
 </globals>
@@ -11,7 +11,7 @@
 <vnodes>
 <v t="zaril.20110904173229" a="E"><vh>Project</vh>
 <v t="loni.20111001190214" a="E"><vh>documentation</vh>
-<v t="loni.20111001190214.1" a="TV"><vh>initial release</vh></v>
+<v t="loni.20111001190214.1"><vh>initial release</vh></v>
 </v>
 <v t="loni.20111001190214.2" a="E"><vh>development log</vh>
 <v t="loni.20111001190214.3"><vh>v0.5 - initial release</vh>
@@ -83,6 +83,7 @@
 <v t="loni.20111121182213"><vh>caching</vh></v>
 </v>
 </v>
+<v t="loni.20111206170905" a="TV"><vh>regression testing</vh></v>
 </v>
 </v>
 <v t="loni.20110928132411" a="E"><vh>bugs/wishlist</vh>
@@ -1260,6 +1261,32 @@ welcome.
 <t tx="loni.20111121190620">found on the web, and made a note of it (PsiLinux ?)
 
 (11) Clean up. The installation contains a load of excessive baggage that wastes considerable disk space - this is why the *.ipk version of PsiLinux is nice. When the dust has settled above you will find that your system takes up about 70 MB of space. You can delete much of the dpkg baggage, however. Once you are happy that all of the required *.deb files are installed, you can delete them from /var/cache/apt/archive; this will clear 21 MB of space. Places for other deletions or gzip-tions are: /usr/lib/gconv, /var/lib/apt/lists-files, /var/lib/dpkg/info files, /usr/share/locale, /usr/share/zoneinfo, /usr/man/* (foreign languages). Some libraries or files are duplicated, e.g., /usr/share/unidata/Unicode* files and /sbin/fsck* files - you can make links to avoid this. Other places to look are the /usr/share/doc files - you will find a lot of README, TODO, etc. files that can be deleted. I should think in all some 30+ MB of space can be cleared up.</t>
+<t tx="loni.20111206170905">
+Q: where should it be implemented?
+Q: should it be self contained?
+
+if we create it as a product (/turnkey/fab/products/fabregtest)
+    we can then deck bootstrap for proper testing
+
+the best and most complete fab test is to fabricate a product
+the regression suite should provide quick testing and confirmation that nothing is broken
+
+
+IDEA:
+    create a source package which creates lots of binary packages
+    those binary packages will provide the testing infrastructure
+    
+Packages
+    no depends
+    depend by name
+        available
+        not available
+    depend by each relation version: &lt;&lt;, &lt;=, =, =&gt;, &gt;&gt;
+        available
+        not available
+
+
+</t>
 <t tx="zaril.20110904173229">@nocolor
 </t>
 <t tx="zaril.20110904173337"></t>

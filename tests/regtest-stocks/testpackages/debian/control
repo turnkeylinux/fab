@@ -1,0 +1,54 @@
+Source: testpackages
+Section: misc
+Priority: optional
+Maintainer: Alon Swartz <alon@turnkeylinux.org>
+Build-Depends: debhelper (>> 4.2.0)
+Standards-Version: 3.6.1
+
+Package: p1
+Architecture: any
+Description: test package
+
+Package: p2
+Architecture: any
+Description: test package
+
+Package: p3
+Architecture: any
+Description: test package
+
+Package: p4
+Architecture: any
+Depends: p1, p2, p3
+Description: test package
+
+Package: p5
+Architecture: any
+Depends: p1 (>=0), p2 (>>0), p3 (<<2)
+Description: test package
+
+Package: p6
+Architecture: any
+Depends: p1, p2 | nonexistent
+Description: test package
+
+Package: p7
+Architecture: any
+Depends: p1, nonexistent | p2
+Description: test package
+
+Package: f1
+Architecture: any
+Depends: nonexistent
+Description: test package
+
+Package: f2
+Architecture: any
+Depends: p1, p2, p3, f1
+Description: test package
+
+Package: f3
+Architecture: any
+Depends: p1, p2 (>=2), p3
+Description: test package
+

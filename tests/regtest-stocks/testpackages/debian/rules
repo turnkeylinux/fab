@@ -1,0 +1,33 @@
+#! /usr/bin/make -f
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+PACKAGES=$(shell grep Package debian/control | sed 's/Package: //')
+
+build:
+	dh_testdir
+
+clean:
+	dh_clean -k
+
+install: build
+	dh_clean -k
+	for package in $(PACKAGES); do \
+		prefix=debian/$$package/tmp; \
+		mkdir -p $$prefix; \
+		touch $$prefix/$$package; \
+	done
+
+binary-indep: build install
+
+binary-arch: build install
+	dh_testdir
+	dh_testroot
+	dh_installdeb -a
+	dh_gencontrol -a
+	dh_md5sums -a
+	dh_builddeb -a
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install
