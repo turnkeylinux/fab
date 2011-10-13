@@ -66,7 +66,7 @@ def main():
     else:
         fh = file(args[0], "r")
 
-    pool = args[1]
+    pool_path = args[1]
     
     bootstrap = None
     if len(args) == 3:
@@ -89,7 +89,7 @@ def main():
         for entry in out.split("\n"):
             plan.add(entry)
 
-    fab.plan_resolve(pool, plan, opt_out)
+    fab.plan_resolve(pool_path, plan, opt_out)
 
         
 if __name__=="__main__":
