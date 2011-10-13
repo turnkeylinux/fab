@@ -30,9 +30,9 @@ from utils import warning, fatal
 def usage():
     print >> sys.stderr, "Syntax: %s [-options] <plan> <pool> [ /path/to/bootstrap ]" % sys.argv[0]
 
-def calculate_plan(declarations):
+def calculate_plan(processed_plan):
     packages = set()
-    for declaration in declarations.splitlines():
+    for declaration in processed_plan.splitlines():
         declaration = re.sub(r'#.*', '', declaration)
         declaration = declaration.strip()
         if not declaration:
