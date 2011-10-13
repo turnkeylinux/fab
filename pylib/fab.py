@@ -10,7 +10,7 @@ import executil
 
 def get_tmpdir():
     """return unique temporary directory path"""
-    tmpdir = os.getenv('FAB_TMPDIR', default='/var/tmp')
+    tmpdir = os.environ.get('FAB_TMPDIR', '/var/tmp')
     utils.mkdir(tmpdir)
     return tempfile.mkdtemp(prefix="fab", dir=tmpdir)
 
