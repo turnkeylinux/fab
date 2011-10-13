@@ -62,9 +62,9 @@ def main():
         usage()
     
     if args[0] == '-':
-        fh = sys.stdin
+        plan_fh = sys.stdin
     else:
-        fh = file(args[0], "r")
+        plan_fh = file(args[0], "r")
 
     pool_path = args[1]
     
@@ -78,7 +78,7 @@ def main():
             opt_out = val
 
     cmd_cpp.append("-Ulinux")
-    out = system_pipe(cmd_cpp, fh.read(), quiet=True)[0]
+    out = system_pipe(cmd_cpp, plan_fh.read(), quiet=True)[0]
     plan = calculate_plan(out)
 
     if bootstrap:
