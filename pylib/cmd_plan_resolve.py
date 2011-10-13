@@ -61,8 +61,8 @@ def plan_resolve(cpp_opts, plan_path, pool_path, bootstrap_path, output_path):
         
         output = fab.chroot_execute(bootstrap_path, "dpkg-query --show -f='${Package}\n'", get_stdout=True)
 
-        for entry in output.splitlines():
-            plan.add(entry)
+        for package in output.splitlines():
+            plan.add(package)
 
     fab.plan_resolve(pool_path, plan, output_path)
 
