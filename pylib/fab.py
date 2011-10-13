@@ -8,6 +8,25 @@ import deb
 import utils
 import executil
 
+def is_mounted(dir):
+    mounts = file("/proc/mounts").read()
+    if mounts.find(dir) != -1:
+        return True
+    return False
+
+def mount(device, mountp, options=None):
+    if not is_mounted(device):
+        print "mounting: " + device
+        if options:
+            system("mount", device, mountp, options)
+        else:
+            system("mount", device, mountp)
+
+def umount(device):
+    if is_mounted(device):
+        print "umounting: " + device
+        system("umount", "-f", device)
+
 def get_tmpdir():
     """return unique temporary directory path"""
     tmpdir = os.environ.get('FAB_TMPDIR', '/var/tmp')
@@ -168,13 +187,13 @@ class Chroot:
     
     def mountpoints(self):
         """mount proc and dev/pts into chroot"""
-        utils.mount('proc-chroot',   join(self.path, 'proc'),    '-tproc')
-        utils.mount('devpts-chroot', join(self.path, 'dev/pts'), '-tdevpts')
+        mount('proc-chroot',   join(self.path, 'proc'),    '-tproc')
+        mount('devpts-chroot', join(self.path, 'dev/pts'), '-tdevpts')
 
     def umountpoints(self):
         """umount proc and dev/pts from chroot"""
-        utils.umount(join(self.path, 'dev/pts'))
-        utils.umount(join(self.path, 'proc'))
+        umount(join(self.path, 'dev/pts'))
+        umount(join(self.path, 'proc'))
 
     def system_chroot(self, command, get_stdout=False):
         """execute system command in chroot"""

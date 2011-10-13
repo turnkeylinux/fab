@@ -38,23 +38,3 @@ def system_pipe(command, pipein, quiet=False):
         raise Error("failed command: " + " ".join(command))
     
     return out, err
-
-def is_mounted(dir):
-    mounts = file("/proc/mounts").read()
-    if mounts.find(dir) != -1:
-        return True
-    return False
-
-def mount(device, mountp, options=None):
-    if not is_mounted(device):
-        print "mounting: " + device
-        if options:
-            system("mount", device, mountp, options)
-        else:
-            system("mount", device, mountp)
-
-def umount(device):
-    if is_mounted(device):
-        print "umounting: " + device
-        system("umount", "-f", device)
-
