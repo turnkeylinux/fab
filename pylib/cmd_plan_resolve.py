@@ -58,6 +58,9 @@ def main():
     cmd_cpp, args, opts = cpp_opts.parse(sys.argv[1:],
                                          ['output='])
     
+    if not args:
+        usage()
+        
     if not len(args) in (2, 3):
         usage("bad number of arguments")
     
