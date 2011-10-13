@@ -8,6 +8,8 @@ import deb
 import utils
 import executil
 
+import subprocess
+
 def is_mounted(dir):
     mounts = file("/proc/mounts").read()
     if mounts.find(dir) != -1:
@@ -18,20 +20,38 @@ def mount(device, mountp, options=None):
     if not is_mounted(device):
         print "mounting: " + device
         if options:
-            system("mount", device, mountp, options)
+            executil.system("mount", device, mountp, options)
         else:
-            system("mount", device, mountp)
+            executil.system("mount", device, mountp)
 
 def umount(device):
     if is_mounted(device):
         print "umounting: " + device
-        system("umount", "-f", device)
+        executil.system("umount", "-f", device)
 
 def get_tmpdir():
     """return unique temporary directory path"""
     tmpdir = os.environ.get('FAB_TMPDIR', '/var/tmp')
     utils.mkdir(tmpdir)
     return tempfile.mkdtemp(prefix="fab", dir=tmpdir)
+
+def system_pipe(command, pipein, quiet=False):
+    if quiet:
+        p = subprocess.Popen(command,
+                             stdin = subprocess.PIPE,
+                             stdout = subprocess.PIPE,
+                             #stderr = subprocess.PIPE,
+                             close_fds = True)
+    else:
+        p = subprocess.Popen(command,
+                             stdin = subprocess.PIPE,
+                             close_fds = True)
+        
+    out, err =  p.communicate(pipein)
+    if p.returncode != 0:
+        raise Error("failed command: " + " ".join(command))
+    
+    return out, err
 
 class Error(Exception):
     pass
@@ -126,7 +146,7 @@ class Packages:
             toget.append(name)
 
         cmd = ["pool-get", "--strict", "-i-", self.outdir]
-        out, err = utils.system_pipe(cmd, "\n".join(toget))
+        out, err = system_pipe(cmd, "\n".join(toget))
         if err:
             raise Error("error: " + err, cmd, out)
 
