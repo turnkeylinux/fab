@@ -3,7 +3,8 @@ import re
 
 import debinfo
 import debversion
-from utils import getstatus
+
+import executil
 
 class Error(Exception):
     pass
@@ -12,8 +13,10 @@ def _package_exists(package):
     """return True if package exists in the pool"""
     if not os.getenv('POOL_DIR'):
         raise Error("POOL_DIR not set")
-    err = getstatus("pool-exists " + package)
-    if err:
+
+    try:
+        executil.getoutput("pool-exists", package)
+    except executil.ExecError:
         return False
     
     return True

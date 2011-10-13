@@ -39,10 +39,6 @@ def system_pipe(command, pipein, quiet=False):
     
     return out, err
 
-def getstatus(command):
-    (s,o) = commands.getstatusoutput(command)
-    return s
-
 def is_mounted(dir):
     mounts = file("/proc/mounts").read()
     if mounts.find(dir) != -1:
