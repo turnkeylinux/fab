@@ -10,6 +10,11 @@ import executil
 
 import subprocess
 
+def mkdir(path):
+    path = str(path)
+    if not exists(path):
+        os.makedirs(path)
+
 def is_mounted(dir):
     mounts = file("/proc/mounts").read()
     if mounts.find(dir) != -1:
@@ -32,7 +37,7 @@ def umount(device):
 def get_tmpdir():
     """return unique temporary directory path"""
     tmpdir = os.environ.get('FAB_TMPDIR', '/var/tmp')
-    utils.mkdir(tmpdir)
+    mkdir(tmpdir)
     return tempfile.mkdtemp(prefix="fab", dir=tmpdir)
 
 def system_pipe(command, pipein, quiet=False):
@@ -133,7 +138,7 @@ class Packages:
     def get_packages(self, packages):
         """get list of packages from pool"""
         if not isdir(self.outdir):
-            utils.mkdir(self.outdir)
+            mkdir(self.outdir)
 
         toget = []
         for pkg in packages:
@@ -343,7 +348,7 @@ def apply_removelist(rmlist, srcpath, dstpath=None):
         dst = join(dstpath, dirname(entry))
     
         if exists(src):
-            utils.mkdir(dst)
+            mkdir(dst)
             if isdir(src):
                 executil.system("mv -f %s/* %s/" % (dirname(src), dst))
             else:
