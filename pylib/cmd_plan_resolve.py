@@ -52,6 +52,21 @@ def calculate_plan(declarations):
     
     return packages
 
+def plan_resolve(cpp_opts, plan_path, pool_path, bootstrap_path, output_path):
+    cpp_opts += [ ("-U", "linux") ]
+    processed_plan = cpp.cpp(plan_path, cpp_opts)
+    plan = calculate_plan(processed_plan)
+
+    if bootstrap_path:
+        if not os.path.isdir(bootstrap_path):
+            fatal("bootstrap does not exist: " + bootstrap_path)
+        
+        out = fab.chroot_execute(bootstrap_path, "dpkg-query --show -f='${Package}\n'", get_stdout=True)
+        for entry in out.split("\n"):
+            plan.add(entry)
+
+    fab.plan_resolve(pool_path, plan, output_path)
+
 def main():
     cpp_opts, args = cpp.getopt(sys.argv[1:])
     try:
@@ -81,20 +96,8 @@ def main():
     except IndexError:
         bootstrap_path = None
 
-    cpp_opts += [ ("-U", "linux") ]
-    processed_plan = cpp.cpp(plan_path, cpp_opts)
-    plan = calculate_plan(processed_plan)
-
-    if bootstrap_path:
-        if not os.path.isdir(bootstrap_path):
-            fatal("bootstrap does not exist: " + bootstrap_path)
-        
-        out = fab.chroot_execute(bootstrap_path, "dpkg-query --show -f='${Package}\n'", get_stdout=True)
-        for entry in out.split("\n"):
-            plan.add(entry)
-
-    fab.plan_resolve(pool_path, plan, output_path)
-        
+    plan_resolve(cpp_opts, plan_path, pool_path, bootstrap_path, output_path)
+    
 if __name__=="__main__":
     main()
 
