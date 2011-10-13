@@ -15,8 +15,7 @@ import getopt
 
 import fab
 import help
-from utils import fatal
-
+from cli_common import fatal
 
 @help.usage(__doc__)
 def usage():

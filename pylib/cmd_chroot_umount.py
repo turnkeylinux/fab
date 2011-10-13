@@ -16,8 +16,7 @@ import getopt
 
 import fab
 import help
-from utils import fatal, warning
-
+from cli_common import fatal, warning
 
 @help.usage(__doc__)
 def usage():

@@ -24,7 +24,7 @@ import fab
 import cpp
 
 import getopt
-from utils import warning, fatal
+from cli_common import warning, fatal
 
 @help.usage(__doc__ + cpp.__doc__)
 def usage():

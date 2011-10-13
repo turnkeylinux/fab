@@ -5,7 +5,7 @@ import tempfile
 from os.path import *
 
 import deb
-import utils
+from cli_common import warning # what is cli code doing in fab?
 import executil
 
 import subprocess
@@ -354,7 +354,7 @@ def apply_removelist(rmlist, srcpath, dstpath=None):
             else:
                 executil.system("mv -f %s %s/" % (src, dst))
         else:
-            utils.warning("entry does not exist: " + entry)
+            warning("entry does not exist: " + entry)
 
     if not dstpath:
         dstpath = get_tmpdir()
