@@ -32,14 +32,14 @@ def usage():
 
 def calculate_plan(processed_plan):
     packages = set()
-    for declaration in processed_plan.splitlines():
-        declaration = re.sub(r'#.*', '', declaration)
-        declaration = declaration.strip()
-        if not declaration:
+    for expr in processed_plan.splitlines():
+        expr = re.sub(r'#.*', '', expr)
+        expr = expr.strip()
+        if not expr:
             continue
         
-        if declaration.startswith("!"):
-            package = declaration[1:]
+        if expr.startswith("!"):
+            package = expr[1:]
 
             if package in packages:
                 packages.remove(package)
@@ -47,7 +47,7 @@ def calculate_plan(processed_plan):
                 warning("retraction failed. package was not declared: " + package)
 
         else:
-            package = declaration
+            package = expr
             packages.add(package)
     
     return packages
