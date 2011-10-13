@@ -16,11 +16,7 @@ def parse(argv, longopts=[]):
     cmd_cpp = ['cpp']
     extra_opts = []
     
-    try:
-        opts, args = getopt.gnu_getopt(argv, "I:D:U:", longopts)
-    except getopt.GetoptError, e:
-        print >> sys.stderr, e
-        sys.exit(1)
+    opts, args = getopt.gnu_getopt(argv, "I:D:U:", longopts)
     
     if argv.count("-") == 1:
         args.insert(0, "-")
