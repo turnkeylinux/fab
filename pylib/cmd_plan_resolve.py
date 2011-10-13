@@ -59,7 +59,7 @@ def main():
                                          ['output='])
     
     if not len(args) in (2, 3):
-        usage()
+        usage("bad number of arguments")
     
     if args[0] == '-':
         plan_fh = sys.stdin
