@@ -71,9 +71,10 @@ def main():
 
     pool_path = args[1]
     
-    bootstrap = None
-    if len(args) == 3:
-        bootstrap = args[2]
+    try:
+        bootstrap_path = args[2]
+    except IndexError:
+        bootstrap_path = None
 
     opt_out = None
     for opt, val in opts:
@@ -84,11 +85,11 @@ def main():
     out = system_pipe(cmd_cpp, plan_fh.read(), quiet=True)[0]
     plan = calculate_plan(out)
 
-    if bootstrap:
-        if not os.path.isdir(bootstrap):
-            fatal("bootstrap does not exist: " + bootstrap)
+    if bootstrap_path:
+        if not os.path.isdir(bootstrap_path):
+            fatal("bootstrap does not exist: " + bootstrap_path)
         
-        out = fab.chroot_execute(bootstrap, "dpkg-query --show -f='${Package}\n'", get_stdout=True)
+        out = fab.chroot_execute(bootstrap_path, "dpkg-query --show -f='${Package}\n'", get_stdout=True)
         for entry in out.split("\n"):
             plan.add(entry)
 
