@@ -78,7 +78,7 @@ def main():
             opt_out = val
 
     cmd_cpp.append("-Ulinux")
-    out, err = system_pipe(cmd_cpp, fh.read(), quiet=True)
+    out = system_pipe(cmd_cpp, fh.read(), quiet=True)[0]
     plan = calculate_plan(out)
 
     if bootstrap:
