@@ -65,13 +65,13 @@ def main():
     if not len(args) in (2, 3):
         usage("bad number of arguments")
 
-    opt_out = None
+    output_path = None
     for opt, val in opts:
         if opt == '-h':
             usage()
 
         if opt in ('-o', '--output'):
-            opt_out = val
+            output_path = val
     
     plan_path = args[0]
     pool_path = args[1]
@@ -93,7 +93,7 @@ def main():
         for entry in out.split("\n"):
             plan.add(entry)
 
-    fab.plan_resolve(pool_path, plan, opt_out)
+    fab.plan_resolve(pool_path, plan, output_path)
         
 if __name__=="__main__":
     main()
