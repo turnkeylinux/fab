@@ -16,7 +16,7 @@ import getopt
 
 import fab
 import help
-from cli_common import fatal, warning
+from cli_common import fatal, warn
 
 @help.usage(__doc__)
 def usage():
@@ -44,7 +44,7 @@ def main():
         if opt_strict:
             fatal(msg)
         else:
-            warning(msg)
+            warn(msg)
             sys.exit(0)
             
     fab.Chroot(chroot).umountpoints()

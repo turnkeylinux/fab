@@ -4,5 +4,5 @@ def fatal(s):
     print >> sys.stderr, "error: " + str(s)
     sys.exit(1)
 
-def warning(s):
+def warn(s):
     print >> sys.stderr, "warning: " + str(s)
