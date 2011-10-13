@@ -43,8 +43,6 @@ def calculate_plan(processed_plan):
 
             if package in packages:
                 packages.remove(package)
-            else:
-                warning("retraction failed. package was not declared: " + package)
 
         else:
             package = expr
