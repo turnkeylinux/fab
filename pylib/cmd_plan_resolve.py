@@ -59,9 +59,9 @@ def plan_resolve(cpp_opts, plan_path, pool_path, bootstrap_path, output_path):
         if not os.path.isdir(bootstrap_path):
             fatal("bootstrap does not exist: " + bootstrap_path)
         
-        out = fab.chroot_execute(bootstrap_path, "dpkg-query --show -f='${Package}\n'", get_stdout=True)
+        output = fab.chroot_execute(bootstrap_path, "dpkg-query --show -f='${Package}\n'", get_stdout=True)
 
-        for entry in out.splitlines():
+        for entry in output.splitlines():
             plan.add(entry)
 
     fab.plan_resolve(pool_path, plan, output_path)
