@@ -82,8 +82,8 @@ def main():
         bootstrap_path = None
 
     cpp_opts += [ ("-U", "linux") ]
-    out = cpp.cpp(plan_path, cpp_opts)
-    plan = calculate_plan(out)
+    processed_plan = cpp.cpp(plan_path, cpp_opts)
+    plan = calculate_plan(processed_plan)
 
     if bootstrap_path:
         if not os.path.isdir(bootstrap_path):
