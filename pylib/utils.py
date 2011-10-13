@@ -4,6 +4,8 @@ import sys
 import commands
 import subprocess
 
+from executil import system
+
 class Error(Exception):
     pass
 
@@ -18,13 +20,6 @@ def mkdir(path):
     path = str(path)
     if not os.path.exists(path):
         os.makedirs(path)
-
-def system(command, *args):
-    command = command + " " + " ".join([commands.mkarg(arg) for arg in args])
-    err = os.system(command)
-    if err:
-        raise Error("command failed: " + command,
-                    os.WEXITSTATUS(err))
 
 def system_pipe(command, pipein, quiet=False):
     if quiet:
@@ -44,13 +39,6 @@ def system_pipe(command, pipein, quiet=False):
 def getstatus(command):
     (s,o) = commands.getstatusoutput(command)
     return s
-
-def getoutput(command, raise_err=True):
-    (err, out) = commands.getstatusoutput(command)
-    if err and raise_err:
-        raise Error("command failed: " + command, err)
-    
-    return out
 
 def is_mounted(dir):
     mounts = file("/proc/mounts").read()

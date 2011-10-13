@@ -6,6 +6,7 @@ from os.path import *
 
 import deb
 import utils
+import executil
 
 def get_tmpdir():
     """return unique temporary directory path"""
@@ -184,9 +185,10 @@ class Chroot:
         
         cmd = "chroot %s %s %s" % (self.path, env, command)
         if get_stdout:
-            return utils.getoutput(cmd, raise_err=False)
-        
-        utils.system(cmd)
+            try:
+                return executil.getoutput(cmd)
+            except executil.ExecError, e:
+                return e.output
 
     def _insert_fakestartstop(self):
         """insert fake start-stop-daemon into chroot"""
@@ -194,7 +196,7 @@ class Chroot:
         if isfile('%s.REAL' % daemon): #already created
             return
         
-        utils.system("mv %s %s.REAL" % (daemon, daemon))
+        executil.system("mv %s %s.REAL" % (daemon, daemon))
         
         fake = "#!/bin/sh\n" \
                "echo\n" \
@@ -206,7 +208,7 @@ class Chroot:
     def _remove_fakestartstop(self):
         """remove fake start-stop daemon from chroot"""
         daemon = join(self.path, 'sbin/start-stop-daemon')
-        utils.system("mv %s.REAL %s" % (daemon, daemon))
+        executil.system("mv %s.REAL %s" % (daemon, daemon))
 
     def _apt_indexpath(self):
         """return package index path"""
@@ -225,7 +227,7 @@ class Chroot:
         self._apt_sourcelist()       
         
         print "generating package index..."
-        utils.system("apt-ftparchive packages %s > %s" % (pkgdir_path, 
+        executil.system("apt-ftparchive packages %s > %s" % (pkgdir_path, 
                                                     self._apt_indexpath()))
         self.system_chroot("apt-cache gencaches")
         
@@ -255,7 +257,7 @@ class Chroot:
     def apt_clean(self):
         """clean apt cache in chroot"""
         self.system_chroot("apt-get clean")
-        utils.system("rm -f " + self._apt_indexpath())
+        executil.system("rm -f " + self._apt_indexpath())
         
 def plan_resolve(pool, plan, output):
     spec = PackagesSpec(output)
@@ -304,9 +306,9 @@ def apply_removelist(rmlist, srcpath, dstpath=None):
         if exists(src):
             utils.mkdir(dst)
             if isdir(src):
-                utils.system("mv -f %s/* %s/" % (dirname(src), dst))
+                executil.system("mv -f %s/* %s/" % (dirname(src), dst))
             else:
-                utils.system("mv -f %s %s/" % (src, dst))
+                executil.system("mv -f %s %s/" % (src, dst))
         else:
             utils.warning("entry does not exist: " + entry)
 
@@ -325,6 +327,6 @@ def apply_overlay(overlay, dstpath, preserve=False):
     opts = "-dR"
     if preserve:
         opts += "p"
-    utils.system("cp %s %s/* %s/" % (opts, overlay, dstpath))
+    executil.system("cp %s %s/* %s/" % (opts, overlay, dstpath))
 
 
