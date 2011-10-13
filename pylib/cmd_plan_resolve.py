@@ -30,7 +30,7 @@ from utils import warning, fatal
 def usage():
     print >> sys.stderr, "Syntax: %s [-options] <plan> <pool> [ /path/to/bootstrap ]" % sys.argv[0]
 
-def calculate_plan(processed_plan):
+def parse_processed_plan(processed_plan):
     packages = set()
     for expr in processed_plan.splitlines():
         expr = re.sub(r'#.*', '', expr)
@@ -53,7 +53,7 @@ def calculate_plan(processed_plan):
 def plan_resolve(cpp_opts, plan_path, pool_path, bootstrap_path, output_path):
     cpp_opts += [ ("-U", "linux") ]
     processed_plan = cpp.cpp(plan_path, cpp_opts)
-    plan = calculate_plan(processed_plan)
+    plan = parse_processed_plan(processed_plan)
 
     if bootstrap_path:
         if not os.path.isdir(bootstrap_path):
