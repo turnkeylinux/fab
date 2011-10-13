@@ -1,8 +1,5 @@
 import sys
 
-class Error(Exception):
-    pass
-
 def fatal(s):
     print >> sys.stderr, "FATAL: " + str(s)
     sys.exit(1)
