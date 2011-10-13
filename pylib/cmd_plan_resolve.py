@@ -21,11 +21,12 @@ import sys
 
 import help
 import fab
-import cpp_opts
-from utils import system_pipe, warning, fatal
+import cpp
 
+import getopt
+from utils import warning, fatal
 
-@help.usage(__doc__ + cpp_opts.__doc__)
+@help.usage(__doc__ + cpp.__doc__)
 def usage():
     print >> sys.stderr, "Syntax: %s [-options] <plan> <pool> [ /path/to/bootstrap ]" % sys.argv[0]
 
@@ -52,23 +53,27 @@ def calculate_plan(declarations):
     return packages
 
 def main():
-    if not len(sys.argv) > 1:
-        usage()
-    
-    cmd_cpp, args, opts = cpp_opts.parse(sys.argv[1:],
-                                         ['output='])
-    
+    cpp_opts, args = cpp.getopt(sys.argv[1:])
+    try:
+        opts, args = getopt.getopt(args, "o:h", ["output="])
+    except getopt.GetoptError, e:
+        usage(e)
+
     if not args:
         usage()
-        
+    
     if not len(args) in (2, 3):
         usage("bad number of arguments")
-    
-    if args[0] == '-':
-        plan_fh = sys.stdin
-    else:
-        plan_fh = file(args[0], "r")
 
+    opt_out = None
+    for opt, val in opts:
+        if opt == '-h':
+            usage()
+
+        if opt in ('-o', '--output'):
+            opt_out = val
+    
+    plan_path = args[0]
     pool_path = args[1]
     
     try:
@@ -76,13 +81,8 @@ def main():
     except IndexError:
         bootstrap_path = None
 
-    opt_out = None
-    for opt, val in opts:
-        if opt == '--output':
-            opt_out = val
-
-    cmd_cpp.append("-Ulinux")
-    out = system_pipe(cmd_cpp, plan_fh.read(), quiet=True)[0]
+    cpp_opts += [ ("-U", "linux") ]
+    out = cpp.cpp(plan_path, cpp_opts)
     plan = calculate_plan(out)
 
     if bootstrap_path:
@@ -94,7 +94,6 @@ def main():
             plan.add(entry)
 
     fab.plan_resolve(pool_path, plan, opt_out)
-
         
 if __name__=="__main__":
     main()
