@@ -34,6 +34,9 @@ def system_pipe(command, pipein, quiet=False):
                              close_fds = True)
         
     out, err =  p.communicate(pipein)
+    if p.returncode != 0:
+        raise Error("failed command: " + " ".join(command))
+    
     return out, err
 
 def getstatus(command):
