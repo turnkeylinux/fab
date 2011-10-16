@@ -233,6 +233,8 @@ class Chroot:
                 return executil.getoutput(cmd)
             except executil.ExecError, e:
                 return e.output
+        else:
+            executil.system(cmd)
 
     def _insert_fakestartstop(self):
         """insert fake start-stop-daemon into chroot"""
