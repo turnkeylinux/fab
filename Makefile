@@ -78,7 +78,7 @@ _install: execproxy
 	install -m 644 pylib/*.pyo $(PATH_INSTALL_LIB)
 	-install -m 755 libexec/* $(PATH_INSTALL_LIBEXEC)
 
-	install -m 644 version.pyo wrapper.pyo $(PATH_INSTALL)
+	install -m 644 wrapper.pyo $(PATH_INSTALL)
 	([ -f debian/changelog ] && (dpkg-parsechangelog | awk '/^Version/ {print $$2 }') || \
 		autoversion HEAD) > $(PATH_INSTALL)/version.txt
 
