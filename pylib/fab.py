@@ -222,19 +222,21 @@ class Chroot:
 
     def system_chroot(self, command, get_stdout=False):
         """execute system command in chroot"""
-        env = "/usr/bin/env -i HOME=/root TERM=${TERM} LC_ALL=C " \
-              "PATH=/usr/sbin:/usr/bin:/sbin:/bin " \
-              "DEBIAN_FRONTEND=noninteractive " \
-              "DEBIAN_PRIORITY=critical"
-        
-        cmd = "chroot %s %s %s" % (self.path, env, command)
+        args = ['/usr/bin/env', '-i', 'HOME=/root', 'TERM=${TERM}', 'LC_ALL=C',
+                'PATH=/usr/sbin:/usr/bin:/sbin:/bin',
+                'DEBIAN_FRONTEND=noninteractive',
+                'DEBIAN_PRIORITY=critical']
+
+        args.extend(command.split())
+        chroot_args = (self.path, 'sh', '-c', executil.fmt_command('', *args))
+
         if get_stdout:
             try:
-                return executil.getoutput(cmd)
+                return executil.getoutput("chroot", *chroot_args)
             except executil.ExecError, e:
                 return e.output
         else:
-            executil.system(cmd)
+            executil.system("chroot", *chroot_args)
 
     def _insert_fakestartstop(self):
         """insert fake start-stop-daemon into chroot"""
