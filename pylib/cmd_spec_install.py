@@ -14,17 +14,18 @@ import os
 import sys
 import getopt
 
-import fab
 import help
+import installer
+from pool import Pool
 from cli_common import fatal
 
 @help.usage(__doc__)
 def usage():
     print >> sys.stderr, "Syntax: %s <spec> <pool> <chroot>" % sys.argv[0]
 
-def spec_install(pool, spec_fh, chroot_path):
-    chroot_path = realpath(chroot_path)
-    pkgdir_path = join(chroot_path, "var/cache/apt/archives")
+def spec_install(pool_path, spec_fh, chroot_path):
+    chroot_path = os.path.realpath(chroot_path)
+    pkgdir_path = os.path.join(chroot_path, "var/cache/apt/archives")
 
     if isfile(spec_fh):
         spec_lines = open(spec_fh, "r").readlines()
@@ -38,7 +39,7 @@ def spec_install(pool, spec_fh, chroot_path):
     pool = Pool(pool_path)
     pool.get(packages, pkgdir_path)
 
-    c = Chroot(chroot_path)
+    c = installer.Chroot(chroot_path)
     c.mountpoints()
     c.apt_install(pkgdir_path)
     c.apt_clean()
@@ -57,17 +58,17 @@ def main():
         usage()
 
     if args[0] == '-':
-        fh = sys.stdin
+        spec_fh = sys.stdin
     else:
-        fh = file(args[0], "r")
+        spec_fh = file(args[0], "r")
 
-    pool = args[1]
-    chroot = args[2]
+    pool_path = args[1]
+    chroot_path = args[2]
     
-    if not os.path.isdir(chroot):
-        fatal("chroot does not exist: " + chroot)
+    if not os.path.isdir(chroot_path):
+        fatal("chroot does not exist: " + chroot_path)
 
-    spec_install(pool, fh.read(), chroot)
+    spec_install(pool_path, spec_fh.read(), chroot_path)
 
         
 if __name__=="__main__":
