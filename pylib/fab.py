@@ -116,10 +116,5 @@ class Plan:
         
         return spec
         
-def apply_overlay(overlay, dstpath, preserve=False):
-    opts = "-dR"
-    if preserve:
-        opts += "p"
-    executil.system("cp %s %s/* %s/" % (opts, overlay, dstpath))
 
 

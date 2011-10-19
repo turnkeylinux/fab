@@ -14,13 +14,19 @@ import os
 import sys
 import getopt
 
-import fab
 import help
+import executil
 from cli_common import fatal
 
 @help.usage(__doc__)
 def usage():
     print >> sys.stderr, "Syntax: %s [-options] <overlay> <path>" % sys.argv[0]
+
+def apply_overlay(overlay, dstpath, preserve=False):
+    opts = "-dR"
+    if preserve:
+        opts += "p"
+    executil.system("cp %s %s/* %s/" % (opts, overlay, dstpath))
 
 def main():
     try:
@@ -35,16 +41,15 @@ def main():
     overlay = args[0]
     dstpath = args[1]
 
-    opt_preserve = False
+    kws = {}
     for opt, val in opts:
-        if opt == '--preserve':
-            opt_preserve = True
+        kws[opt[2:]] = val
 
-    for dir in [overlay, dstpath]:
+    for dir in (overlay, dstpath):
         if not os.path.isdir(dir):
             fatal("does not exist: " + dir)
 
-    fab.apply_overlay(overlay, dstpath, opt_preserve)
+    apply_overlay(overlay, dstpath, **kws)
 
         
 if __name__=="__main__":
