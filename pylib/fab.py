@@ -226,9 +226,8 @@ class Chroot:
                 'PATH=/usr/sbin:/usr/bin:/sbin:/bin',
                 'DEBIAN_FRONTEND=noninteractive',
                 'DEBIAN_PRIORITY=critical']
-
-        args.extend(command.split())
-        chroot_args = (self.path, 'sh', '-c', executil.fmt_command('', *args))
+        command = " ".join(args) + " " + command
+        chroot_args = (self.path, 'sh', '-c', command)
 
         if get_stdout:
             return executil.getoutput("chroot", *chroot_args)
