@@ -22,6 +22,28 @@ from cli_common import fatal
 def usage():
     print >> sys.stderr, "Syntax: %s <spec> <pool> <chroot>" % sys.argv[0]
 
+def spec_install(pool, spec_fh, chroot_path):
+    chroot_path = realpath(chroot_path)
+    pkgdir_path = join(chroot_path, "var/cache/apt/archives")
+
+    if isfile(spec_fh):
+        spec_lines = open(spec_fh, "r").readlines()
+    else:
+        spec_lines = spec_fh.splitlines()
+
+    packages = set()
+    for package in spec_lines:
+        packages.add(package)
+
+    pool = Pool(pool_path)
+    pool.get(packages, pkgdir_path)
+
+    c = Chroot(chroot_path)
+    c.mountpoints()
+    c.apt_install(pkgdir_path)
+    c.apt_clean()
+    c.umountpoints()
+
 def main():
     try:
         opts, args = getopt.gnu_getopt(sys.argv[1:], "")
@@ -45,7 +67,7 @@ def main():
     if not os.path.isdir(chroot):
         fatal("chroot does not exist: " + chroot)
 
-    fab.spec_install(pool, fh.read(), chroot)
+    spec_install(pool, fh.read(), chroot)
 
         
 if __name__=="__main__":

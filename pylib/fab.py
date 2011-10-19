@@ -119,28 +119,6 @@ class Plan:
         
         return spec
         
-def spec_install(pool, spec_fh, chroot_path):
-    chroot_path = realpath(chroot_path)
-    pkgdir_path = join(chroot_path, "var/cache/apt/archives")
-
-    if isfile(spec_fh):
-        spec_lines = open(spec_fh, "r").readlines()
-    else:
-        spec_lines = spec_fh.splitlines()
-
-    packages = set()
-    for package in spec_lines:
-        packages.add(package)
-
-    pool = Pool(pool_path)
-    pool.get(packages, pkgdir_path)
-
-    c = Chroot(chroot_path)
-    c.mountpoints()
-    c.apt_install(pkgdir_path)
-    c.apt_clean()
-    c.umountpoints()
-
 def chroot_execute(chroot_path, command, mountpoints=False, get_stdout=False):
     c = Chroot(chroot_path)
     if mountpoints:
