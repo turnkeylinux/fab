@@ -92,7 +92,7 @@ install-nodoc: pycompile-nodoc _install
 install: pycompile  _install
 
 clean:
-	rm -f pylib/*.pyc pylib/*.pyo pylib/*~ *.pyc *.pyo *~ _$(progname)
+	rm -f pylib/*.pyc pylib/*.pyo *.pyc *.pyo _$(progname)
 
 dist: clean
 	-mkdir -p $(PATH_DIST)
