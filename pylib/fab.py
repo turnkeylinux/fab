@@ -68,9 +68,8 @@ class PackagesSpec:
            value: name=version
     """
     
-    def __init__(self, output=None):
+    def __init__(self):
         self.packages = {}
-        self.output = output
     
     def add(self, name, version):
         """add package name=version to spec"""
@@ -106,14 +105,6 @@ class PackagesSpec:
         
         return False
 
-    def print_spec(self):
-        """print spec to stdout (and output file if specified"""
-        spec = "\n".join(self.packages.values())
-        print spec
-
-        if self.output:
-            open(self.output, "w").write(spec)
-        
 class Packages:
     """class for getting packages from pool according to a spec"""
     def __init__(self, pool, spec, outdir=None):
@@ -302,14 +293,14 @@ class Chroot:
         """clean apt cache in chroot"""
         self.system_chroot("apt-get clean")
         executil.system("rm -f " + self._apt_indexpath())
-        
-def plan_resolve(pool, plan, output):
-    spec = PackagesSpec(output)
-    p = Packages(pool, spec)
+
+def plan_resolve(pool_path, plan):
+    spec = PackagesSpec()
+    p = Packages(pool_path, spec)
     
     p.resolve_plan(plan)
-    p.spec.print_spec()
-
+    return "\n".join(p.spec.get())
+    
 def spec_get(pool, specinfo, outdir):
     spec = PackagesSpec()
     spec.read(specinfo)

@@ -50,7 +50,7 @@ def parse_processed_plan(processed_plan):
     
     return packages
 
-def plan_resolve(cpp_opts, plan_path, pool_path, bootstrap_path, output_path):
+def plan_resolve(cpp_opts, plan_path, pool_path, bootstrap_path):
     cpp_opts += [ ("-U", "linux") ]
     processed_plan = cpp.cpp(plan_path, cpp_opts)
     plan = parse_processed_plan(processed_plan)
@@ -64,7 +64,7 @@ def plan_resolve(cpp_opts, plan_path, pool_path, bootstrap_path, output_path):
         for package in output.splitlines():
             plan.add(package)
 
-    fab.plan_resolve(pool_path, plan, output_path)
+    return fab.plan_resolve(pool_path, plan)
 
 def main():
     cpp_opts, args = cpp.getopt(sys.argv[1:])
@@ -95,7 +95,12 @@ def main():
     except IndexError:
         bootstrap_path = None
 
-    plan_resolve(cpp_opts, plan_path, pool_path, bootstrap_path, output_path)
+    spec = plan_resolve(cpp_opts, plan_path, pool_path, bootstrap_path)
+    if output_path is None:
+        print spec
+    else:
+        open(output_path, "w").write(spec)
+    
     
 if __name__=="__main__":
     main()
