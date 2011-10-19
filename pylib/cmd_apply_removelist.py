@@ -27,46 +27,51 @@ def usage():
     print >> sys.stderr, "Syntax: %s [-options] <removelist> <srcpath>" % sys.argv[0]
 
 def parse_list(raw):
-    list = {'yes': [],
-            'no':  []}
+    remove = []
+    restore = []
     
-    for line in raw.split("\n"):
-        line = re.sub(r'#.*', '', line)
-        line = line.strip()
-        if not line:
+    for expr in raw.splitlines():
+        expr = re.sub(r'#.*', '', expr)
+        expr = expr.strip()
+        if not expr:
             continue
-        m = re.match("!(.*)", line)
-        if m:
-            list['no'].append(m.group(1))
+
+        if expr.startswith("!"):
+            entry = expr[1:]
+            restore.append(entry)
+
         else:
-            list['yes'].append(line)
+            entry = expr
+            remove.append(entry)
 
-    return list
+    return remove, restore
 
-def apply_removelist(rmlist, srcpath, dstpath=None):
-    def _move(entry, srcpath, dstpath):
-        entry = re.sub("^/","", entry)
-        src = join(srcpath, entry)
-        dst = join(dstpath, dirname(entry))
+def _move(entry, srcpath, dstpath):
+    entry = re.sub("^/","", entry)
+    src = join(srcpath, entry)
+    dst = join(dstpath, dirname(entry))
     
-        if exists(src):
-            mkdir(dst)
-            if isdir(src):
-                executil.system("mv -f %s/* %s/" % (dirname(src), dst))
-            else:
-                executil.system("mv -f %s %s/" % (src, dst))
+    if exists(src):
+        mkdir(dst)
+        if isdir(src):
+            executil.system("mv -f %s/* %s/" % (dirname(src), dst))
         else:
-            warn("entry does not exist: " + entry)
+            executil.system("mv -f %s %s/" % (src, dst))
+    else:
+        warn("entry does not exist: " + entry)
 
+def apply_removelist(rmlist_fh, srcpath, dstpath=None):
+    remove, restore = parse_list(rmlist_fh.read())
+    
     if not dstpath:
         dstpath = get_tmpdir()
 
     # move entries out of srcpath
-    for entry in rmlist['yes']:
+    for entry in remove:
         _move(entry, srcpath, dstpath)
 
     # move entries back into srcpath
-    for entry in rmlist['no']:
+    for entry in restore:
         _move(entry, dstpath, srcpath)
         
 def main():
@@ -83,22 +88,20 @@ def main():
         usage()
     
     if args[0] == '-':
-        fh = sys.stdin
+        rmlist_fh = sys.stdin
     else:
-        fh = file(args[0], "r")
+        rmlist_fh = file(args[0], "r")
 
-    rmlist = parse_list(fh.read())
     srcpath = args[1]
 
     if not os.path.isdir(srcpath):
         fatal("srcpath does not exist: " + srcpath)
 
-    opt_dstpath = None
+    kws = {}
     for opt, val in opts:
-        if opt == '--dstpath':
-            opt_removedir.append(val)
+        kws[opt[2:]] = val
 
-    apply_removelist(rmlist, srcpath, opt_dstpath)
+    apply_removelist(rmlist_fh, srcpath, **kws)
 
         
 if __name__=="__main__":
