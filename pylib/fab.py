@@ -119,7 +119,10 @@ class Plan:
         
         return spec
         
-def spec_get(pool_path, spec_fh, outdir):
+def spec_install(pool, spec_fh, chroot_path):
+    chroot_path = realpath(chroot_path)
+    pkgdir_path = join(chroot_path, "var/cache/apt/archives")
+
     if isfile(spec_fh):
         spec_lines = open(spec_fh, "r").readlines()
     else:
@@ -130,13 +133,7 @@ def spec_get(pool_path, spec_fh, outdir):
         packages.add(package)
 
     pool = Pool(pool_path)
-    pool.get(packages, outdir)
-
-def spec_install(pool, spec_fh, chroot_path):
-    chroot_path = realpath(chroot_path)
-    pkgdir_path = join(chroot_path, "var/cache/apt/archives")
-
-    spec_get(pool, spec_fh, pkgdir_path)
+    pool.get(packages, pkgdir_path)
 
     c = Chroot(chroot_path)
     c.mountpoints()
