@@ -8,12 +8,14 @@ Arguments:
 
 Options:
   --dstpath=        Path to directory which will store removed items
-                    If not specified, FAB_TMPDIR will be used
+                    If not specified, FAB_TMPDIR will be used, and deleted
+                    when finished.
 """
 
 import os
 import re
 import sys
+import shutil
 import getopt
 from os.path import *
 
@@ -50,7 +52,7 @@ def _move(entry, srcpath, dstpath):
     entry = re.sub("^/","", entry)
     src = join(srcpath, entry)
     dst = join(dstpath, dirname(entry))
-    
+
     if exists(src):
         mkdir(dst)
         if isdir(src):
@@ -62,9 +64,12 @@ def _move(entry, srcpath, dstpath):
 
 def apply_removelist(rmlist_fh, srcpath, dstpath=None):
     remove, restore = parse_list(rmlist_fh.read())
-    
+
+    remove_dstpath = False
     if not dstpath:
         dstpath = get_tmpdir()
+        remove_dstpath = True
+
 
     # move entries out of srcpath
     for entry in remove:
@@ -73,10 +78,13 @@ def apply_removelist(rmlist_fh, srcpath, dstpath=None):
     # move entries back into srcpath
     for entry in restore:
         _move(entry, dstpath, srcpath)
-        
+
+    if remove_dstpath:
+        shutil.rmtree(dstpath)
+
 def main():
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "", 
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "",
                                        ['dstpath='])
     except getopt.GetoptError, e:
         usage(e)
