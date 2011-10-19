@@ -23,7 +23,7 @@ import getopt
 import help
 import cpp
 from plan import Plan
-from installer import Chroot
+from chroot import Chroot
 from common import fatal
 
 @help.usage(__doc__ + cpp.__doc__)

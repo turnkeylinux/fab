@@ -17,7 +17,7 @@ import sys
 import getopt
 
 import help
-from installer import Chroot
+from chroot import Chroot
 from common import fatal
 
 @help.usage(__doc__)
