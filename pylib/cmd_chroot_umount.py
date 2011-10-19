@@ -14,8 +14,8 @@ import os
 import sys
 import getopt
 
-import fab
 import help
+from installer import Chroot
 from cli_common import fatal, warn
 
 @help.usage(__doc__)
@@ -37,18 +37,17 @@ def main():
     if not len(args) == 1:
         usage()
     
-    chroot = args[0]
+    chroot_path = args[0]
     
-    if not os.path.isdir(chroot):
-        msg = "chroot does not exist: " + chroot
+    if not os.path.isdir(chroot_path):
+        msg = "chroot does not exist: " + chroot_path
         if opt_strict:
             fatal(msg)
         else:
             warn(msg)
             sys.exit(0)
-            
-    fab.Chroot(chroot).umountpoints()
 
+    Chroot(chroot_path).umount_chrootmounts()
 
         
 if __name__=="__main__":

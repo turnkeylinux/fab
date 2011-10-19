@@ -1,56 +1,165 @@
 
 import os
+import shutil
 from os.path import *
 
 import deb
 import executil
-
-def is_mounted(dir):
-    mounts = file("/proc/mounts").read()
-    if mounts.find(dir) != -1:
-        return True
-    return False
-
-def mount(device, mountp, options=None):
-    if not is_mounted(device):
-        print "mounting: " + device
-        if options:
-            executil.system("mount", device, mountp, options)
-        else:
-            executil.system("mount", device, mountp)
-
-def umount(device):
-    if is_mounted(device):
-        print "umounting: " + device
-        executil.system("umount", "-f", device)
+from pool import Pool
 
 class Error(Exception):
     pass
 
+def fakestartstop(method):
+    """decorator for fake start-stop-daemon
+       backup real, create fake, finally restore real
+    """
+    def wrapper(self, *args, **kws):
+        path = join(self.chroot.path, "sbin/start-stop-daemon")
+        path_orig = path + ".orig"
+        if not exists(path_orig):
+            shutil.move(path, path_orig)
+            fake = "#!/bin/sh\n" \
+                  "echo\n" \
+                  "echo \"Warning: Fake start-stop-daemon called\"\n"
+
+            open(path, "w").write(fake)
+            os.chmod(path, 0755)
+
+        try:
+            ret = method(self, *args, **kws)
+        finally:
+            shutil.move(path_orig, path)
+
+        return ret
+
+    return wrapper
+
+def sources_list(method):
+    """decorator for sources.list
+       backup current, create local version, finally restore current
+    """
+    def wrapper(self, *args, **kws):
+        path = join(self.chroot.path, "etc/apt/sources.list")
+        path_orig = path + ".orig"
+        if not exists(path_orig):
+            shutil.move(path, path_orig)
+            open(path, "w").write("deb file:/// local debs\n")
+
+        try:
+            ret = method(self, *args, **kws)
+        finally:
+            shutil.move(path_orig, path)
+
+        return ret
+
+    return wrapper
+
+
+class Installer:
+    def __init__(self, chroot_path, pool_path):
+        self.chroot = Chroot(chroot_path)
+        self.pool = Pool(pool_path)
+
+    def _apt_clean(self, indexfile):
+        """clean apt cache in chroot"""
+        self.chroot.execute("apt-get clean")
+        os.remove(indexfile)
+
+    def _apt_genindex(self, packagedir, indexfile):
+        """generate package index"""
+
+        print "generating package index..."
+        cmd = "apt-ftparchive packages %s > %s" % (packagedir, indexfile)
+        executil.system(cmd)
+
+        self.chroot.execute("apt-cache gencaches")
+
+    @fakestartstop
+    @sources_list
+    def _apt_install(self, packagedir):
+        high, regular = deb.prioritize_packages(packagedir)
+
+        for packages in (high, regular):
+            args = ['install', '--assume-yes', '--allow-unauthenticated']
+            command = "apt-get " + " ".join(args) + " " + " ".join(packages)
+
+            self.chroot.execute(command)
+
+    def install(self, packages):
+        """install packages into chroot """
+        packagedir = join(self.chroot.path, "var/cache/apt/archives")
+        indexfile  = join(self.chroot.path, "var/lib/apt/lists",
+                          "_dists_local_debs_binary-i386_Packages")
+
+        self.pool.get(packages, packagedir)
+        self._apt_genindex(packagedir, indexfile)
+        self._apt_install(packagedir)
+        self._apt_clean(indexfile)
+
+
+def chrootmounts(method):
+    """decorator for mountpoints
+       mount/umount proc and dev/pts into/from chroot
+    """
+    def wrapper(self, *args, **kws):
+        if self.chrootmounts:
+            self._mount('proc-chroot',   join(self.path, 'proc'),   '-tproc')
+            self._mount('devpts-chroot', join(self.path, 'dev/pts'),'-tdevpts')
+
+        try:
+            ret = method(self, *args, **kws)
+        finally:
+            if self.chrootmounts:
+                self.umount_chrootmounts()
+
+        return ret
+
+    return wrapper
+
 class Chroot:
-    """class for interacting with a fab chroot"""
-    def __init__(self, path):
+    def __init__(self, path, chrootmounts=True):
         if os.getuid() != 0:
             raise Error("root privileges required for chroot")
 
-        self.path = path
-    
-    def mountpoints(self):
-        """mount proc and dev/pts into chroot"""
-        mount('proc-chroot',   join(self.path, 'proc'),    '-tproc')
-        mount('devpts-chroot', join(self.path, 'dev/pts'), '-tdevpts')
+        self.path = realpath(path)
+        self.chrootmounts = chrootmounts
 
-    def umountpoints(self):
+    @staticmethod
+    def _is_mounted(dir):
+        mounts = file("/proc/mounts").read()
+        if mounts.find(dir) != -1:
+            return True
+        return False
+
+    @classmethod
+    def _mount(cls, device, mountp, options=None):
+        if not cls._is_mounted(device):
+            print "mounting: " + device
+            if options is not None:
+                executil.system("mount", device, mountp, options)
+            else:
+                executil.system("mount", device, mountp)
+
+    @classmethod
+    def _umount(cls, device):
+        if cls._is_mounted(device):
+            print "umounting: " + device
+            executil.system("umount", "-f", device)
+
+    def umount_chrootmounts(self):
         """umount proc and dev/pts from chroot"""
-        umount(join(self.path, 'dev/pts'))
-        umount(join(self.path, 'proc'))
+        self._umount(join(self.path, 'dev/pts'))
+        self._umount(join(self.path, 'proc'))
 
-    def system_chroot(self, command, get_stdout=False):
+    @chrootmounts
+    def execute(self, command, get_stdout=False):
         """execute system command in chroot"""
         args = ['/usr/bin/env', '-i', 'HOME=/root', 'TERM=${TERM}', 'LC_ALL=C',
                 'PATH=/usr/sbin:/usr/bin:/sbin:/bin',
                 'DEBIAN_FRONTEND=noninteractive',
                 'DEBIAN_PRIORITY=critical']
+
         command = " ".join(args) + " " + command
         chroot_args = (self.path, 'sh', '-c', command)
 
@@ -58,74 +167,5 @@ class Chroot:
             return executil.getoutput("chroot", *chroot_args)
         else:
             executil.system("chroot", *chroot_args)
-
-    def _insert_fakestartstop(self):
-        """insert fake start-stop-daemon into chroot"""
-        daemon = join(self.path, 'sbin/start-stop-daemon')
-        if isfile('%s.REAL' % daemon): #already created
-            return
-        
-        executil.system("mv %s %s.REAL" % (daemon, daemon))
-        
-        fake = "#!/bin/sh\n" \
-               "echo\n" \
-               "echo \"Warning: Fake start-stop-daemon called, doing nothing\"\n"
-        
-        open(daemon, "w").write(fake)
-        os.chmod(daemon, 0755)
-
-    def _remove_fakestartstop(self):
-        """remove fake start-stop daemon from chroot"""
-        daemon = join(self.path, 'sbin/start-stop-daemon')
-        executil.system("mv %s.REAL %s" % (daemon, daemon))
-
-    def _apt_indexpath(self):
-        """return package index path"""
-        return join(self.path,
-                    "var/lib/apt/lists",
-                    "_dists_local_debs_binary-i386_Packages")
-
-    def _apt_sourcelist(self):
-        """configure apt for local index generation and package installation"""
-        source = "deb file:/// local debs"
-        path = join(self.path, "etc/apt/sources.list")
-        file(path, "w").write(source)
-    
-    def _apt_refresh(self, pkgdir_path):
-        """generate index cache of packages in pkgdir_path"""
-        self._apt_sourcelist()       
-        
-        print "generating package index..."
-        executil.system("apt-ftparchive packages %s > %s" % (pkgdir_path, 
-                                                    self._apt_indexpath()))
-        self.system_chroot("apt-cache gencaches")
-        
-    def apt_install(self, pkgdir_path):
-        """install pkgdir_path/*.deb packages into chroot"""
-        self._apt_refresh(pkgdir_path)
-        
-        pkgnames = []
-        pre_pkgnames = []
-        for filename in os.listdir(pkgdir_path):
-            if filename.endswith(".deb"):
-                name, version = filename.split("_")[:2]
-                if deb.is_preinstall(name):
-                    pre_pkgnames.append(name)
-                else:
-                    pkgnames.append(name)
-        
-        self._insert_fakestartstop()
-        
-        for pkglist in [pre_pkgnames, pkgnames]:
-            pkglist.sort()
-            self.system_chroot("apt-get install -y --allow-unauthenticated %s" %
-                               " ".join(pkglist))
-
-        self._remove_fakestartstop()
-
-    def apt_clean(self):
-        """clean apt cache in chroot"""
-        self.system_chroot("apt-get clean")
-        executil.system("rm -f " + self._apt_indexpath())
 
 

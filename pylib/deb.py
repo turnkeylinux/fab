@@ -83,8 +83,22 @@ def parse_name(name):
     
     return name
 
-def is_preinstall(name):
-    if name.startswith("linux-image"):
-        return True
+def prioritize_packages(packagedir):
+    HIGH_PRIORITY = ('linux-image')
     
-    return False
+    high = []
+    regular = []
+    
+    for filename in os.listdir(packagedir):
+        try:
+            name = parse_filename(filename)[0]
+        except:
+            continue
+        
+        if name in HIGH_PRIORITY:
+            high.append(name)
+        else:
+            regular.append(name)
+    
+    return high, regular
+

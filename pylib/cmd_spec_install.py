@@ -16,18 +16,16 @@ import getopt
 
 import help
 import installer
-from pool import Pool
+from installer import Installer
 from cli_common import fatal
 
 @help.usage(__doc__)
 def usage():
     print >> sys.stderr, "Syntax: %s <spec> <pool> <chroot>" % sys.argv[0]
 
-def spec_install(pool_path, spec_fh, chroot_path):
-    chroot_path = os.path.realpath(chroot_path)
-    pkgdir_path = os.path.join(chroot_path, "var/cache/apt/archives")
 
-    if isfile(spec_fh):
+def spec_install(pool_path, spec_fh, chroot_path):
+    if os.path.isfile(spec_fh):
         spec_lines = open(spec_fh, "r").readlines()
     else:
         spec_lines = spec_fh.splitlines()
@@ -36,15 +34,10 @@ def spec_install(pool_path, spec_fh, chroot_path):
     for package in spec_lines:
         packages.add(package)
 
-    pool = Pool(pool_path)
-    pool.get(packages, pkgdir_path)
+    installer = Installer(chroot_path, pool_path)
+    installer.install(packages)
 
-    c = installer.Chroot(chroot_path)
-    c.mountpoints()
-    c.apt_install(pkgdir_path)
-    c.apt_clean()
-    c.umountpoints()
-
+    
 def main():
     try:
         opts, args = getopt.gnu_getopt(sys.argv[1:], "")

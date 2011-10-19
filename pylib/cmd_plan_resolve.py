@@ -18,12 +18,12 @@ Options:
 import os
 import re
 import sys
+import getopt
 
 import help
 import fab
 import cpp
-
-import getopt
+from installer import Chroot
 from cli_common import fatal
 
 @help.usage(__doc__ + cpp.__doc__)
@@ -39,8 +39,10 @@ def plan_resolve(cpp_opts, plan_path, pool_path, bootstrap_path):
     if bootstrap_path:
         if not os.path.isdir(bootstrap_path):
             fatal("bootstrap does not exist: " + bootstrap_path)
-        
-        output = fab.chroot_execute(bootstrap_path, "dpkg-query --show -f='${Package}\\n'", get_stdout=True)
+
+        chroot = Chroot(bootstrap_path, chrootmounts=False)
+        output = chroot.execute("dpkg-query --show -f='${Package}\\n'",
+                                get_stdout=True)
 
         for package in output.splitlines():
             plan.add(package)
