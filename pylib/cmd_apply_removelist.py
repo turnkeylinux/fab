@@ -15,10 +15,12 @@ import os
 import re
 import sys
 import getopt
+from os.path import *
 
-import fab
 import help
-from cli_common import fatal
+import executil
+from common import mkdir, get_tmpdir
+from cli_common import fatal, warn
 
 @help.usage(__doc__)
 def usage():
@@ -41,6 +43,32 @@ def parse_list(raw):
 
     return list
 
+def apply_removelist(rmlist, srcpath, dstpath=None):
+    def _move(entry, srcpath, dstpath):
+        entry = re.sub("^/","", entry)
+        src = join(srcpath, entry)
+        dst = join(dstpath, dirname(entry))
+    
+        if exists(src):
+            mkdir(dst)
+            if isdir(src):
+                executil.system("mv -f %s/* %s/" % (dirname(src), dst))
+            else:
+                executil.system("mv -f %s %s/" % (src, dst))
+        else:
+            warn("entry does not exist: " + entry)
+
+    if not dstpath:
+        dstpath = get_tmpdir()
+
+    # move entries out of srcpath
+    for entry in rmlist['yes']:
+        _move(entry, srcpath, dstpath)
+
+    # move entries back into srcpath
+    for entry in rmlist['no']:
+        _move(entry, dstpath, srcpath)
+        
 def main():
     try:
         opts, args = getopt.gnu_getopt(sys.argv[1:], "", 
@@ -70,7 +98,7 @@ def main():
         if opt == '--dstpath':
             opt_removedir.append(val)
 
-    fab.apply_removelist(rmlist, srcpath, opt_dstpath)
+    apply_removelist(rmlist, srcpath, opt_dstpath)
 
         
 if __name__=="__main__":

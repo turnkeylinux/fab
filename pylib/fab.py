@@ -8,9 +8,6 @@ import cpp
 import deb
 import executil
 from pool import Pool
-from common import *
-
-from cli_common import warn # what is cli code doing in fab?
 
 class Spec(dict):
     """class for holding a spec"""
@@ -119,32 +116,6 @@ class Plan:
         
         return spec
         
-def apply_removelist(rmlist, srcpath, dstpath=None):
-    def _move(entry, srcpath, dstpath):
-        entry = re.sub("^/","", entry)
-        src = join(srcpath, entry)
-        dst = join(dstpath, dirname(entry))
-    
-        if exists(src):
-            mkdir(dst)
-            if isdir(src):
-                executil.system("mv -f %s/* %s/" % (dirname(src), dst))
-            else:
-                executil.system("mv -f %s %s/" % (src, dst))
-        else:
-            warn("entry does not exist: " + entry)
-
-    if not dstpath:
-        dstpath = get_tmpdir()
-
-    # move entries out of srcpath
-    for entry in rmlist['yes']:
-        _move(entry, srcpath, dstpath)
-
-    # move entries back into srcpath
-    for entry in rmlist['no']:
-        _move(entry, dstpath, srcpath)
-
 def apply_overlay(overlay, dstpath, preserve=False):
     opts = "-dR"
     if preserve:
