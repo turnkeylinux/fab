@@ -231,10 +231,7 @@ class Chroot:
         chroot_args = (self.path, 'sh', '-c', executil.fmt_command('', *args))
 
         if get_stdout:
-            try:
-                return executil.getoutput("chroot", *chroot_args)
-            except executil.ExecError, e:
-                return e.output
+            return executil.getoutput("chroot", *chroot_args)
         else:
             executil.system("chroot", *chroot_args)
 
