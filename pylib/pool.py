@@ -6,7 +6,7 @@ from os.path import *
 import executil
 from common import get_tmpdir, mkdir
 
-def setup(method):
+def chdir(method):
     def wrapper(self, *args, **kws):
         orig_cwd = os.getcwd()
         os.chdir(self.path)
@@ -26,7 +26,7 @@ class Pool:
         if not isdir(join(self.path, ".pool")):
             raise Error("pool does not exist" + path)
 
-    @setup
+    @chdir
     def get(self, packages, outdir=None):
         """get packages (iterable object) from pool, return output dir"""
         if outdir is None:
@@ -47,7 +47,7 @@ class Pool:
 
         return outdir
 
-    @setup
+    @chdir
     def exists(self, package):
         try:
             executil.getoutput("pool-exists", package)
