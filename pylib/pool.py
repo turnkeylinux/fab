@@ -4,7 +4,7 @@ import shutil
 from os.path import *
 
 import executil
-from common import *
+from common import get_tmpdir, mkdir
 
 def setup(method):
     def wrapper(self, *args, **kws):
