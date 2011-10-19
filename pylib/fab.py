@@ -119,18 +119,6 @@ class Plan:
         
         return spec
         
-def chroot_execute(chroot_path, command, mountpoints=False, get_stdout=False):
-    c = Chroot(chroot_path)
-    if mountpoints:
-        c.mountpoints()
-    
-    out = c.system_chroot(command, get_stdout)
-
-    if mountpoints:
-        c.umountpoints()
-
-    return out
-
 def apply_removelist(rmlist, srcpath, dstpath=None):
     def _move(entry, srcpath, dstpath):
         entry = re.sub("^/","", entry)

@@ -16,8 +16,8 @@ import os
 import sys
 import getopt
 
-import fab
 import help
+from installer import Chroot
 from cli_common import fatal
 
 @help.usage(__doc__)
@@ -31,10 +31,10 @@ def main():
     except getopt.GetoptError, e:
         usage(e)
 
-    opt_mountpoints = False
+    chrootmounts = False
     for opt, val in opts:
         if opt == '--mount':
-            opt_mountpoints = True
+            chrootmounts = True
 
     if len(args) == 1:
         args.append("/bin/bash")
@@ -42,13 +42,14 @@ def main():
     if not len(args) == 2:
         usage()
     
-    chroot = args[0]
+    chroot_path = args[0]
     command = args[1]
     
-    if not os.path.isdir(chroot):
-        fatal("chroot does not exist: " + chroot)
+    if not os.path.isdir(chroot_path):
+        fatal("chroot does not exist: " + chroot_path)
 
-    fab.chroot_execute(chroot, command, opt_mountpoints)
+    chroot = Chroot(chroot_path, chrootmounts=chrootmounts)
+    chroot.execute(command)
 
         
 if __name__=="__main__":
