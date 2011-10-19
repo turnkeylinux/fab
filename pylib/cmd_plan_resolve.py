@@ -21,8 +21,8 @@ import sys
 import getopt
 
 import help
-import fab
 import cpp
+from plan import Plan
 from installer import Chroot
 from common import fatal
 
@@ -33,7 +33,7 @@ def usage():
 def plan_resolve(cpp_opts, plan_path, pool_path, bootstrap_path):
     cpp_opts += [ ("-U", "linux") ]
     
-    plan = fab.Plan(pool_path)
+    plan = Plan(pool_path)
     plan.process(plan_path, cpp_opts)
     
     if bootstrap_path:
