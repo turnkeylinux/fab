@@ -16,7 +16,7 @@ import getopt
 
 import help
 import executil
-from cli_common import fatal
+from common import fatal
 
 @help.usage(__doc__)
 def usage():

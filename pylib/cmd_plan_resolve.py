@@ -24,7 +24,7 @@ import help
 import fab
 import cpp
 from installer import Chroot
-from cli_common import fatal
+from common import fatal
 
 @help.usage(__doc__ + cpp.__doc__)
 def usage():

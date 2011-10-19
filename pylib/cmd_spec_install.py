@@ -17,7 +17,7 @@ import getopt
 import help
 import installer
 from installer import Installer
-from cli_common import fatal
+from common import fatal
 
 @help.usage(__doc__)
 def usage():

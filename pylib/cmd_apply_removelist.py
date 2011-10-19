@@ -21,8 +21,7 @@ from os.path import *
 
 import help
 import executil
-from common import mkdir, get_tmpdir
-from cli_common import fatal, warn
+from common import fatal, warn, mkdir, get_tmpdir
 
 @help.usage(__doc__)
 def usage():

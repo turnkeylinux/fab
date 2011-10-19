@@ -18,7 +18,7 @@ import getopt
 
 import help
 from installer import Chroot
-from cli_common import fatal
+from common import fatal
 
 @help.usage(__doc__)
 def usage():
