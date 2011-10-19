@@ -4,22 +4,8 @@ import re
 import debinfo
 import debversion
 
-import executil
-
 class Error(Exception):
     pass
-
-def _package_exists(package):
-    """return True if package exists in the pool"""
-    if not os.getenv('POOL_DIR'):
-        raise Error("POOL_DIR not set")
-
-    try:
-        executil.getoutput("pool-exists", package)
-    except executil.ExecError:
-        return False
-    
-    return True
 
 def checkversion(package, version):
     """compare package := name(relation)ver and version by relation"""
@@ -39,7 +25,7 @@ def checkversion(package, version):
 
             raise Error("dependency version error: ", package, version)
 
-def info(path):
+def info(path, pool):
     deps = set()
     control_fields = debinfo.get_control_fields(path)
 
@@ -53,7 +39,7 @@ def info(path):
 
                     # gotcha: if package exists, but not the specified version
                     # an error will be raised in checkversion
-                    if _package_exists(depname):
+                    if pool.exists(depname):
                         break
             else:
                 depname = parse_name(depend[0])

@@ -30,31 +30,12 @@ from cli_common import fatal
 def usage():
     print >> sys.stderr, "Syntax: %s [-options] <plan> <pool> [ /path/to/bootstrap ]" % sys.argv[0]
 
-def parse_processed_plan(processed_plan):
-    packages = set()
-    for expr in processed_plan.splitlines():
-        expr = re.sub(r'#.*', '', expr)
-        expr = expr.strip()
-        if not expr:
-            continue
-        
-        if expr.startswith("!"):
-            package = expr[1:]
-
-            if package in packages:
-                packages.remove(package)
-
-        else:
-            package = expr
-            packages.add(package)
-    
-    return packages
-
 def plan_resolve(cpp_opts, plan_path, pool_path, bootstrap_path):
     cpp_opts += [ ("-U", "linux") ]
-    processed_plan = cpp.cpp(plan_path, cpp_opts)
-    plan = parse_processed_plan(processed_plan)
-
+    
+    plan = fab.Plan(pool_path)
+    plan.process(plan_path, cpp_opts)
+    
     if bootstrap_path:
         if not os.path.isdir(bootstrap_path):
             fatal("bootstrap does not exist: " + bootstrap_path)
@@ -64,7 +45,8 @@ def plan_resolve(cpp_opts, plan_path, pool_path, bootstrap_path):
         for package in output.splitlines():
             plan.add(package)
 
-    return fab.plan_resolve(pool_path, plan)
+    spec = plan.resolve_to_spec()
+    return "\n".join(spec.list())
 
 def main():
     cpp_opts, args = cpp.getopt(sys.argv[1:])

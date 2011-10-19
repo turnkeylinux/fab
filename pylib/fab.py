@@ -1,19 +1,17 @@
 
 import re
 import os
-import tempfile
+import shutil
 from os.path import *
 
+import cpp
 import deb
-from cli_common import warn # what is cli code doing in fab?
 import executil
+from pool import Pool
+from common import *
 
-import subprocess
+from cli_common import warn # what is cli code doing in fab?
 
-def mkdir(path):
-    path = str(path)
-    if not exists(path):
-        os.makedirs(path)
 
 def is_mounted(dir):
     mounts = file("/proc/mounts").read()
@@ -34,165 +32,116 @@ def umount(device):
         print "umounting: " + device
         executil.system("umount", "-f", device)
 
-def get_tmpdir():
-    """return unique temporary directory path"""
-    tmpdir = os.environ.get('FAB_TMPDIR', '/var/tmp')
-    mkdir(tmpdir)
-    return tempfile.mkdtemp(prefix="fab", dir=tmpdir)
-
-def system_pipe(command, pipein, quiet=False):
-    if quiet:
-        p = subprocess.Popen(command,
-                             stdin = subprocess.PIPE,
-                             stdout = subprocess.PIPE,
-                             #stderr = subprocess.PIPE,
-                             close_fds = True)
-    else:
-        p = subprocess.Popen(command,
-                             stdin = subprocess.PIPE,
-                             close_fds = True)
-        
-    out, err =  p.communicate(pipein)
-    if p.returncode != 0:
-        raise Error("failed command: " + " ".join(command))
-    
-    return out, err
-
 class Error(Exception):
     pass
 
-class PackagesSpec:
-    """class for creating and controlling a packages spec
-       package:
-           key: name
-           value: name=version
-    """
-    
-    def __init__(self):
-        self.packages = {}
+class Spec(dict):
+    """class for holding a spec"""
     
     def add(self, name, version):
-        """add package name=version to spec"""
-        package = name + "=" + version
-        self.packages[name] = package
+        """add package name and version to spec"""
+        self.__setitem__(name, version)
+
+    def list(self, sep="="):
+        """return list of packages, as name(sep)version"""
+        packages = []
+        for item in self.items():
+            packages.append(item[0] + sep + item[1])
+        
+        return packages
+
+    exists = dict.has_key
+
+class Plan:
+    def __init__(self, pool_path):
+        self.pool = Pool(pool_path)
+        self.packages = set()
     
-    def get(self):
-        return self.packages.values()
-    
-    def read(self, input):
-        """add packages to spec from input
-        input := file | string (packages seperated by newlines)
-        """
-        if isfile(input):
-            entries = open(input, "r").readlines()
-        else:
-            entries = input.split("\n")
+    @staticmethod
+    def _parse_package_dir(package_dir):
+        """return dict of packages: key=pkgname, value=pkgpath"""
+        package_paths = {}
+
+        for filename in os.listdir(package_dir):
+            if filename.endswith(".deb"):
+                name = deb.parse_filename(filename)[0]
+                package_paths[name] = join(package_dir, filename)
+
+        return package_paths
+
+    @staticmethod
+    def _parse_processed_plan(processed_plan):
+        packages = set()
+        for expr in processed_plan.splitlines():
+            expr = re.sub(r'#.*', '', expr)
+            expr = expr.strip()
+            if not expr:
+                continue
         
-        for entry in entries:
-            entry = re.sub(r'#.*', '', entry)
-            entry = entry.strip()
-            if entry:
-                try:
-                    name, version = entry.split("=")
-                except ValueError:
-                    name = entry
-                self.packages[name] = entry
-            
-    def exists(self, name):
-        """return True if package `name' exists in spec"""
-        if name in self.packages.keys():
-            return True
+            if expr.startswith("!"):
+                package = expr[1:]
+
+                if package in packages:
+                    packages.remove(package)
+
+            else:
+                package = expr
+                packages.add(package)
+
+        return packages
+
+    def add(self, package):
+        """add package to plan"""
+        self.packages.add(package)
+
+    def remove(self, package):
+        """remove package from plan """
+        self.packages.remove(package)
+
+    def process(self, plan_path, cpp_opts):
+        """process plan through cpp, then parse it and add packages to plan """
+        processed_plan = cpp.cpp(plan_path, cpp_opts)
+        packages = self._parse_processed_plan(processed_plan)
         
-        return False
+        for package in packages:
+            self.packages.add(package)
 
-class Packages:
-    """class for getting packages from pool according to a spec"""
-    def __init__(self, pool, spec, outdir=None):
-        if outdir:
-            self.outdir = outdir
-        else:
-            self.outdir = get_tmpdir()
-
-        if not isabs(pool):
-            poolpath = os.getenv('FAB_POOL_PATH')
-            if poolpath:
-                pool = join(poolpath, pool)
+    def resolve_to_spec(self):
+        """resolve plan and its dependencies recursively, return spec"""
+        spec = Spec()
         
-        if isdir(join(pool, ".pool")):
-            os.environ['POOL_DIR'] = pool
-        else:
-            raise Error("pool does not exist" + pool)
-        
-        self.spec = spec
-        self.packages = {}
-
-    def get_packages(self, packages):
-        """get list of packages from pool"""
-        if not isdir(self.outdir):
-            mkdir(self.outdir)
-
-        toget = []
-        for pkg in packages:
-            name = pkg
-            for relation in ('>>', '>=', '<=', '<<'):
-                if relation in pkg:
-                    name, version = pkg.split(relation)
-                    break
-
-            toget.append(name)
-
-        cmd = ["pool-get", "--strict", "-i-", self.outdir]
-        out, err = system_pipe(cmd, "\n".join(toget))
-        if err:
-            raise Error("error: " + err, cmd, out)
-
-    def _read_packages(self):
-        """get paths of all packages in outdir, update packages dictionary
-           package:
-               key: name
-               value: path
-        """
-        for filename in os.listdir(self.outdir):
-            filepath = join(self.outdir, filename)
-            
-            if isfile(filepath) and filename.endswith(".deb"):
-                pkgname, pkgver = deb.parse_filename(filename)
-                self.packages[pkgname] = filepath
-
-    def resolve_plan(self, plan):
-        """resolve plan and its dependencies recursively, update spec"""
         resolved = set()
-        toresolve = plan
+        toresolve = self.packages.copy()
+
         while toresolve:
-            self.outdir = get_tmpdir()
-            self.get_packages(toresolve)
-            self._read_packages()
+            package_dir = self.pool.get(toresolve)
+            package_paths = self._parse_package_dir(package_dir)
+            
             depends = set()
             for pkg in toresolve:
                 name = pkg
                 for relation in ('>=', '>>', '<=', '<<', '='):
                     if relation in pkg:
-                        name, v = pkg.split(relation)
+                        name = pkg.split(relation)[0]
                         break
 
-                ver, deps = deb.info(self.packages[name])
-                deb.checkversion(pkg, ver)
-                self.spec.add(name, ver)
+                version, deps = deb.info(package_paths[name], self.pool)
+                deb.checkversion(pkg, version)  # raise error on mismatch
+                spec.add(name, version)
 
                 resolved.add(pkg)
                 resolved.add(name)
-                resolved.add(name + "=" + ver)
+                resolved.add(name + "=" + version)
 
                 depends.update(deps)
 
             toresolve = depends
             toresolve.difference_update(resolved)
-
-    def get_spec_packages(self):
-        """get packages according to spec"""
-        self.get_packages(self.spec.get())
-
-
+            
+            shutil.rmtree(package_dir)
+        
+        return spec
+        
 class Chroot:
     """class for interacting with a fab chroot"""
     def __init__(self, path):
@@ -286,34 +235,34 @@ class Chroot:
             pkglist.sort()
             self.system_chroot("apt-get install -y --allow-unauthenticated %s" %
                                " ".join(pkglist))
-        
+
         self._remove_fakestartstop()
-    
+
     def apt_clean(self):
         """clean apt cache in chroot"""
         self.system_chroot("apt-get clean")
         executil.system("rm -f " + self._apt_indexpath())
 
-def plan_resolve(pool_path, plan):
-    spec = PackagesSpec()
-    p = Packages(pool_path, spec)
-    
-    p.resolve_plan(plan)
-    return "\n".join(p.spec.get())
-    
-def spec_get(pool, specinfo, outdir):
-    spec = PackagesSpec()
-    spec.read(specinfo)
-    
-    p = Packages(pool, spec, outdir)
-    p.get_spec_packages()
-    
-def spec_install(pool, specinfo, chroot_path):
+
+def spec_get(pool_path, spec_fh, outdir):
+    if isfile(spec_fh):
+        spec_lines = open(spec_fh, "r").readlines()
+    else:
+        spec_lines = spec_fh.splitlines()
+
+    packages = set()
+    for package in spec_lines:
+        packages.add(package)
+
+    pool = Pool(pool_path)
+    pool.get(packages, outdir)
+
+def spec_install(pool, spec_fh, chroot_path):
     chroot_path = realpath(chroot_path)
     pkgdir_path = join(chroot_path, "var/cache/apt/archives")
-    
-    spec_get(pool, specinfo, pkgdir_path)
-    
+
+    spec_get(pool, spec_fh, pkgdir_path)
+
     c = Chroot(chroot_path)
     c.mountpoints()
     c.apt_install(pkgdir_path)
@@ -326,10 +275,10 @@ def chroot_execute(chroot_path, command, mountpoints=False, get_stdout=False):
         c.mountpoints()
     
     out = c.system_chroot(command, get_stdout)
-    
+
     if mountpoints:
         c.umountpoints()
-    
+
     return out
 
 def apply_removelist(rmlist, srcpath, dstpath=None):
