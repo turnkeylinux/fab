@@ -82,6 +82,7 @@ def plan_lint(plan_path, pool_path):
             output.append("%s # %s" % (expr.ljust(column_len),
                                        description.capitalize()))
 
+    output.append('\n')
     return "\n".join(output)
 
 def main():
