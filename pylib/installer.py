@@ -73,14 +73,11 @@ class Installer:
 
     @fakestartstop
     @sources_list
-    def _apt_install(self, packagedir):
-        high, regular = deb.prioritize_packages(packagedir)
+    def _apt_install(self, packages):
+        args = ['install', '--assume-yes', '--allow-unauthenticated']
+        command = "apt-get " + " ".join(args) + " " + " ".join(packages)
 
-        for packages in (high, regular):
-            args = ['install', '--assume-yes', '--allow-unauthenticated']
-            command = "apt-get " + " ".join(args) + " " + " ".join(packages)
-
-            self.chroot.execute(command)
+        self.chroot.execute(command)
 
     def install(self, packages):
         """install packages into chroot """
@@ -90,6 +87,6 @@ class Installer:
 
         self.pool.get(packages, packagedir)
         self._apt_genindex(packagedir, indexfile)
-        self._apt_install(packagedir)
+        self._apt_install(packages)
         self._apt_clean(indexfile)
 

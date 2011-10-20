@@ -89,25 +89,6 @@ def parse_name(name):
     
     return name
 
-def prioritize_packages(packagedir):
-    HIGH_PRIORITY = ('linux-image')
-    
-    high = []
-    regular = []
-    
-    for filename in os.listdir(packagedir):
-        try:
-            name = parse_filename(filename)[0]
-        except:
-            continue
-        
-        if name in HIGH_PRIORITY:
-            high.append(name)
-        else:
-            regular.append(name)
-    
-    return high, regular
-
 def get_package_index(packagedir):
     def filesize(path):
         return str(os.stat(path).st_size)
