@@ -27,13 +27,14 @@ def checkversion(package, version):
             raise Error("dependency version error: ", package, version)
 
 def get_version(package_path):
-    """return version of package"""
+    """return package version"""
     control = debinfo.get_control_fields(package_path)
     return control['Version']
 
-def info(path, pool):
+def get_depends(package_path, pool):
+    """return package dependencies"""
     deps = set()
-    control_fields = debinfo.get_control_fields(path)
+    control_fields = debinfo.get_control_fields(package_path)
 
     if control_fields.has_key('Depends'):
         for depend in parse_depends(control_fields['Depends'].split(",")):
