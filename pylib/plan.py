@@ -9,6 +9,9 @@ import deb
 import executil
 from pool import Pool
 
+class Error(Exception):
+    pass
+
 class Spec(dict):
     """class for holding a spec"""
     
