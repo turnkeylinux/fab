@@ -2,21 +2,20 @@
 O := .
 
 ISOLABEL := $(shell basename $(shell pwd))
-RELEASE := rocky
 
 REMOVELIST_PATH := removelist
 
 FAB_PATH := /turnkey/fab
-POOL_PATH := $(FAB_PATH)/pools/$(RELEASE)
-BOOTSTRAP_PATH := $(FAB_PATH)/bootstraps/$(RELEASE)
-CDROOT_PATH := $(FAB_PATH)/cdroots/bootsplash
+POOL_PATH = $(FAB_PATH)/pools/$(RELEASE)
+BOOTSTRAP_PATH = $(FAB_PATH)/bootstraps/$(RELEASE)
+CDROOT_PATH = $(FAB_PATH)/cdroots/bootsplash
 
-export FAB_PLAN_INCLUDE_PATH := $(FAB_PATH)/common-plans
+export FAB_PLAN_INCLUDE_PATH = $(FAB_PATH)/common-plans
 
 INITRAMFS_PACKAGES := busybox-initramfs casper
 
-MKSQUASHFS_COMPRESS ?= 0
-MKSQUASHFS_VERBOSE ?= 0
+MKSQUASHFS_COMPRESS ?= 1
+MKSQUASHFS_VERBOSE ?= 1
 
 ifneq ($(MKSQUASHFS_COMPRESS), 1)
 	MKSQUASHFS_OPTS += -noD -noI -noF -no-fragments
