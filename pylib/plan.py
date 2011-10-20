@@ -99,7 +99,8 @@ class Plan:
                         name = pkg.split(relation)[0]
                         break
 
-                version, deps = deb.info(package_paths[name], self.pool)
+                version = deb.get_version(package_paths[name])
+                deps = deb.info(package_paths[name], self.pool)
                 deb.checkversion(pkg, version)  # raise error on mismatch
                 spec.add(name, version)
 
