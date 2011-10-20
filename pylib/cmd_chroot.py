@@ -4,10 +4,12 @@
 Arguments:
   <chroot>          Path to chroot
 
-Options:
+Optional Arguments:
   command           Command to execute in chroot
-                    If no command is specified, an interactive shell is assumed
-  --mount           Mount virtual filesystems in chroot
+                    If no command is specified, /bin/bash is assumed (shell)
+
+Options:
+  --mount           Mount virtual filesystems proc and dev/pts into chroot
 
 """
 
