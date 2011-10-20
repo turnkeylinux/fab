@@ -34,10 +34,10 @@ def get_version(package_path):
 def get_depends(package_path, pool):
     """return package dependencies"""
     deps = set()
-    control_fields = debinfo.get_control_fields(package_path)
+    control = debinfo.get_control_fields(package_path)
 
-    if control_fields.has_key('Depends'):
-        for depend in parse_depends(control_fields['Depends'].split(",")):
+    if control.has_key('Depends'):
+        for depend in parse_depends(control['Depends'].split(",")):
             if "|" in depend[0]:
                 for d in parse_depends(depend[0].split("|")):
                     depname = parse_name(d[0])
