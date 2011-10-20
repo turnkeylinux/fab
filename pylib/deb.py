@@ -26,6 +26,8 @@ def checkversion(package, version):
 
             return False
 
+    return True
+
 def get_version(package_path):
     """return package version"""
     control = debinfo.get_control_fields(package_path)
