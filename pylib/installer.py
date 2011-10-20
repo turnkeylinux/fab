@@ -65,11 +65,9 @@ class Installer:
         os.remove(indexfile)
 
     def _apt_genindex(self, packagedir, indexfile):
-        """generate package index"""
-
-        print "generating package index..."
-        cmd = "apt-ftparchive packages %s > %s" % (packagedir, indexfile)
-        executil.system(cmd)
+        print "generating package index"
+        index = deb.get_package_index(packagedir)
+        file(indexfile, "w").write("\n".join(index))
 
         self.chroot.execute("apt-cache gencaches")
 

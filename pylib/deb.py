@@ -1,5 +1,6 @@
 import os
 import re
+import md5
 
 import debinfo
 import debversion
@@ -101,4 +102,26 @@ def prioritize_packages(packagedir):
             regular.append(name)
     
     return high, regular
+
+def get_package_index(packagedir):
+    def filesize(path):
+        return str(os.stat(path).st_size)
+
+    def md5sum(path):
+        return str(md5.md5(open(path, 'rb').read()).hexdigest())
+
+    index = []
+    for package in os.listdir(packagedir):
+        path = os.path.join(packagedir, package)
+        if path.endswith('.deb'):
+            control = debinfo.get_control_fields(path)
+            for field in control.keys():
+                index.append(field + ": " + control[field])
+
+            index.append("Filename: " + path)
+            index.append("Size: " + filesize(path))
+            index.append("MD5sum: " + md5sum(path))
+            index.append("")
+
+    return index
 
