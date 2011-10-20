@@ -101,7 +101,10 @@ class Plan:
 
                 version = deb.get_version(package_paths[name])
                 deps = deb.get_depends(package_paths[name], self.pool)
-                deb.checkversion(pkg, version)  # raise error on mismatch
+
+                if not deb.checkversion(pkg, version):
+                    raise Error("dependency version error", pkg, version)
+
                 spec.add(name, version)
 
                 resolved.add(pkg)

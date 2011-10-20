@@ -24,7 +24,7 @@ def checkversion(package, version):
             if debversion.compare(version, ver) in relations[relation]:
                 return True
 
-            raise Error("dependency version error: ", package, version)
+            return False
 
 def get_version(package_path):
     """return package version"""
