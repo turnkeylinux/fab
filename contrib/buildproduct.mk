@@ -123,7 +123,7 @@ clean:
 bootstrap/deps = $(BOOTSTRAP) $(BOOTSTRAP).spec
 define bootstrap/main
 	$(call remove-deck, $O/bootstrap)
-	$(call remove-deck, $0/root.build)
+	$(call remove-deck, $O/root.build)
 	deck $(BOOTSTRAP) $O/bootstrap
 endef
 
