@@ -85,7 +85,7 @@ define help/main
 	@echo
 	@echo '=== Usage'
 	@echo '# remake target and the targets that depend on it'
-	@echo '$$ rm .stamps/<target>'
+	@echo '$$ rm $$O/.stamps/<target>'
 	@echo
 	@echo '# build a target (default: product.iso)'
 	@echo '$$ make [target] [O=path/to/build/dir]'
