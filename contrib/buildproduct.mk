@@ -1,34 +1,39 @@
+ifndef FAB_PATH
+$(error FAB_PATH not defined - needed for default paths)
+endif
+
+# (to disable set to empty string)
+MKSQUASHFS_COMPRESS ?= yes 
+MKSQUASHFS_VERBOSE ?= yes  
+
+define MKSQUASHFS_OPTS
+$(if $(MKSQUASHFS_COMPRESS),, -noD -noI -noF -no-fragments) \
+$(if $(MKSQUASHFS_VERBOSE), -info)
+endef
+
+# FAB_PATH dependent infrastructural components
+POOL ?= $(FAB_PATH)/pools/$(RELEASE)
+BOOTSTRAP ?= $(FAB_PATH)/bootstraps/$(RELEASE)
+CDROOT ?= $(FAB_PATH)/cdroots/bootsplash
+FAB_PLAN_INCLUDE_PATH ?= $(FAB_PATH)/common-plans
+export FAB_PLAN_INCLUDE_PATH
+
+# default locations of product build inputs
+PLAN ?= plan/main
+ROOT_OVERLAY ?= overlay
+CDROOT_OVERLAY ?= cdroot.overlay
+REMOVELIST ?= removelist
+
+INITRAMFS_PACKAGES ?= busybox-initramfs casper
+
 # build output path
-O := .
+O ?= .
 
-ISOLABEL := $(shell basename $(shell pwd))
+ISOLABEL ?= $(shell basename $(shell pwd))
 
-REMOVELIST_PATH := removelist
-
-FAB_PATH := /turnkey/fab
-POOL_PATH = $(FAB_PATH)/pools/$(RELEASE)
-BOOTSTRAP_PATH = $(FAB_PATH)/bootstraps/$(RELEASE)
-CDROOT_PATH = $(FAB_PATH)/cdroots/bootsplash
-
-export FAB_PLAN_INCLUDE_PATH = $(FAB_PATH)/common-plans
-
-INITRAMFS_PACKAGES := busybox-initramfs casper
-
-MKSQUASHFS_COMPRESS ?= 1
-MKSQUASHFS_VERBOSE ?= 1
-
-ifneq ($(MKSQUASHFS_COMPRESS), 1)
-	MKSQUASHFS_OPTS += -noD -noI -noF -no-fragments
-endif
-
-ifeq ($(MKSQUASHFS_VERBOSE), 1)
-	MKSQUASHFS_OPTS += -info
-endif
-
-STAMPS_DIR := $(O)/.stamps
+STAMPS_DIR := $O/.stamps
 $(shell mkdir -p $(STAMPS_DIR))
 
-### define functions
 define remove-deck
 	if deck -t $(strip $1); then \
 		deck -D $(strip $1); \
@@ -36,6 +41,10 @@ define remove-deck
 endef
 
 all: $O/product.iso
+
+prereq: $(BOOTSTRAP)
+	@echo $<
+	@echo $(BOOTSTRAP)
 
 debug:
 	$(foreach v, $V, $(warning $v = $($v)))
@@ -77,36 +86,36 @@ clean:
 	$(call remove-deck, $O/bootstrap)
 	-rm -rf $O/root.spec $O/cdroot $O/product.iso $(STAMPS_DIR) tmp
 
-$(STAMPS_DIR)/bootstrap: $(BOOTSTRAP_PATH) $(BOOTSTRAP_PATH).spec
+$(STAMPS_DIR)/bootstrap: $(BOOTSTRAP) $(BOOTSTRAP).spec
 	$(call remove-deck, $O/bootstrap)
 	$(call remove-deck, $(0)/root.build)
-	deck $(BOOTSTRAP_PATH) $O/bootstrap
+	deck $(BOOTSTRAP) $O/bootstrap
 	touch $@
 
 $(STAMPS_DIR)/root.spec: $(STAMPS_DIR)/bootstrap $(wildcard plan/*)
-	fab-plan-resolve --output=$O/root.spec plan/main $(POOL_PATH) $O/bootstrap
+	fab-plan-resolve --output=$O/root.spec $(PLAN) $(POOL) $O/bootstrap
 	touch $@
 
 $(STAMPS_DIR)/root.build: $(STAMPS_DIR)/bootstrap $(STAMPS_DIR)/root.spec
 	if [ -e $O/root.build ]; then fab-chroot-umount $O/root.build; fi
 	if ! deck -t $O/root.build; then deck $O/bootstrap $O/root.build; fi
-	fab-spec-install $O/root.spec $(POOL_PATH) $O/root.build
+	fab-spec-install $O/root.spec $(POOL) $O/root.build
 	touch $@
 
-# undefine REMOVELIST_PATH if it doesn't exist
-ifeq ($(wildcard $(REMOVELIST_PATH)),)
-REMOVELIST_PATH =
+# undefine REMOVELIST if it doesn't exist
+ifeq ($(wildcard $(REMOVELIST)),)
+REMOVELIST =
 endif
 
-$(STAMPS_DIR)/root.patched: $(STAMPS_DIR)/root.build $(REMOVELIST_PATH)
+$(STAMPS_DIR)/root.patched: $(STAMPS_DIR)/root.build $(REMOVELIST)
 	$(call remove-deck, $O/root.patched)
 	deck $O/root.build $O/root.patched
-ifdef REMOVELIST_PATH
-	fab-apply-removelist $(REMOVELIST_PATH) $O/root.patched
+ifdef REMOVELIST
+	fab-apply-removelist $(REMOVELIST) $O/root.patched
 endif
-	if [ -d overlay ]; then \
-		fab-apply-overlay overlay $O/root.patched; \
-		if [ -e overlay/etc/casper.conf ]; then \
+	if [ -d $(ROOT_OVERLAY) ]; then \
+		fab-apply-overlay $(ROOT_OVERLAY) $O/root.patched; \
+		if [ -e $(ROOT_OVERLAY)/etc/casper.conf ]; then \
 			fab-chroot --mount $O/root.patched "update-initramfs -u"; \
 		fi \
 	fi
@@ -114,11 +123,11 @@ endif
 	fab-chroot $O/root.patched "rm -rf /boot/*.bak"
 	touch $@
 
-$(STAMPS_DIR)/cdroot: $(STAMPS_DIR)/root.patched $(CDROOT_PATH)
+$(STAMPS_DIR)/cdroot: $(STAMPS_DIR)/root.patched $(CDROOT)
 	if [ -e $O/cdroot ]; then rm -rf $O/cdroot; fi
-	cp -a $(CDROOT_PATH) $O/cdroot
+	cp -a $(CDROOT) $O/cdroot
 	mkdir $O/cdroot/casper
-	if [ -d cdroot.overlay ]; then fab-apply-overlay cdroot.overlay $O/cdroot; fi
+	if [ -d $(CDROOT_OVERLAY) ]; then fab-apply-overlay $(CDROOT_OVERLAY) $O/cdroot; fi
 
 	cp $O/root.patched/usr/lib/syslinux/isolinux.bin $O/cdroot/isolinux
 	cp $O/root.patched/vmlinuz $O/cdroot/casper/vmlinuz
@@ -143,7 +152,7 @@ $O/product.iso: $(STAMPS_DIR)/cdroot
 update-initramfs: $O/product.iso
 	rm -rf $O/product.iso
 	for package in $(INITRAMFS_PACKAGES); do \
-		echo $$package | fab-spec-install - $(POOL_PATH) $O/root.patched; \
+		echo $$package | fab-spec-install - $(POOL) $O/root.patched; \
 	done
 
 	fab-chroot $O/root.patched "rm -rf /boot/*.bak"
