@@ -60,12 +60,10 @@ class Installer:
         self.pool = Pool(pool_path)
 
     def _apt_clean(self, indexfile):
-        """clean apt cache in chroot"""
         self.chroot.execute("apt-get clean")
         os.remove(indexfile)
 
     def _apt_genindex(self, packagedir, indexfile):
-        print "generating package index"
         index = deb.get_package_index(packagedir)
         file(indexfile, "w").write("\n".join(index))
 
@@ -85,8 +83,13 @@ class Installer:
         indexfile  = join(self.chroot.path, "var/lib/apt/lists",
                           "_dists_local_debs_binary-i386_Packages")
 
+        print "getting packages..."
         self.pool.get(packages, packagedir)
+
+        print "generating package index..."
         self._apt_genindex(packagedir, indexfile)
+
+        print "installing packages..."
         self._apt_install(packages)
         self._apt_clean(indexfile)
 
