@@ -51,52 +51,52 @@ debug:
 	@true
 
 help:
-	@echo "=== Configurable variables"
-	@echo "Resolution order:"
-	@echo "1) command line (highest precedence)"
-	@echo "2) product Makefile"
-	@echo "3) environment variable"
-	@echo "4) built-in default (lowest precedence)"
+	@echo '=== Configurable variables'
+	@echo 'Resolution order:'
+	@echo '1) command line (highest precedence)'
+	@echo '2) product Makefile'
+	@echo '3) environment variable'
+	@echo '4) built-in default (lowest precedence)'
 	@echo
-	@echo "# Mandatory configuration variables:"
-	@echo "  FAB_PATH and RELEASE	used to calculate default paths for input variables"
+	@echo '# Mandatory configuration variables:'
+	@echo '  FAB_PATH and RELEASE	used to calculate default paths for input variables'
 	@echo
-	@echo "# Build configuration variables:"
-	@echo "  MKSQUASHFS_COMPRESS	if not an empty string - disables mksquashfs compression"
-	@echo "  MKSQUASHFS_VERBOSE	if not an empty string - mksquashfs is verbose"
+	@echo '# Build configuration variables:'
+	@echo '  MKSQUASHFS_COMPRESS	if not an empty string - disables mksquashfs compression'
+	@echo '  MKSQUASHFS_VERBOSE	if not an empty string - mksquashfs is verbose'
 	@echo
-	@echo "# Build context variables:"
-	@echo "  POOL"
-	@echo "  BOOTSTRAP"
-	@echo "  CDROOT"
-	@echo "  FAB_PLAN_INCLUDE_PATH"
+	@echo '# Build context variables    [VALUE]'
+	@echo '  POOL                       $(value POOL)'
+	@echo '  BOOTSTRAP                  $(value BOOTSTRAP)'
+	@echo '  CDROOT                     $(value CDROOT)'
+	@echo '  FAB_PLAN_INCLUDE_PATH      $(value FAB_PLAN_INCLUDE_PATH)'
 	@echo
-	@echo "# Product input variables:"
-	@echo "  PLAN"
-	@echo "  ROOT_OVERLAY"
-	@echo "  CDROOT_OVERLAY"
-	@echo "  REMOVELIST"
+	@echo '# Product input variables    [VALUE]'  
+	@echo '  PLAN                       $(value PLAN)'
+	@echo '  ROOT_OVERLAY               $(value ROOT_OVERLAY)'
+	@echo '  CDROOT_OVERLAY             $(value CDROOT_OVERLAY)'
+	@echo '  REMOVELIST                 $(value REMOVELIST)'
 	@echo
-	@echo "# Product output variables:"
-	@echo "  O"
-	@echo "  ISOLABEL"
+	@echo '# Product output variables   [VALUE]'
+	@echo '  O                          $(value O)'
+	@echo '  ISOLABEL                   $(value ISOLABEL)'
 	@echo
-	@echo "=== Usage:"
-	@echo "# remake target and the targets that depend on it"
-	@echo "$$ rm .stamps/<target>"
+	@echo '=== Usage:'
+	@echo '# remake target and the targets that depend on it'
+	@echo '$$ rm .stamps/<target>'
 	@echo
-	@echo "# build a target (default: product.iso)"
-	@echo "$$ make [target] [O=path/to/build/dir]"
-	@echo "  clean         # clean all build targets"
-	@echo "  bootstrap     # minimal chrootable filesystem used to bootstrap the root"
-	@echo "  root.spec     # the spec from which root.build is built (I.e., resolved plan)"
-	@echo "  root.build    # created by applying the root.spec to the bootstrap"
-	@echo "  root.patched  # created by applying the root overlay and removelist"
-	@echo "  cdroot        # created by squashing root.patched into cdroot template + overlay"
-	@echo "  product.iso   # product ISO created from the cdroot"
+	@echo '# build a target (default: product.iso)'
+	@echo '$$ make [target] [O=path/to/build/dir]'
+	@echo '  clean         # clean all build targets'
+	@echo '  bootstrap     # minimal chrootable filesystem used to bootstrap the root'
+	@echo '  root.spec     # the spec from which root.build is built (I.e., resolved plan)'
+	@echo '  root.build    # created by applying the root.spec to the bootstrap'
+	@echo '  root.patched  # created by applying the root overlay and removelist'
+	@echo '  cdroot        # created by squashing root.patched into cdroot template + overlay'
+	@echo '  product.iso   # product ISO created from the cdroot'
 	@echo
-	@echo "# reinstall INITRAMFS_PACKAGES in root.patched and recreate product.iso"
-	@echo "  update-initramfs"
+	@echo '# reinstall INITRAMFS_PACKAGES in root.patched and recreate product.iso'
+	@echo '  update-initramfs'
 
 clean:
 	fab-chroot-umount $O/root.build
