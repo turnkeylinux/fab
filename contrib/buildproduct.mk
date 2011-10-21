@@ -120,6 +120,8 @@ clean:
 	$(clean/post)
 
 ### STAMPED_TARGETS
+
+# target: bootstrap
 bootstrap/deps ?= $(BOOTSTRAP) $(BOOTSTRAP).spec
 define bootstrap/body
 	$(call remove-deck, $O/bootstrap)
@@ -127,11 +129,13 @@ define bootstrap/body
 	deck $(BOOTSTRAP) $O/bootstrap
 endef
 
+# target: root.spec
 root.spec/deps ?= $(STAMPS_DIR)/bootstrap $(wildcard plan/*)
 define root.spec/body
 	fab-plan-resolve --output=$O/root.spec $(PLAN) $(POOL) $O/bootstrap
 endef
 
+# target: root.build
 root.build/deps ?= $(STAMPS_DIR)/bootstrap $(STAMPS_DIR)/root.spec
 define root.build/body
 	if [ -e $O/root.build ]; then fab-chroot-umount $O/root.build; fi
@@ -139,7 +143,8 @@ define root.build/body
 	fab-spec-install $O/root.spec $(POOL) $O/root.build
 endef
 
-# undefine REMOVELIST if it doesn't exist
+# target: root.patched
+# undefine REMOVELIST if the file doesn't exist
 ifeq ($(wildcard $(REMOVELIST)),)
 REMOVELIST =
 endif
@@ -159,7 +164,7 @@ define root.patched/body
 	fab-chroot $O/root.patched "rm -rf /boot/*.bak"
 endef
 
-
+# target: cdroot
 cdroot/deps ?= $(STAMPS_DIR)/root.patched $(CDROOT)
 define cdroot/body
 	if [ -e $O/cdroot ]; then rm -rf $O/cdroot; fi
@@ -174,6 +179,7 @@ define cdroot/body
 	mksquashfs $O/root.patched $O/cdroot/casper/filesystem.squashfs $(MKSQUASHFS_OPTS)
 endef
 
+# construct target rules
 define _stamped_target
 $1: $(STAMPS_DIR)/$1
 
@@ -197,6 +203,7 @@ define run-mkisofs
 		-boot-info-table $O/cdroot/
 endef
 
+# target: product.iso
 define product.iso/body
 	$(run-mkisofs)
 endef
@@ -206,6 +213,7 @@ $O/product.iso: $(product.iso/deps)
 	$(product.iso/body)
 	$(product.iso/post)
 
+# target: update-initramfs
 define update-initramfs/body
 	rm -rf $O/product.iso
 	for package in $(INITRAMFS_PACKAGES); do \
