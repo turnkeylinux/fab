@@ -37,7 +37,7 @@ O ?= .
 
 ISOLABEL ?= $(shell basename $(shell pwd))
 
-STAMPS_DIR := $O/.stamps
+STAMPS_DIR := $O/stamps
 $(shell mkdir -p $(STAMPS_DIR))
 
 define remove-deck
