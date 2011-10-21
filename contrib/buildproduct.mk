@@ -59,11 +59,11 @@ help:
 	@echo '4) built-in default (lowest precedence)'
 	@echo
 	@echo '# Mandatory configuration variables:'
-	@echo '  FAB_PATH and RELEASE	used to calculate default paths for input variables'
+	@echo '  FAB_PATH and RELEASE       used to calculate default paths for input variables'
 	@echo
 	@echo '# Build configuration variables:'
-	@echo '  MKSQUASHFS_COMPRESS	if not an empty string - disables mksquashfs compression'
-	@echo '  MKSQUASHFS_VERBOSE	if not an empty string - mksquashfs is verbose'
+	@echo '  MKSQUASHFS_COMPRESS        if not an empty string - mksquashfs uses compression'
+	@echo '  MKSQUASHFS_VERBOSE         if not an empty string - mksquashfs is verbose'
 	@echo
 	@echo '# Build context variables    [VALUE]'
 	@echo '  POOL                       $(value POOL)'
