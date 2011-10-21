@@ -44,10 +44,6 @@ endef
 
 all: $O/product.iso
 
-prereq: $(BOOTSTRAP)
-	@echo $<
-	@echo $(BOOTSTRAP)
-
 debug:
 	$(foreach v, $V, $(warning $v = $($v)))
 	@true
