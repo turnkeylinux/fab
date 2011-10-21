@@ -51,25 +51,43 @@ debug:
 	@true
 
 help:
-	@echo "Environment variables:"
-	@echo "======================"
+	@echo "=== Configurable variables"
+	@echo "Resolution order:"
+	@echo "1) command line (highest precedence)"
+	@echo "2) product Makefile"
+	@echo "3) environment variable"
+	@echo "4) built-in default (lowest precedence)"
 	@echo
-	@echo "MKSQUASHFS_COMPRESS=0|1   turning off compression speeds up cdroot target 14X"
-	@echo "                          (default: $(MKSQUASHFS_COMPRESS))"
-	@echo "MKSQUASHFS_VERBOSE=0|1    make mksquashfs print verbose progress output"
-	@echo "                          (default: $(MKSQUASHFS_VERBOSE))"
-
+	@echo "# Mandatory configuration variables:"
+	@echo "  FAB_PATH and RELEASE	used to calculate default paths for input variables"
 	@echo
-	@echo "Usage:"
-	@echo "======"
+	@echo "# Build configuration variables:"
+	@echo "  MKSQUASHFS_COMPRESS	if not an empty string - disables mksquashfs compression"
+	@echo "  MKSQUASHFS_VERBOSE	if not an empty string - mksquashfs is verbose"
 	@echo
+	@echo "# Build context variables:"
+	@echo "  POOL"
+	@echo "  BOOTSTRAP"
+	@echo "  CDROOT"
+	@echo "  FAB_PLAN_INCLUDE_PATH"
+	@echo
+	@echo "# Product input variables:"
+	@echo "  PLAN"
+	@echo "  ROOT_OVERLAY"
+	@echo "  CDROOT_OVERLAY"
+	@echo "  REMOVELIST"
+	@echo
+	@echo "# Product output variables:"
+	@echo "  O"
+	@echo "  ISOLABEL"
+	@echo
+	@echo "=== Usage:"
 	@echo "# remake target and the targets that depend on it"
 	@echo "$$ rm .stamps/<target>"
 	@echo
 	@echo "# build a target (default: product.iso)"
 	@echo "$$ make [target] [O=path/to/build/dir]"
 	@echo "  clean"
-	@echo
 	@echo "  bootstrap"
 	@echo "  root.spec"
 	@echo "  root.build"
@@ -77,7 +95,8 @@ help:
 	@echo "  cdroot"
 	@echo "  product.iso       # depends on all the above, in sequence"
 	@echo
-	@echo "  update-initramfs  # reinstall INITRAMFS_PACKAGES in root.patched and recreate product.iso"
+	@echo "# reinstall INITRAMFS_PACKAGES in root.patched and recreate product.iso"
+	@echo "  update-initramfs"
 
 clean:
 	fab-chroot-umount $O/root.build
