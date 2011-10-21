@@ -48,6 +48,12 @@ endef
 
 all: $O/product.iso
 
+_redeck = if deck -t $1; then deck $1; fi
+redeck:
+	$(call _redeck, $O/bootstrap)
+	$(call _redeck, $O/root.build)
+	$(call _redeck, $O/root.patched)
+
 debug:
 	$(foreach v, $V, $(warning $v = $($v)))
 	@true
@@ -231,4 +237,4 @@ update-initramfs: $(update-initramfs/deps)
 	$(update-initramfs/body)
 	$(update-initramfs/post)
 
-.PHONY: all debug help clean update-initramfs $(STAMPED_TARGETS)
+.PHONY: all debug redeck help clean update-initramfs $(STAMPED_TARGETS)
