@@ -1,3 +1,5 @@
+#!/usr/bin/make -f
+
 ifndef FAB_PATH
 $(error FAB_PATH not defined - needed for default paths)
 endif
