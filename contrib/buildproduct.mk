@@ -185,7 +185,6 @@ $(STAMPS_DIR)/$1: $($1/deps)
 endef
 
 STAMPED_TARGETS := bootstrap root.spec root.build root.patched cdroot
-
 $(foreach target,$(STAMPED_TARGETS),$(eval $(call _stamped_target,$(target))))
 
 define run-mkisofs
@@ -198,16 +197,15 @@ define run-mkisofs
 		-boot-info-table $O/cdroot/
 endef
 
-product.iso/deps = $(STAMPS_DIR)/cdroot
 define product.iso/body
 	$(run-mkisofs)
 endef
+product.iso/deps = $(STAMPS_DIR)/cdroot
 $O/product.iso: $(product.iso/deps)
 	$(product.iso/pre)
 	$(product.iso/body)
 	$(product.iso/post)
 
-update-initramfs/deps = $O/product.iso
 define update-initramfs/body
 	rm -rf $O/product.iso
 	for package in $(INITRAMFS_PACKAGES); do \
@@ -219,6 +217,7 @@ define update-initramfs/body
 	$(run-mkisofs)
 endef
 
+update-initramfs/deps = $O/product.iso
 update-initramfs: $(update-initramfs/deps)
 	$(update-initramfs/pre)
 	$(update-initramfs/body)
