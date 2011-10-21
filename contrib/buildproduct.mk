@@ -129,7 +129,8 @@ define bootstrap/main
 	deck $(BOOTSTRAP) $O/bootstrap
 endef
 
-$(STAMPS_DIR)/bootstrap: $(BOOTSTRAP) $(BOOTSTRAP).spec
+bootstrap/deps = $(BOOTSTRAP) $(BOOTSTRAP).spec
+$(STAMPS_DIR)/bootstrap: $(bootstrap/deps)
 	$(bootstrap/pre)
 	$(bootstrap/main)
 	$(bootstrap/post)
@@ -139,7 +140,8 @@ define root.spec/main
 	fab-plan-resolve --output=$O/root.spec $(PLAN) $(POOL) $O/bootstrap
 endef
 
-$(STAMPS_DIR)/root.spec: $(STAMPS_DIR)/bootstrap $(wildcard plan/*)
+root.spec/deps = $(STAMPS_DIR)/bootstrap $(wildcard plan/*)
+$(STAMPS_DIR)/root.spec: $(root.spec/deps)
 	$(root.spec/pre)
 	$(root.spec/main)
 	$(root.spec/post)
@@ -151,7 +153,8 @@ define root.build/main
 	fab-spec-install $O/root.spec $(POOL) $O/root.build
 endef
 
-$(STAMPS_DIR)/root.build: $(STAMPS_DIR)/bootstrap $(STAMPS_DIR)/root.spec
+root.build/deps = $(STAMPS_DIR)/bootstrap $(STAMPS_DIR)/root.spec
+$(STAMPS_DIR)/root.build: $(root.build/deps)
 	$(root.build/pre)
 	$(root.build/main)
 	$(root.build/post)
@@ -176,7 +179,8 @@ define root.patched/main
 	fab-chroot $O/root.patched "rm -rf /boot/*.bak"
 endef
 
-$(STAMPS_DIR)/root.patched: $(STAMPS_DIR)/root.build $(REMOVELIST)
+root.patched/deps = $(STAMPS_DIR)/root.build $(REMOVELIST)
+$(STAMPS_DIR)/root.patched: $(root.patched/deps)
 	$(root.patched/pre)
 	$(root.patched/main)
 	$(root.patched/post)
@@ -195,7 +199,8 @@ define cdroot/main
 	mksquashfs $O/root.patched $O/cdroot/casper/filesystem.squashfs $(MKSQUASHFS_OPTS)
 endef
 
-$(STAMPS_DIR)/cdroot: $(STAMPS_DIR)/root.patched $(CDROOT)
+cdroot/deps = $(STAMPS_DIR)/root.patched $(CDROOT)
+$(STAMPS_DIR)/cdroot: $(cdroot/deps)
 	$(cdroot/pre)
 	$(cdroot/main)
 	$(cdroot/post)
