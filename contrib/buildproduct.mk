@@ -119,52 +119,32 @@ clean:
 	$(clean/main)
 	$(clean/post)
 
-define example/main
-	echo example1
-endef
-
+### STAMPED_TARGETS
+bootstrap/deps = $(BOOTSTRAP) $(BOOTSTRAP).spec
 define bootstrap/main
 	$(call remove-deck, $O/bootstrap)
-	$(call remove-deck, $(0)/root.build)
+	$(call remove-deck, $0/root.build)
 	deck $(BOOTSTRAP) $O/bootstrap
 endef
 
-bootstrap/deps = $(BOOTSTRAP) $(BOOTSTRAP).spec
-$(STAMPS_DIR)/bootstrap: $(bootstrap/deps)
-	$(bootstrap/pre)
-	$(bootstrap/main)
-	$(bootstrap/post)
-	touch $@
-
+root.spec/deps = $(STAMPS_DIR)/bootstrap $(wildcard plan/*)
 define root.spec/main
 	fab-plan-resolve --output=$O/root.spec $(PLAN) $(POOL) $O/bootstrap
 endef
 
-root.spec/deps = $(STAMPS_DIR)/bootstrap $(wildcard plan/*)
-$(STAMPS_DIR)/root.spec: $(root.spec/deps)
-	$(root.spec/pre)
-	$(root.spec/main)
-	$(root.spec/post)
-	touch $@
-
+root.build/deps = $(STAMPS_DIR)/bootstrap $(STAMPS_DIR)/root.spec
 define root.build/main
 	if [ -e $O/root.build ]; then fab-chroot-umount $O/root.build; fi
 	if ! deck -t $O/root.build; then deck $O/bootstrap $O/root.build; fi
 	fab-spec-install $O/root.spec $(POOL) $O/root.build
 endef
 
-root.build/deps = $(STAMPS_DIR)/bootstrap $(STAMPS_DIR)/root.spec
-$(STAMPS_DIR)/root.build: $(root.build/deps)
-	$(root.build/pre)
-	$(root.build/main)
-	$(root.build/post)
-	touch $@
-
 # undefine REMOVELIST if it doesn't exist
 ifeq ($(wildcard $(REMOVELIST)),)
 REMOVELIST =
 endif
 
+root.patched/deps = $(STAMPS_DIR)/root.build $(REMOVELIST)
 define root.patched/main
 	$(call remove-deck, $O/root.patched)
 	deck $O/root.build $O/root.patched
@@ -179,13 +159,8 @@ define root.patched/main
 	fab-chroot $O/root.patched "rm -rf /boot/*.bak"
 endef
 
-root.patched/deps = $(STAMPS_DIR)/root.build $(REMOVELIST)
-$(STAMPS_DIR)/root.patched: $(root.patched/deps)
-	$(root.patched/pre)
-	$(root.patched/main)
-	$(root.patched/post)
-	touch $@
 
+cdroot/deps = $(STAMPS_DIR)/root.patched $(CDROOT)
 define cdroot/main
 	if [ -e $O/cdroot ]; then rm -rf $O/cdroot; fi
 	cp -a $(CDROOT) $O/cdroot
@@ -199,12 +174,19 @@ define cdroot/main
 	mksquashfs $O/root.patched $O/cdroot/casper/filesystem.squashfs $(MKSQUASHFS_OPTS)
 endef
 
-cdroot/deps = $(STAMPS_DIR)/root.patched $(CDROOT)
-$(STAMPS_DIR)/cdroot: $(cdroot/deps)
-	$(cdroot/pre)
-	$(cdroot/main)
-	$(cdroot/post)
-	touch $@
+define _stamped_target
+$1: $(STAMPS_DIR)/$1
+
+$(STAMPS_DIR)/$1: $($1/deps)
+	$($1/pre)
+	$($1/main)
+	$($1/post)
+	touch $$@
+endef
+
+STAMPED_TARGETS := bootstrap root.spec root.build root.patched cdroot
+
+$(foreach target,$(STAMPED_TARGETS),$(eval $(call _stamped_target,$(target))))
 
 define run-mkisofs
 	mkisofs -o $O/product.iso -r -J -l \
@@ -216,15 +198,16 @@ define run-mkisofs
 		-boot-info-table $O/cdroot/
 endef
 
+product.iso/deps = $(STAMPS_DIR)/cdroot
 define product.iso/main
 	$(run-mkisofs)
 endef
-
-$O/product.iso: $(STAMPS_DIR)/cdroot
+$O/product.iso: $(product.iso/deps)
 	$(product.iso/pre)
 	$(product.iso/main)
 	$(product.iso/post)
 
+update-initramfs/deps = $O/product.iso
 define update-initramfs/main
 	rm -rf $O/product.iso
 	for package in $(INITRAMFS_PACKAGES); do \
@@ -236,13 +219,9 @@ define update-initramfs/main
 	$(run-mkisofs)
 endef
 
-update-initramfs: $O/product.iso
+update-initramfs: $(update-initramfs/deps)
 	$(update-initramfs/pre)
 	$(update-initramfs/main)
 	$(update-initramfs/post)
 
-# virtual targets that prequire $(STAMPS_DIR)/$target
-_VIRT_TARGETS := bootstrap root.spec root.build root.patched cdroot
-$(_VIRT_TARGETS): %: $(STAMPS_DIR)/%
-
-.PHONY: all debug help clean update-initramfs $(_VIRT_TARGETS)
+.PHONY: all debug help clean update-initramfs $(STAMPED_TARGETS)
