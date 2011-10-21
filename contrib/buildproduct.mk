@@ -120,19 +120,19 @@ clean:
 	$(clean/post)
 
 ### STAMPED_TARGETS
-bootstrap/deps = $(BOOTSTRAP) $(BOOTSTRAP).spec
+bootstrap/deps ?= $(BOOTSTRAP) $(BOOTSTRAP).spec
 define bootstrap/body
 	$(call remove-deck, $O/bootstrap)
 	$(call remove-deck, $O/root.build)
 	deck $(BOOTSTRAP) $O/bootstrap
 endef
 
-root.spec/deps = $(STAMPS_DIR)/bootstrap $(wildcard plan/*)
+root.spec/deps ?= $(STAMPS_DIR)/bootstrap $(wildcard plan/*)
 define root.spec/body
 	fab-plan-resolve --output=$O/root.spec $(PLAN) $(POOL) $O/bootstrap
 endef
 
-root.build/deps = $(STAMPS_DIR)/bootstrap $(STAMPS_DIR)/root.spec
+root.build/deps ?= $(STAMPS_DIR)/bootstrap $(STAMPS_DIR)/root.spec
 define root.build/body
 	if [ -e $O/root.build ]; then fab-chroot-umount $O/root.build; fi
 	if ! deck -t $O/root.build; then deck $O/bootstrap $O/root.build; fi
@@ -144,7 +144,7 @@ ifeq ($(wildcard $(REMOVELIST)),)
 REMOVELIST =
 endif
 
-root.patched/deps = $(STAMPS_DIR)/root.build $(REMOVELIST)
+root.patched/deps ?= $(STAMPS_DIR)/root.build $(REMOVELIST)
 define root.patched/body
 	$(call remove-deck, $O/root.patched)
 	deck $O/root.build $O/root.patched
@@ -160,7 +160,7 @@ define root.patched/body
 endef
 
 
-cdroot/deps = $(STAMPS_DIR)/root.patched $(CDROOT)
+cdroot/deps ?= $(STAMPS_DIR)/root.patched $(CDROOT)
 define cdroot/body
 	if [ -e $O/cdroot ]; then rm -rf $O/cdroot; fi
 	cp -a $(CDROOT) $O/cdroot
@@ -200,7 +200,7 @@ endef
 define product.iso/body
 	$(run-mkisofs)
 endef
-product.iso/deps = $(STAMPS_DIR)/cdroot
+product.iso/deps ?= $(STAMPS_DIR)/cdroot
 $O/product.iso: $(product.iso/deps)
 	$(product.iso/pre)
 	$(product.iso/body)
@@ -217,7 +217,7 @@ define update-initramfs/body
 	$(run-mkisofs)
 endef
 
-update-initramfs/deps = $O/product.iso
+update-initramfs/deps ?= $O/product.iso
 update-initramfs: $(update-initramfs/deps)
 	$(update-initramfs/pre)
 	$(update-initramfs/body)
