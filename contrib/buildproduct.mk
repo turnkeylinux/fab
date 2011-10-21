@@ -25,7 +25,7 @@ FAB_PLAN_INCLUDE_PATH ?= $(FAB_PATH)/common-plans
 export FAB_PLAN_INCLUDE_PATH
 
 # default locations of product build inputs
-PLAN ?= plan/main
+PLAN ?= plan/body
 ROOT_OVERLAY ?= overlay
 CDROOT_OVERLAY ?= cdroot.overlay
 REMOVELIST ?= removelist
@@ -52,7 +52,7 @@ debug:
 	$(foreach v, $V, $(warning $v = $($v)))
 	@true
 
-define help/main
+define help/body
 	@echo '=== Configurable variables'
 	@echo 'Resolution order:'
 	@echo '1) command line (highest precedence)'
@@ -103,10 +103,10 @@ endef
 
 help:
 	$(help/pre)
-	$(help/main)
+	$(help/body)
 	$(help/post)
 
-define clean/main
+define clean/body
 	fab-chroot-umount $O/root.build
 	$(call remove-deck, $O/root.patched)
 	$(call remove-deck, $O/root.build)
@@ -116,24 +116,24 @@ endef
 
 clean:
 	$(clean/pre)
-	$(clean/main)
+	$(clean/body)
 	$(clean/post)
 
 ### STAMPED_TARGETS
 bootstrap/deps = $(BOOTSTRAP) $(BOOTSTRAP).spec
-define bootstrap/main
+define bootstrap/body
 	$(call remove-deck, $O/bootstrap)
 	$(call remove-deck, $O/root.build)
 	deck $(BOOTSTRAP) $O/bootstrap
 endef
 
 root.spec/deps = $(STAMPS_DIR)/bootstrap $(wildcard plan/*)
-define root.spec/main
+define root.spec/body
 	fab-plan-resolve --output=$O/root.spec $(PLAN) $(POOL) $O/bootstrap
 endef
 
 root.build/deps = $(STAMPS_DIR)/bootstrap $(STAMPS_DIR)/root.spec
-define root.build/main
+define root.build/body
 	if [ -e $O/root.build ]; then fab-chroot-umount $O/root.build; fi
 	if ! deck -t $O/root.build; then deck $O/bootstrap $O/root.build; fi
 	fab-spec-install $O/root.spec $(POOL) $O/root.build
@@ -145,7 +145,7 @@ REMOVELIST =
 endif
 
 root.patched/deps = $(STAMPS_DIR)/root.build $(REMOVELIST)
-define root.patched/main
+define root.patched/body
 	$(call remove-deck, $O/root.patched)
 	deck $O/root.build $O/root.patched
 	$(if $(REMOVELIST),fab-apply-removelist $(REMOVELIST) $O/root.patched)
@@ -161,7 +161,7 @@ endef
 
 
 cdroot/deps = $(STAMPS_DIR)/root.patched $(CDROOT)
-define cdroot/main
+define cdroot/body
 	if [ -e $O/cdroot ]; then rm -rf $O/cdroot; fi
 	cp -a $(CDROOT) $O/cdroot
 	mkdir $O/cdroot/casper
@@ -179,7 +179,7 @@ $1: $(STAMPS_DIR)/$1
 
 $(STAMPS_DIR)/$1: $($1/deps)
 	$($1/pre)
-	$($1/main)
+	$($1/body)
 	$($1/post)
 	touch $$@
 endef
@@ -199,16 +199,16 @@ define run-mkisofs
 endef
 
 product.iso/deps = $(STAMPS_DIR)/cdroot
-define product.iso/main
+define product.iso/body
 	$(run-mkisofs)
 endef
 $O/product.iso: $(product.iso/deps)
 	$(product.iso/pre)
-	$(product.iso/main)
+	$(product.iso/body)
 	$(product.iso/post)
 
 update-initramfs/deps = $O/product.iso
-define update-initramfs/main
+define update-initramfs/body
 	rm -rf $O/product.iso
 	for package in $(INITRAMFS_PACKAGES); do \
 		echo $$package | fab-spec-install - $(POOL) $O/root.patched; \
@@ -221,7 +221,7 @@ endef
 
 update-initramfs: $(update-initramfs/deps)
 	$(update-initramfs/pre)
-	$(update-initramfs/main)
+	$(update-initramfs/body)
 	$(update-initramfs/post)
 
 .PHONY: all debug help clean update-initramfs $(STAMPED_TARGETS)
