@@ -111,7 +111,7 @@ define clean/main
 	$(call remove-deck, $O/root.patched)
 	$(call remove-deck, $O/root.build)
 	$(call remove-deck, $O/bootstrap)
-	-rm -rf $O/root.spec $O/cdroot $O/product.iso $(STAMPS_DIR) tmp
+	-rm -rf $O/root.spec $O/cdroot $O/product.iso $(STAMPS_DIR)
 endef
 
 clean:
