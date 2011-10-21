@@ -52,7 +52,7 @@ debug:
 	$(foreach v, $V, $(warning $v = $($v)))
 	@true
 
-help:
+define help/main
 	@echo '=== Configurable variables'
 	@echo 'Resolution order:'
 	@echo '1) command line (highest precedence)'
@@ -99,28 +99,62 @@ help:
 	@echo
 	@echo '# reinstall INITRAMFS_PACKAGES in root.patched and recreate product.iso'
 	@echo '  update-initramfs'
+endef
 
-clean:
+help:
+	$(help/pre)
+	$(help/main)
+	$(help/post)
+
+define clean/main
 	fab-chroot-umount $O/root.build
 	$(call remove-deck, $O/root.patched)
 	$(call remove-deck, $O/root.build)
 	$(call remove-deck, $O/bootstrap)
 	-rm -rf $O/root.spec $O/cdroot $O/product.iso $(STAMPS_DIR) tmp
+endef
 
-$(STAMPS_DIR)/bootstrap: $(BOOTSTRAP) $(BOOTSTRAP).spec
+clean:
+	$(clean/pre)
+	$(clean/main)
+	$(clean/post)
+
+define example/main
+	echo example1
+endef
+
+define bootstrap/main
 	$(call remove-deck, $O/bootstrap)
 	$(call remove-deck, $(0)/root.build)
 	deck $(BOOTSTRAP) $O/bootstrap
+endef
+
+$(STAMPS_DIR)/bootstrap: $(BOOTSTRAP) $(BOOTSTRAP).spec
+	$(bootstrap/pre)
+	$(bootstrap/main)
+	$(bootstrap/post)
 	touch $@
+
+define root.spec/main
+	fab-plan-resolve --output=$O/root.spec $(PLAN) $(POOL) $O/bootstrap
+endef
 
 $(STAMPS_DIR)/root.spec: $(STAMPS_DIR)/bootstrap $(wildcard plan/*)
-	fab-plan-resolve --output=$O/root.spec $(PLAN) $(POOL) $O/bootstrap
+	$(root.spec/pre)
+	$(root.spec/main)
+	$(root.spec/post)
 	touch $@
 
-$(STAMPS_DIR)/root.build: $(STAMPS_DIR)/bootstrap $(STAMPS_DIR)/root.spec
+define root.build/main
 	if [ -e $O/root.build ]; then fab-chroot-umount $O/root.build; fi
 	if ! deck -t $O/root.build; then deck $O/bootstrap $O/root.build; fi
 	fab-spec-install $O/root.spec $(POOL) $O/root.build
+endef
+
+$(STAMPS_DIR)/root.build: $(STAMPS_DIR)/bootstrap $(STAMPS_DIR)/root.spec
+	$(root.build/pre)
+	$(root.build/main)
+	$(root.build/post)
 	touch $@
 
 # undefine REMOVELIST if it doesn't exist
@@ -128,12 +162,10 @@ ifeq ($(wildcard $(REMOVELIST)),)
 REMOVELIST =
 endif
 
-$(STAMPS_DIR)/root.patched: $(STAMPS_DIR)/root.build $(REMOVELIST)
+define root.patched/main
 	$(call remove-deck, $O/root.patched)
 	deck $O/root.build $O/root.patched
-ifdef REMOVELIST
-	fab-apply-removelist $(REMOVELIST) $O/root.patched
-endif
+	$(if $(REMOVELIST),fab-apply-removelist $(REMOVELIST) $O/root.patched)
 	if [ -d $(ROOT_OVERLAY) ]; then \
 		fab-apply-overlay $(ROOT_OVERLAY) $O/root.patched; \
 		if [ -e $(ROOT_OVERLAY)/etc/casper.conf ]; then \
@@ -142,9 +174,15 @@ endif
 	fi
 	fab-chroot $O/root.patched "cp /usr/share/base-files/dot.bashrc /etc/skel/.bashrc"
 	fab-chroot $O/root.patched "rm -rf /boot/*.bak"
+endef
+
+$(STAMPS_DIR)/root.patched: $(STAMPS_DIR)/root.build $(REMOVELIST)
+	$(root.patched/pre)
+	$(root.patched/main)
+	$(root.patched/post)
 	touch $@
 
-$(STAMPS_DIR)/cdroot: $(STAMPS_DIR)/root.patched $(CDROOT)
+define cdroot/main
 	if [ -e $O/cdroot ]; then rm -rf $O/cdroot; fi
 	cp -a $(CDROOT) $O/cdroot
 	mkdir $O/cdroot/casper
@@ -155,6 +193,12 @@ $(STAMPS_DIR)/cdroot: $(STAMPS_DIR)/root.patched $(CDROOT)
 	cp $O/root.patched/initrd.img $O/cdroot/casper/initrd.gz
 
 	mksquashfs $O/root.patched $O/cdroot/casper/filesystem.squashfs $(MKSQUASHFS_OPTS)
+endef
+
+$(STAMPS_DIR)/cdroot: $(STAMPS_DIR)/root.patched $(CDROOT)
+	$(cdroot/pre)
+	$(cdroot/main)
+	$(cdroot/post)
 	touch $@
 
 define run-mkisofs
@@ -167,10 +211,16 @@ define run-mkisofs
 		-boot-info-table $O/cdroot/
 endef
 
-$O/product.iso: $(STAMPS_DIR)/cdroot
+define product.iso/main
 	$(run-mkisofs)
+endef
 
-update-initramfs: $O/product.iso
+$O/product.iso: $(STAMPS_DIR)/cdroot
+	$(product.iso/pre)
+	$(product.iso/main)
+	$(product.iso/post)
+
+define update-initramfs/main
 	rm -rf $O/product.iso
 	for package in $(INITRAMFS_PACKAGES); do \
 		echo $$package | fab-spec-install - $(POOL) $O/root.patched; \
@@ -179,6 +229,12 @@ update-initramfs: $O/product.iso
 	fab-chroot $O/root.patched "rm -rf /boot/*.bak"
 	cp $O/root.patched/boot/initrd.img-* $O/cdroot/casper/initrd.gz
 	$(run-mkisofs)
+endef
+
+update-initramfs: $O/product.iso
+	$(update-initramfs/pre)
+	$(update-initramfs/main)
+	$(update-initramfs/post)
 
 # virtual targets that prequire $(STAMPS_DIR)/$target
 _VIRT_TARGETS := bootstrap root.spec root.build root.patched cdroot
