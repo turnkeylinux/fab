@@ -4,6 +4,10 @@ ifndef FAB_PATH
 $(error FAB_PATH not defined - needed for default paths)
 endif
 
+ifndef RELEASE
+$(warning RELEASE not defined - default paths for POOL and BOOTSTRAP may break)
+endif
+
 # (to disable set to empty string)
 MKSQUASHFS_COMPRESS ?= yes 
 MKSQUASHFS_VERBOSE ?= yes  
@@ -79,7 +83,7 @@ help:
 	@echo '  O                          $(value O)'
 	@echo '  ISOLABEL                   $(value ISOLABEL)'
 	@echo
-	@echo '=== Usage:'
+	@echo '=== Usage'
 	@echo '# remake target and the targets that depend on it'
 	@echo '$$ rm .stamps/<target>'
 	@echo
