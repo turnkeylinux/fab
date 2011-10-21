@@ -25,7 +25,7 @@ FAB_PLAN_INCLUDE_PATH ?= $(FAB_PATH)/common-plans
 export FAB_PLAN_INCLUDE_PATH
 
 # default locations of product build inputs
-PLAN ?= plan/body
+PLAN ?= plan/main
 ROOT_OVERLAY ?= overlay
 CDROOT_OVERLAY ?= cdroot.overlay
 REMOVELIST ?= removelist
