@@ -189,10 +189,10 @@ endef
 define _stamped_target
 $1: $(STAMPS_DIR)/$1
 
-$(STAMPS_DIR)/$1: $($1/deps)
-	$($1/pre)
-	$($1/body)
-	$($1/post)
+$(STAMPS_DIR)/$1: $$($1/deps)
+	$$($1/pre)
+	$$($1/body)
+	$$($1/post)
 	touch $$@
 endef
 
