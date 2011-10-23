@@ -189,7 +189,7 @@ endef
 define _stamped_target
 $1: $(STAMPS_DIR)/$1
 
-$(STAMPS_DIR)/$1: $$($1/deps)
+$(STAMPS_DIR)/$1: $$($1/deps) $$($1/deps/extra)
 	$$($1/pre)
 	$$($1/body)
 	$$($1/post)
@@ -214,7 +214,7 @@ define product.iso/body
 	$(run-mkisofs)
 endef
 product.iso/deps ?= $(STAMPS_DIR)/cdroot
-$O/product.iso: $(product.iso/deps)
+$O/product.iso: $(product.iso/deps) $(product.iso/deps/extra)
 	$(product.iso/pre)
 	$(product.iso/body)
 	$(product.iso/post)
@@ -232,7 +232,7 @@ define update-initramfs/body
 endef
 
 update-initramfs/deps ?= $O/product.iso
-update-initramfs: $(update-initramfs/deps)
+update-initramfs: $(update-initramfs/deps) $(update-initramfs/deps/extra)
 	$(update-initramfs/pre)
 	$(update-initramfs/body)
 	$(update-initramfs/post)
