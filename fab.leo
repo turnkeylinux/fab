@@ -3,7 +3,7 @@
 <leo_file>
 <leo_header file_format="2" tnodes="0" max_tnode_index="0" clone_windows="0"/>
 <globals body_outline_ratio="0.368651488616">
-	<global_window_position top="0" left="5" height="709" width="1142"/>
+	<global_window_position top="10" left="10" height="709" width="1142"/>
 	<global_log_window_position top="0" left="0" height="0" width="0"/>
 </globals>
 <preferences/>
@@ -83,7 +83,8 @@
 <v t="loni.20111121182213"><vh>caching</vh></v>
 </v>
 </v>
-<v t="loni.20111206170905" a="TV"><vh>regression testing</vh></v>
+<v t="loni.20111206170905"><vh>regression testing</vh></v>
+<v t="loni.20120103150913" a="V"><vh>bugfix: package installation prioritization</vh></v>
 </v>
 </v>
 <v t="loni.20110928132411" a="E"><vh>bugs/wishlist</vh>
@@ -1285,6 +1286,16 @@ Packages
         available
         not available
 
+
+</t>
+<t tx="loni.20120103150913">Slim builds fine with it, but backstage chokes.
+
+Unpacking linux-image-2.6.20-15-386 (from .../linux-image-2.6.20-15-386_2.6.20-15.27_i386.deb) ...
+Ok, Aborting
+dpkg: error processing /var/cache/apt/archives/linux-image-2.6.20-15-386_2.6.20-15.27_i386.deb (--unpack):
+ subprocess pre-installation script returned error exit status 1
+Selecting previously deselected package linux-image-386.
+Unpacking linux-image-386 (from .../linux-image-386_2.6.20.15.14_i386.deb) ...
 
 </t>
 <t tx="zaril.20110904173229">@nocolor

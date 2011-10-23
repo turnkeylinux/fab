@@ -59,6 +59,24 @@ class Installer:
         self.chroot = Chroot(chroot_path)
         self.pool = Pool(pool_path)
 
+    @staticmethod
+    def _prioritize_packages(packages):
+        """high priority packages must be installed before regular packages
+           APT should handle this, but in some circumstances it chokes...
+        """
+        HIGH_PRIORITY = ('linux-image')
+
+        high = []
+        regular = []
+
+        for package in packages:
+            if package.startswith(HIGH_PRIORITY):
+                high.append(package)
+            else:
+                regular.append(package)
+
+        return high, regular
+
     def _apt_clean(self, indexfile):
         self.chroot.execute("apt-get clean")
         os.remove(indexfile)
@@ -72,10 +90,14 @@ class Installer:
     @fakestartstop
     @sources_list
     def _apt_install(self, packages):
-        args = ['install', '--assume-yes', '--allow-unauthenticated']
-        command = "apt-get " + " ".join(args) + " " + " ".join(packages)
+        high, regular = self._prioritize_packages(packages)
 
-        self.chroot.execute(command)
+        for packages in (high, regular):
+            if packages:
+                args = ['install', '--assume-yes', '--allow-unauthenticated']
+                cmd = "apt-get " + " ".join(args) + " " + " ".join(packages)
+
+                self.chroot.execute(cmd)
 
     def install(self, packages):
         """install packages into chroot """
