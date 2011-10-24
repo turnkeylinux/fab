@@ -41,6 +41,7 @@ O ?= .
 ISOLABEL ?= $(shell basename $(shell pwd))
 
 STAMPS_DIR = $O/stamps
+$(shell mkdir -p $(STAMPS_DIR))
 
 define remove-deck
 	if deck -t $(strip $1); then \
