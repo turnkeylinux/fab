@@ -38,7 +38,6 @@ O ?= .
 ISOLABEL ?= $(shell basename $(shell pwd))
 
 STAMPS_DIR = $O/stamps
-$(shell mkdir -p $(STAMPS_DIR))
 
 define remove-deck
 	if deck -t $(strip $1); then \
@@ -185,11 +184,14 @@ define cdroot/body
 	mksquashfs $O/root.patched $O/cdroot/casper/filesystem.squashfs $(MKSQUASHFS_OPTS)
 endef
 
+_init:
+	@mkdir -p $(STAMPS_DIR)
+
 # construct target rules
 define _stamped_target
 $1: $(STAMPS_DIR)/$1
 
-$(STAMPS_DIR)/$1: $$($1/deps) $$($1/deps/extra)
+$(STAMPS_DIR)/$1: _init $$($1/deps) $$($1/deps/extra)
 	$$($1/pre)
 	$$($1/body)
 	$$($1/post)
