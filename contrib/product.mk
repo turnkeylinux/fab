@@ -10,7 +10,7 @@ endif
 
 # (to disable set to empty string)
 MKSQUASHFS_COMPRESS ?= yes 
-MKSQUASHFS_VERBOSE ?= yes  
+MKSQUASHFS_VERBOSE ?=
 
 define MKSQUASHFS_OPTS
 $(if $(MKSQUASHFS_COMPRESS),, -noD -noI -noF -no-fragments) \
