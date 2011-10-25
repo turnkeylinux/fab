@@ -6,7 +6,6 @@ Package ordering is not changed
 Arguments:
   <plan>            Path to read plan from
   <pool>            Relative or absolute pool path
-                    If relative, pool path is looked up in FAB_POOL_PATH
 
 Options:
   -i --inplace      Edit plan inplace

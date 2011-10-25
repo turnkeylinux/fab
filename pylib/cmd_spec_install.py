@@ -4,7 +4,6 @@
 Arguments:
   <spec>            Path to read spec from (- for stdin)
   <pool>            Relative or absolute pool path
-                    If relative, pool path is looked up in FAB_POOL_PATH
   <chroot>          Path to chroot
 
 """

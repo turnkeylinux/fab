@@ -4,7 +4,6 @@
 Arguments:
   <plan>            Path to read plan from (- for stdin)
   <pool>            Relative or absolute pool path
-                    If relative, pool path is looked up in FAB_POOL_PATH
 
 Optional Arguments:
   bootstrap         Extract list of installed packages from the bootstrap and
