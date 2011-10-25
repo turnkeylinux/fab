@@ -22,7 +22,10 @@ POOL ?= $(FAB_PATH)/pools/$(RELEASE)
 BOOTSTRAP ?= $(FAB_PATH)/bootstraps/$(RELEASE)
 CDROOT ?= $(FAB_PATH)/cdroots/bootsplash
 FAB_PLAN_INCLUDE_PATH ?= $(FAB_PATH)/common-plans
+FAB_TMPDIR ?= $(FAB_PATH)/tmp
+
 export FAB_PLAN_INCLUDE_PATH
+export FAB_TMPDIR
 
 # default locations of product build inputs
 PLAN ?= plan/main
@@ -77,6 +80,7 @@ define help/body
 	@echo '  BOOTSTRAP                  $(value BOOTSTRAP)'
 	@echo '  CDROOT                     $(value CDROOT)'
 	@echo '  FAB_PLAN_INCLUDE_PATH      $(value FAB_PLAN_INCLUDE_PATH)'
+	@echo '  FAB_TMPDIR                 $(value FAB_TMPDIR)'
 	@echo
 	@echo '# Product input variables    [VALUE]'  
 	@echo '  PLAN                       $(value PLAN)'
