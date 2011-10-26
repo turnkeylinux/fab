@@ -20,7 +20,8 @@ def chrootmounts(method):
             ret = method(self, *args, **kws)
         finally:
             if self.chrootmounts:
-                self.umount_chrootmounts()
+                self._umount(join(self.path, 'dev/pts'))
+                self._umount(join(self.path, 'proc'))
 
         return ret
 
@@ -55,11 +56,6 @@ class Chroot:
         if cls._is_mounted(device):
             print "umounting: " + device
             executil.system("umount", "-f", device)
-
-    def umount_chrootmounts(self):
-        """umount proc and dev/pts from chroot"""
-        self._umount(join(self.path, 'dev/pts'))
-        self._umount(join(self.path, 'proc'))
 
     @chrootmounts
     def execute(self, command, get_stdout=False):

@@ -122,7 +122,6 @@ help:
 	$(help/post)
 
 define clean/body
-	fab-chroot-umount $O/root.build
 	$(call remove-deck, $O/root.patched)
 	$(call remove-deck, $O/root.build)
 	$(call remove-deck, $O/bootstrap)
@@ -153,7 +152,6 @@ endef
 # target: root.build
 root.build/deps ?= $(STAMPS_DIR)/bootstrap $(STAMPS_DIR)/root.spec
 define root.build/body
-	if [ -e $O/root.build ]; then fab-chroot-umount $O/root.build; fi
 	if ! deck -t $O/root.build; then deck $O/bootstrap $O/root.build; fi
 	fab-spec-install $O/root.spec $(POOL) $O/root.build
 endef
