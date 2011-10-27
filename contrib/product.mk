@@ -192,14 +192,14 @@ define cdroot/body
 	mksquashfs $O/root.patched $O/cdroot/casper/filesystem.squashfs $(MKSQUASHFS_OPTS)
 endef
 
-_init:
-	@mkdir -p $(STAMPS_DIR)
+$(STAMPS_DIR):
+	mkdir -p $(STAMPS_DIR)
 
 # construct target rules
 define _stamped_target
 $1: $(STAMPS_DIR)/$1
 
-$(STAMPS_DIR)/$1: _init $$($1/deps) $$($1/deps/extra)
+$(STAMPS_DIR)/$1: $(STAMPS_DIR) $$($1/deps) $$($1/deps/extra)
 	$$($1/pre)
 	$$($1/body)
 	$$($1/post)
