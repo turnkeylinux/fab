@@ -48,6 +48,7 @@ define remove-deck
 			echo "error: root.tmp is dirty with manual changes. To continue: deck -D $(strip $1)"; \
 			exit 1; \
 		fi; \
+		echo deck -D $1; \
 		deck -D $1; \
 	fi
 endef
