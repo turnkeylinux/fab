@@ -43,8 +43,12 @@ ISOLABEL ?= $(shell basename $(shell pwd))
 STAMPS_DIR = $O/stamps
 
 define remove-deck
-	if deck -t $(strip $1); then \
-		deck -D $(strip $1); \
+	@if deck -t $1; then \
+		if [ "$$(basename $1)" = "root.tmp" ] && deck --isdirty $1; then \
+			echo "error: root.tmp is dirty with manual changes. To continue: deck -D $(strip $1)"; \
+			exit 1; \
+		fi; \
+		deck -D $1; \
 	fi
 endef
 
@@ -102,7 +106,8 @@ define help/body
 	@echo '  bootstrap     # minimal chrootable filesystem used to bootstrap the root'
 	@echo '  root.spec     # the spec from which root.build is built (I.e., resolved plan)'
 	@echo '  root.build    # created by applying the root.spec to the bootstrap'
-	@echo '  root.patched  # created by applying the root overlay and removelist'
+	@echo '  root.patched  # deck root.build and apply the root overlay and removelist'
+	@echo '  root.tmp      # temporary changes here are squashed into a separate layer'
 	@echo '  cdroot        # created by squashing root.patched into cdroot template + overlay'
 	@echo '  product.iso   # product ISO created from the cdroot'
 	@echo
@@ -122,7 +127,9 @@ help:
 	$(help/post)
 
 define clean/body
+	$(call remove-deck, $O/root.tmp)
 	$(call remove-deck, $O/root.patched)
+	fab-chroot-umount $O/root.build
 	$(call remove-deck, $O/root.build)
 	$(call remove-deck, $O/bootstrap)
 	-rm -rf $O/root.spec $O/cdroot $O/product.iso $(STAMPS_DIR)
@@ -177,6 +184,12 @@ define root.patched/body
 	fab-chroot $O/root.patched "rm -rf /boot/*.bak"
 endef
 
+root.tmp/deps ?= $(STAMPS_DIR)/root.patched
+define root.tmp/body
+	$(call remove-deck, $O/root.tmp)
+	deck $O/root.patched $O/root.tmp
+endef
+
 # target: cdroot
 cdroot/deps ?= $(STAMPS_DIR)/root.patched $(CDROOT)
 define cdroot/body
@@ -189,7 +202,7 @@ define cdroot/body
 	cp $O/root.patched/vmlinuz $O/cdroot/casper/vmlinuz
 	cp $O/root.patched/initrd.img $O/cdroot/casper/initrd.gz
 
-	mksquashfs $O/root.patched $O/cdroot/casper/filesystem.squashfs $(MKSQUASHFS_OPTS)
+	mksquashfs $O/root.patched $O/cdroot/casper/10root.squashfs $(MKSQUASHFS_OPTS)
 endef
 
 # construct target rules
@@ -204,7 +217,7 @@ $(STAMPS_DIR)/$1: $$($1/deps) $$($1/deps/extra)
 	touch $$@
 endef
 
-STAMPED_TARGETS := bootstrap root.spec root.build root.patched cdroot
+STAMPED_TARGETS := bootstrap root.spec root.build root.patched root.tmp cdroot
 $(foreach target,$(STAMPED_TARGETS),$(eval $(call _stamped_target,$(target))))
 
 define run-mkisofs
@@ -219,9 +232,18 @@ endef
 
 # target: product.iso
 define product.iso/body
+	rm -f $O/cdroot/casper/20tmp.squashfs
+	@if deck --isdirty $O/root.tmp; then \
+		get_last_level="deck --get-level=last $O/root.tmp"; \
+		output=$O/cdroot/casper/20tmp.squashfs; \
+		echo "mksquashfs \$$($$get_last_level) $$output $(MKSQUASHFS_OPTS)"; \
+		\
+		last_level=$$($$get_last_level); \
+		mksquashfs $$last_level $$output $(MKSQUASHFS_OPTS); \
+	fi;
 	$(run-mkisofs)
 endef
-product.iso/deps ?= $(STAMPS_DIR)/cdroot
+product.iso/deps ?= $(STAMPS_DIR)/cdroot $(STAMPS_DIR)/root.tmp
 $O/product.iso: $(product.iso/deps) $(product.iso/deps/extra)
 	$(product.iso/pre)
 	$(product.iso/body)
