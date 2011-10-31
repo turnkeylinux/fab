@@ -130,7 +130,6 @@ help:
 define clean/body
 	$(call remove-deck, $O/root.tmp)
 	$(call remove-deck, $O/root.patched)
-	fab-chroot-umount $O/root.build
 	$(call remove-deck, $O/root.build)
 	$(call remove-deck, $O/bootstrap)
 	-rm -rf $O/root.spec $O/cdroot $O/product.iso $(STAMPS_DIR)
