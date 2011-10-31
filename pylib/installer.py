@@ -33,6 +33,44 @@ def fakestartstop(method):
 
     return wrapper
 
+def defer_update_initramfs(method):
+    """decorator to defer and compound update-initramfs execution
+       intercept calls and log them, finally execute unique calls in order
+    """
+    def wrapper(self, *args, **kws):
+        defer_log = "var/lib/update-initramfs.deferred"
+
+        path = join(self.chroot.path, "usr/sbin/update-initramfs")
+        path_orig = path + ".orig"
+        if not exists(path_orig):
+            shutil.move(path, path_orig)
+            defer = "#!/bin/sh\n" \
+                    "echo\n" \
+                    "echo \"Warning: Deferring update-initramfs $@\"\n" \
+                    "echo \"update-initramfs $@\" >> %s\n" % join("/", defer_log)
+
+            open(path, "w").write(defer)
+            os.chmod(path, 0755)
+
+        try:
+            ret = method(self, *args, **kws)
+        finally:
+            shutil.move(path_orig, path)
+            chroot_defer_log = join(self.chroot.path, defer_log)
+
+            executed = []
+            for cmd in file(chroot_defer_log, 'r').readlines():
+                cmd = cmd.strip()
+                if cmd not in executed:
+                    self.chroot.execute(cmd)
+                    executed.append(cmd)
+
+            os.remove(chroot_defer_log)
+
+        return ret
+
+    return wrapper
+
 def sources_list(method):
     """decorator for sources.list
        backup current, create local version, finally restore current
@@ -87,8 +125,9 @@ class Installer:
 
         self.chroot.execute("apt-cache gencaches")
 
-    @fakestartstop
     @sources_list
+    @fakestartstop
+    @defer_update_initramfs
     def _apt_install(self, packages):
         high, regular = self._prioritize_packages(packages)
 
