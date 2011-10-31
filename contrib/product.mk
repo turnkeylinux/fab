@@ -199,8 +199,9 @@ define cdroot/body
 	if [ -d $(CDROOT_OVERLAY) ]; then fab-apply-overlay $(CDROOT_OVERLAY) $O/cdroot; fi
 
 	cp $O/root.patched/usr/lib/syslinux/isolinux.bin $O/cdroot/isolinux
-	cp $O/root.patched/vmlinuz $O/cdroot/casper/vmlinuz
-	cp $O/root.patched/initrd.img $O/cdroot/casper/initrd.gz
+
+	cp $O/root.patched/boot/$(shell basename $(shell readlink $O/root.patched/vmlinuz)) $O/cdroot/casper/vmlinuz
+	cp $O/root.patched/boot/$(shell basename $(shell readlink $O/root.patched/initrd.img)) $O/cdroot/casper/initrd.gz
 
 	mksquashfs $O/root.patched $O/cdroot/casper/10root.squashfs $(MKSQUASHFS_OPTS)
 endef
@@ -257,7 +258,7 @@ define update-initramfs/body
 	done
 
 	fab-chroot $O/root.patched "rm -rf /boot/*.bak"
-	cp $O/root.patched/boot/initrd.img-* $O/cdroot/casper/initrd.gz
+	cp $O/root.patched/boot/$(shell basename $(shell readlink $O/root.patched/initrd.img)) $O/cdroot/casper/initrd.gz
 	$(run-mkisofs)
 endef
 
