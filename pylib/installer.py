@@ -8,6 +8,9 @@ import executil
 from chroot import Chroot
 from pool import Pool
 
+class Error(Exception):
+    pass
+
 def fakestartstop(method):
     """decorator for fake start-stop-daemon
        backup real, create fake, finally restore real
@@ -42,15 +45,17 @@ def defer_update_initramfs(method):
 
         path = join(self.chroot.path, "usr/sbin/update-initramfs")
         path_orig = path + ".orig"
-        if not exists(path_orig):
-            shutil.move(path, path_orig)
-            defer = "#!/bin/sh\n" \
-                    "echo\n" \
-                    "echo \"Warning: Deferring update-initramfs $@\"\n" \
-                    "echo \"update-initramfs $@\" >> %s\n" % join("/", defer_log)
+        if exists(path_orig):
+            raise Error("file shouldn't exist: " + path_orig)
+        
+        shutil.move(path, path_orig)
+        defer = "#!/bin/sh\n" \
+                "echo\n" \
+                "echo \"Warning: Deferring update-initramfs $@\"\n" \
+                "echo \"update-initramfs $@\" >> %s\n" % join("/", defer_log)
 
-            open(path, "w").write(defer)
-            os.chmod(path, 0755)
+        open(path, "w").write(defer)
+        os.chmod(path, 0755)
 
         try:
             ret = method(self, *args, **kws)
