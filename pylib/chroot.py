@@ -2,6 +2,7 @@
 import os
 from os.path import *
 
+import paths
 import executil
 
 class Error(Exception):
@@ -45,7 +46,6 @@ class Chroot:
     @classmethod
     def _mount(cls, device, mountp, options=None):
         if not cls._is_mounted(device):
-            print "mounting: " + device
             if options is not None:
                 executil.system("mount", device, mountp, options)
             else:
@@ -54,7 +54,6 @@ class Chroot:
     @classmethod
     def _umount(cls, device):
         if cls._is_mounted(device):
-            print "umounting: " + device
             executil.system("umount", "-f", device)
 
     @chrootmounts
@@ -65,6 +64,8 @@ class Chroot:
                 'DEBIAN_FRONTEND=noninteractive',
                 'DEBIAN_PRIORITY=critical']
 
+        print "chroot %s %s" % (paths.make_relative(os.getcwd(), self.path),
+                                command)
         command = " ".join(args) + " " + command
         chroot_args = (self.path, 'sh', '-c', command)
 
