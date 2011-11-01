@@ -64,14 +64,13 @@ class Chroot:
                 'DEBIAN_FRONTEND=noninteractive',
                 'DEBIAN_PRIORITY=critical']
 
-        print "chroot %s %s" % (paths.make_relative(os.getcwd(), self.path),
-                                command)
-        command = " ".join(args) + " " + command
-        chroot_args = (self.path, 'sh', '-c', command)
+        chroot_args = (self.path, 'sh', '-c', " ".join(args) + " " + command)
 
         if get_stdout:
             return executil.getoutput("chroot", *chroot_args)
         else:
+            print "chroot %s %s" % (paths.make_relative(os.getcwd(), self.path),
+                                    command)
             executil.system("chroot", *chroot_args)
 
 
