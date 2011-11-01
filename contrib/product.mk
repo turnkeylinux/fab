@@ -114,9 +114,6 @@ define help/body
 	@echo
 	@echo '# reinstall INITRAMFS_PACKAGES in root.patched and recreate product.iso'
 	@echo '  update-initramfs'
-	@echo
-	@echo '# update packages in all plans with their short description as a comment'
-	@echo '  lint-plans'
 endef
 
 help:
@@ -265,17 +262,4 @@ update-initramfs: $(update-initramfs/deps) $(update-initramfs/deps/extra)
 	$(update-initramfs/body)
 	$(update-initramfs/post)
 
-# target: lint-plans
-define lint-plans/body
-	for plan in $(wildcard plan/*); do \
-		fab-plan-lint --inplace $$plan $(POOL); \
-	done
-endef
-
-lint-plans/deps ?= $(wildcard plan/*)
-lint-plans: $(lint-plans/deps) $(lint-plans/deps/extra)
-	$(lint-plans/pre)
-	$(lint-plans/body)
-	$(lint-plans/post)
-
-.PHONY: all debug redeck help clean update-initramfs lint-plans $(STAMPED_TARGETS)
+.PHONY: all debug redeck help clean update-initramfs $(STAMPED_TARGETS)
