@@ -137,7 +137,7 @@ class Installer:
 
         for packages in (high, regular):
             if packages:
-                args = ['install', '--assume-yes', '--allow-unauthenticated']
+                args = ['install', '--force-yes', '--assume-yes', '--allow-unauthenticated']
                 cmd = "apt-get " + " ".join(args) + " " + " ".join(packages)
 
                 self.chroot.execute(cmd)
