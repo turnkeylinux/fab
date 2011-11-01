@@ -63,12 +63,10 @@ def defer_update_initramfs(method):
             shutil.move(path_orig, path)
             defer_log = join(self.chroot.path, defer_log)
 
-            executed = []
-            for cmd in file(defer_log, 'r').readlines():
-                cmd = cmd.strip()
-                if cmd not in executed:
-                    self.chroot.execute(cmd)
-                    executed.append(cmd)
+            deferred = [ command.strip()
+                         for command in file(defer_log, 'r').readlines() ]
+            for command in set(deferred):
+                self.chroot.execute(command)
 
             os.remove(defer_log)
 
