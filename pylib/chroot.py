@@ -13,16 +13,29 @@ def chrootmounts(method):
        mount/umount proc and dev/pts into/from chroot
     """
     def wrapper(self, *args, **kws):
+        mounted_proc_now = False
+        mounted_devpts_now = False
+        
+        proc_path = join(self.path, 'proc')
+        devpts_path = join(self.path, 'dev/pts')
+
         if self.chrootmounts:
-            self._mount('proc-chroot',   join(self.path, 'proc'),   '-tproc')
-            self._mount('devpts-chroot', join(self.path, 'dev/pts'),'-tdevpts')
+            if not self._is_mounted(proc_path):
+                self._mount('proc-chroot', proc_path, '-tproc')
+                mounted_proc_now = True
+
+            if not self._is_mounted(devpts_path):
+                self._mount('devpts-chroot', devpts_path, '-tdevpts')
+                mounted_devpts_now = True
 
         try:
             ret = method(self, *args, **kws)
         finally:
-            if self.chrootmounts:
-                self._umount(join(self.path, 'dev/pts'))
-                self._umount(join(self.path, 'proc'))
+            if mounted_proc_now:
+                self._umount(proc_path)
+
+            if mounted_devpts_now:
+                self._umount(devpts_path)
 
         return ret
 
@@ -49,13 +62,11 @@ class Chroot:
         if options:
             args.append(options)
             
-        if not cls._is_mounted(device):
-            executil.system("mount", *args)
+        executil.system("mount", *args)
 
     @classmethod
     def _umount(cls, device):
-        if cls._is_mounted(device):
-            executil.system("umount", "-f", device)
+        executil.system("umount", "-f", device)
 
     @chrootmounts
     def execute(self, command, get_stdout=False):
