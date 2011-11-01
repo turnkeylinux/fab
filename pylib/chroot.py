@@ -44,12 +44,13 @@ class Chroot:
         return False
 
     @classmethod
-    def _mount(cls, device, mountp, options=None):
+    def _mount(cls, device, mountpath, options=None):
+        args = [device, mountpath]
+        if options:
+            args.append(options)
+            
         if not cls._is_mounted(device):
-            if options is not None:
-                executil.system("mount", device, mountp, options)
-            else:
-                executil.system("mount", device, mountp)
+            executil.system("mount", *args)
 
     @classmethod
     def _umount(cls, device):
