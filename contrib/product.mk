@@ -117,9 +117,6 @@ define help/body
 	@echo
 	@echo '# update packages in all plans with their short description as a comment'
 	@echo '  lint-plans'
-	@echo
-	@echo '# burn product.iso to /dev/cdrom'
-	@echo '  burn'
 endef
 
 help:
@@ -281,19 +278,4 @@ lint-plans: $(lint-plans/deps) $(lint-plans/deps/extra)
 	$(lint-plans/body)
 	$(lint-plans/post)
 
-# target: burn
-define burn/body
-	cdrecord -verbose -data -eject \
-		driveropts=burnfree \
-		speed=4 \
-		dev=/dev/cdrom \
-		product.iso
-endef
-
-burn/deps ?= product.iso
-burn: $(burn/deps) $(burn/deps/extra)
-	$(burn/pre)
-	$(burn/body)
-	$(burn/post)
-
-.PHONY: all debug redeck help clean update-initramfs lint-plans burn $(STAMPED_TARGETS)
+.PHONY: all debug redeck help clean update-initramfs lint-plans $(STAMPED_TARGETS)
