@@ -2,8 +2,8 @@
 <?xml-stylesheet ekr_test?>
 <leo_file>
 <leo_header file_format="2" tnodes="0" max_tnode_index="0" clone_windows="0"/>
-<globals body_outline_ratio="0.368651488616">
-	<global_window_position top="10" left="10" height="709" width="1142"/>
+<globals body_outline_ratio="0.468684759916">
+	<global_window_position top="0" left="1278" height="958" width="894"/>
 	<global_log_window_position top="0" left="0" height="0" width="0"/>
 </globals>
 <preferences/>
@@ -84,13 +84,16 @@
 </v>
 </v>
 <v t="loni.20111206170905"><vh>regression testing</vh></v>
-<v t="loni.20120103150913" a="V"><vh>bugfix: package installation prioritization</vh></v>
+<v t="loni.20120103150913"><vh>bugfix: package installation prioritization</vh></v>
 </v>
 </v>
 <v t="loni.20110928132411" a="E"><vh>bugs/wishlist</vh>
 <v t="loni.20111121182213.1"><vh>handling dependencies in virtual packages</vh></v>
-<v t="loni.20111121190436"><vh>resume support</vh></v>
-<v t="loni.20111121190620"><vh>cleanup</vh></v>
+<v t="loni.20111121190436"><vh>resume support?</vh></v>
+<v t="zaril.20120115021505" a="TV"><vh>product.mk: product recipe</vh></v>
+<v t="zaril.20120115021505.1"><vh>product.mk: usb product build</vh></v>
+<v t="zaril.20120115021505.2"><vh>apt -&gt; dpkg</vh></v>
+<v t="zaril.20120115021505.3"><vh>spec-analysis</vh></v>
 </v>
 </v>
 </vnodes>
@@ -863,40 +866,7 @@ Q: why are we decking bootstrap/rocky to bootstrap, then bootstrap to root.build
         why? we create it before creating the bootstrap...
         
         </t>
-<t tx="loni.20110928132411">plan-resolve
-    depends on version checking (see fab.resolve_package)
-    handle provides / virtual packages (see child node: handling dependencies...)
-
-caching
-    optimize plan-resolve by caching package dependencies
-
-product recipe := a light bundle of data from which a product can be recreated from source
-    a product recipe is created during the creation of a new product
-        by recording the outputs of the build
-            bootstrap spec
-            root spec
-            root patch
-            product format configuration
-
-apt -&gt; dpkg
-    * use dpkg instead of apt when installing packages
-    * using apt-ftparchive is very inefficient
-    * ideas:
-            * debootstrap scripts
-            * spec analysis code
-
-
-
-spec-analysis
-    * same idea as oldfab/package-analysis
-    
-plan-lint: plan annotation
-
-usb booting
-
-remove rm_epochs when liraz's pool code accepts them
-
-</t>
+<t tx="loni.20110928132411"></t>
 <t tx="loni.20111001190214"></t>
 <t tx="loni.20111001190214.1">FAB: product fabrication framework
 
@@ -1259,11 +1229,7 @@ If you accept the proposal, you can add it to the Leo and implement it. Comments
 welcome.
 
 </t>
-<t tx="loni.20111121190620">found on the web, and made a note of it (PsiLinux ?)
-
-(11) Clean up. The installation contains a load of excessive baggage that wastes considerable disk space - this is why the *.ipk version of PsiLinux is nice. When the dust has settled above you will find that your system takes up about 70 MB of space. You can delete much of the dpkg baggage, however. Once you are happy that all of the required *.deb files are installed, you can delete them from /var/cache/apt/archive; this will clear 21 MB of space. Places for other deletions or gzip-tions are: /usr/lib/gconv, /var/lib/apt/lists-files, /var/lib/dpkg/info files, /usr/share/locale, /usr/share/zoneinfo, /usr/man/* (foreign languages). Some libraries or files are duplicated, e.g., /usr/share/unidata/Unicode* files and /sbin/fsck* files - you can make links to avoid this. Other places to look are the /usr/share/doc files - you will find a lot of README, TODO, etc. files that can be deleted. I should think in all some 30+ MB of space can be cleared up.</t>
-<t tx="loni.20111206170905">
-Q: where should it be implemented?
+<t tx="loni.20111206170905">Q: where should it be implemented?
 Q: should it be self contained?
 
 if we create it as a product (/turnkey/fab/products/fabregtest)
@@ -1672,5 +1638,19 @@ plans
         suid wrappers for critical tasks?
 
 </t>
+<t tx="zaril.20120115021505">recipe := a light bundle of data from which a product can be recreated from source
+
+a product recipe is created during the creation of a new product
+    by recording the outputs of the build
+        bootstrap spec
+        root spec
+        root patch
+        product format configuration</t>
+<t tx="zaril.20120115021505.1"></t>
+<t tx="zaril.20120115021505.2">* use dpkg instead of apt when installing packages
+* ideas:
+        * debootstrap scripts
+        * spec analysis code</t>
+<t tx="zaril.20120115021505.3">* same idea as oldfab/package-analysis</t>
 </tnodes>
 </leo_file>
