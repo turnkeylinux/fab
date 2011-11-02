@@ -83,6 +83,7 @@ def parse_name(name):
                 'perlapi-5.8.8':             'perl-base',
                 'mail-transport-agent':      'postfix',
                 'libapt-pkg-libc6.4-6-3.53': 'apt',
+                'libapt-inst-libc6.4-6-1.1': 'apt-utils',
                 'aufs-modules':              'aufs-modules-2.6.20-15-386'
                }
 
