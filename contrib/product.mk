@@ -112,8 +112,8 @@ define help/body
 	@echo '  cdroot        # created by squashing root.patched into cdroot template + overlay'
 	@echo '  product.iso   # product ISO created from the cdroot'
 	@echo
-	@echo '# reinstall INITRAMFS_PACKAGES in root.patched and recreate product.iso'
-	@echo '  update-initramfs'
+	@echo '  updated-initramfs # rebuild product with updated initramfs'
+	@echo '  updated-root-tmp  # rebuild product with updated root tmp'
 endef
 
 help:
@@ -244,8 +244,18 @@ $O/product.iso: $(product.iso/deps) $(product.iso/deps/extra)
 	$(product.iso/body)
 	$(product.iso/post)
 
-# target: update-initramfs
-define update-initramfs/body
+# target: updated-root-tmp
+define updated-root-tmp/body
+	$(product.iso/body)
+endef
+
+updated-root-tmp:
+	$(updated-root-tmp/pre)
+	$(updated-root-tmp/body)
+	$(updated-root-tmp/post)
+
+# target: updated-initramfs
+define updated-initramfs/body
 	rm -rf $O/product.iso
 	for package in $(INITRAMFS_PACKAGES); do \
 		echo $$package | fab-spec-install - $(POOL) $O/root.patched; \
@@ -256,10 +266,11 @@ define update-initramfs/body
 	$(run-mkisofs)
 endef
 
-update-initramfs/deps ?= $O/product.iso
-update-initramfs: $(update-initramfs/deps) $(update-initramfs/deps/extra)
-	$(update-initramfs/pre)
-	$(update-initramfs/body)
-	$(update-initramfs/post)
 
-.PHONY: all debug redeck help clean update-initramfs $(STAMPED_TARGETS)
+updated-initramfs/deps ?= $O/product.iso
+updated-initramfs: $(update-initramfs/deps) $(updated-initramfs/deps/extra)
+	$(updated-initramfs/pre)
+	$(updated-initramfs/body)
+	$(updated-initramfs/post)
+
+.PHONY: all debug redeck help clean updated-initramfs updated-root-tmp $(STAMPED_TARGETS)
