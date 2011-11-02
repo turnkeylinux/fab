@@ -257,11 +257,10 @@ updated-root-tmp:
 # target: updated-initramfs
 define updated-initramfs/body
 	rm -rf $O/product.iso
+	$(root.patched/body)
 	for package in $(INITRAMFS_PACKAGES); do \
 		echo $$package | fab-spec-install - $(POOL) $O/root.patched; \
 	done
-
-	fab-chroot $O/root.patched "rm -rf /boot/*.bak"
 	cp $O/root.patched/boot/$(shell basename $(shell readlink $O/root.patched/initrd.img)) $O/cdroot/casper/initrd.gz
 	$(run-mkisofs)
 endef
