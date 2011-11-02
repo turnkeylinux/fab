@@ -215,8 +215,8 @@ endef
 STAMPED_TARGETS := bootstrap root.spec root.build root.patched root.tmp cdroot
 $(foreach target,$(STAMPED_TARGETS),$(eval $(call _stamped_target,$(target))))
 
-define run-mkisofs
-	mkisofs -o $O/product.iso -r -J -l \
+define run-genisoimage
+	genisoimage -o $O/product.iso -r -J -l \
 		-V ${ISOLABEL} \
 		-b isolinux/isolinux.bin \
 		-c isolinux/boot.cat \
@@ -236,7 +236,7 @@ define product.iso/body
 		last_level=$$($$get_last_level); \
 		mksquashfs $$last_level $$output $(MKSQUASHFS_OPTS); \
 	fi;
-	$(run-mkisofs)
+	$(run-genisoimage)
 endef
 product.iso/deps ?= $(STAMPS_DIR)/cdroot $(STAMPS_DIR)/root.tmp
 $O/product.iso: $(product.iso/deps) $(product.iso/deps/extra)
@@ -262,7 +262,7 @@ define updated-initramfs/body
 		echo $$package | fab-spec-install - $(POOL) $O/root.patched; \
 	done
 	cp $O/root.patched/boot/$(shell basename $(shell readlink $O/root.patched/initrd.img)) $O/cdroot/casper/initrd.gz
-	$(run-mkisofs)
+	$(run-genisoimage)
 endef
 
 
