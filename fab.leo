@@ -88,13 +88,16 @@
 </v>
 </v>
 <v t="loni.20110928132411" a="E"><vh>bugs/wishlist</vh>
-<v t="zaril.20120115022049" a="TV"><vh>fab cli design amendment</vh></v>
+<v t="zaril.20120115022525.1" a="TV"><vh>product.mk: develop root.patched/ scripts mechanism</vh></v>
+<v t="zaril.20120115022525"><vh>conditional development/production builds</vh></v>
+<v t="zaril.20120115022333"><vh>plan comments</vh></v>
+<v t="zaril.20120115022049"><vh>fab cli design amendment</vh></v>
 <v t="loni.20111121182213.1"><vh>handling dependencies in virtual packages</vh></v>
-<v t="loni.20111121190436"><vh>resume support?</vh></v>
 <v t="zaril.20120115021505"><vh>product.mk: product recipe</vh></v>
 <v t="zaril.20120115021505.1"><vh>product.mk: usb product build</vh></v>
 <v t="zaril.20120115021505.2"><vh>apt -&gt; dpkg</vh></v>
 <v t="zaril.20120115021505.3"><vh>spec-analysis</vh></v>
+<v t="loni.20111121190436"><vh>resume support?</vh></v>
 </v>
 </v>
 </vnodes>
@@ -1728,6 +1731,64 @@ Liraz
 
 
 
+
+</t>
+<t tx="zaril.20120115022333">problem: there doesn't exist a decent mechanism for annotating plans
+
+IDEA: c-style comments?
+	//
+	/* */
+
+GOTCHA: make sure annotation survives plan-lint
+
+</t>
+<t tx="zaril.20120115022525">When we reach production, we can change the plan so that the development bits of
+a product are included conditionally during preprocessing, depending on a
+product.mk variable. Even then I think the default should still be optimized for
+development builds because they are more common than production/release builds.
+</t>
+<t tx="zaril.20120115022525.1">IDEA: add infrastructure to allow scripts to be run to patch root.patched
+
+I just noticed an opportunity to clean up the boot sequence and optimize it at
+the same time.
+
+Most of the casper-bottom scripts can and should be either removed (*) or moved
+to product fabrication, to be applied to root.patched:
+
+10adduser
+14locales
+15autologin (*)
+18hostname
+19keyboard (?)
+22gnome_panel_data (*)
+22screensaver (*)
+23etc_modules (*)
+24preseed
+25configure_init
+30accessibility (*)
+31disable_update_notifier (*)
+32disable_hibernation (*)
+33disable_binary_drivers (*)
+33enable_apport_crashes (*)
+34disable_kwallet (*)
+35fix_language_selector (*)
+40install_driver_updates (*)
+41apt_cdrom (*)
+
+(*) - probably best to just remove this altogether
+
+The primary motivation for moving this stuff elsewhere is based on engineering
+principles. casper is a global package, and hard wiring Ubuntu's defaults into
+all our products is simply wrong. This stuff has to be configurable at a per
+product level.
+
+The only scripts that have a legitimate right to exist in casper-bottom are
+things that either detected or configured at boot time, such as, for example:
+
+05mountpoints
+13swap
+20xconfig
+23networking
 
 </t>
 </tnodes>
