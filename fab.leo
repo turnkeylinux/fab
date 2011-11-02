@@ -88,9 +88,10 @@
 </v>
 </v>
 <v t="loni.20110928132411" a="E"><vh>bugs/wishlist</vh>
+<v t="zaril.20120115022049" a="TV"><vh>fab cli design amendment</vh></v>
 <v t="loni.20111121182213.1"><vh>handling dependencies in virtual packages</vh></v>
 <v t="loni.20111121190436"><vh>resume support?</vh></v>
-<v t="zaril.20120115021505" a="TV"><vh>product.mk: product recipe</vh></v>
+<v t="zaril.20120115021505"><vh>product.mk: product recipe</vh></v>
 <v t="zaril.20120115021505.1"><vh>product.mk: usb product build</vh></v>
 <v t="zaril.20120115021505.2"><vh>apt -&gt; dpkg</vh></v>
 <v t="zaril.20120115021505.3"><vh>spec-analysis</vh></v>
@@ -1652,5 +1653,82 @@ a product recipe is created during the creation of a new product
         * debootstrap scripts
         * spec analysis code</t>
 <t tx="zaril.20120115021505.3">* same idea as oldfab/package-analysis</t>
+<t tx="zaril.20120115022049">I would like to make some changes to fab's cli to make it easier to use
+interactively during development/debugging.
+
+1) -p --pool
+A mandatory option, with the default being set by the POOL environment variable.
+
+Specifying the pool in the command line (e.g., -p /turnkey/fab/pools/rocky),
+overrides the POOL environment variable.
+
+Rational:
+* makes it easier to use fab-plan-resolve and fab-spec-install interactively,
+for development/debugging purposes.
+* the pool is not input so much as a configuration/context in which the fab
+operates.
+* cleans up the argument list in the Makefile
+
+$ export POOL=/turnkey/fab/pools/rocky
+$ fab-plan-resolve plan/main
+$ fab-plan-resolve plan/main bootstrap
+
+2) fab-spec-install -&gt; fab-install
+
+I would like to extend and generalize the functionality of fab-spec-install so
+it can install plans and package names as well.
+
+Usage scenarios:
+$ fab-install root.patched jed
+
+Will resolve all of the dependencies for the latest version of jed in the pool
+and install all of them into root.patched. This should be equivalent to
+something like (assuming 1 has already been implemented):
+
+	echo jed &gt; tmp-plan
+	fab-plan-resolve tmp-plan &gt; tmp-spec
+	fab-spec-install tmp-spec root.patched
+
+$ fab-install root.patched xjed jed
+
+Installs more than one package into root.patched
+
+$ fab-install root.patched jed=1.2.3
+
+Will "resolve" all of the dependencies for this specific version of jed in the
+pool and install all of them into root.patched.
+
+$ fab-install root.patched root.spec
+
+Recognizes that root.spec is a file and processes it accordingly.
+
+Equivalent to:
+	fab-install root.patched $(cat root.spec)
+
+$ fab-install root.patched plan/main
+
+Does what you would expect.
+
+Note that this would eliminate the distinction between specs and plans for
+fab-install, which would magically support both.
+
+I think this is the right thing to do.
+
+What do you think?
+
+Cheers,
+Liraz
+
+
+
+
+
+
+
+
+
+
+
+</t>
 </tnodes>
 </leo_file>
