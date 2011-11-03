@@ -155,7 +155,7 @@ endef
 root.build/deps ?= $(STAMPS_DIR)/bootstrap $(STAMPS_DIR)/root.spec
 define root.build/body
 	if ! deck -t $O/root.build; then deck $O/bootstrap $O/root.build; fi
-	fab-spec-install $O/root.spec $O/root.build
+	fab-install --no-deps --input $O/root.spec $O/root.build
 endef
 
 # target: root.patched
@@ -259,9 +259,7 @@ updated-root-tmp:
 define updated-initramfs/body
 	rm -rf $O/product.iso
 	$(root.patched/body)
-	for package in $(INITRAMFS_PACKAGES); do \
-		echo $$package | fab-spec-install - $O/root.patched; \
-	done
+	fab-install $O/root.patched $(INITRAMFS_PACKAGES)
 	cp $O/root.patched/boot/$(shell basename $(shell readlink $O/root.patched/initrd.img)) $O/cdroot/casper/initrd.gz
 	$(run-genisoimage)
 endef

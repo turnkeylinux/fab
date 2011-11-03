@@ -18,7 +18,7 @@ class CliWrapper(pyproject.CliWrapper):
 
     COMMANDS_USAGE_ORDER = ['plan-lint', 'cpp', 'chroot', 
                             '',
-                            'plan-resolve', 'spec-install',
+                            'plan-resolve', 'install',
                             'apply-removelist', 'apply-overlay']
     
 if __name__ == '__main__':

@@ -86,8 +86,8 @@
 <v t="loni.20111206170905"><vh>regression testing</vh></v>
 <v t="loni.20120103150913"><vh>bugfix: package installation prioritization</vh></v>
 <v t="zaril.20120115022049" a="E"><vh>fab cli design amendment</vh>
-<v t="loni.20120124160345" a="V"><vh>-p --pool or POOL</vh></v>
-<v t="loni.20120124164315"><vh>fab-spec-install -&gt; fab-install</vh></v>
+<v t="loni.20120124160345"><vh>-p --pool or POOL</vh></v>
+<v t="loni.20120124164315" a="TV"><vh>fab-spec-install -&gt; fab-install</vh></v>
 </v>
 </v>
 </v>
@@ -1335,7 +1335,43 @@ Does what you would expect.
 Note that this would eliminate the distinction between specs and plans for
 fab-install, which would magically support both.
 
-I think this is the right thing to do.</t>
+I think this is the right thing to do.
+
+-----------
+
+fab-install would be the result of merging plan-resolve and spec-install
+
+if fab-install replaces fab-spec-install to install root.spec, then we will be resolving every package in the spec, which was originally resolved by plan-resolve - in other words it would waste time
+
+IDEA: have an option to not resolve dependencies
+    an error will be raised if we try install a package that has dependendencies, and they are not already installed...
+
+    --dont-resolve
+    --no-deps
+    --nodeps
+
+Design change:
+    instead of specifying a path/file as an argument, a cleaner implementation would be to have -i --input, like pool does, and consistency is always good. ;)
+
+
+====================
+
+Syntax: install [-options] &lt;chroot&gt; [ package[=version] ... ]
+Install packages into chroot
+
+If a package is specified without a version, install the newest version.
+
+Argument:
+  &lt;chroot&gt;          Path to chroot
+    
+Option:
+  -i --input &lt;file&gt; File from which we read package list (- for stdin)
+  -p --pool         Mandatory: Relative or absolute pool path
+                               Defaults to environment: POOL
+  --no-deps         Do not resolve and install package dependencies
+
+
+</t>
 <t tx="zaril.20110904173229">@nocolor
 </t>
 <t tx="zaril.20110904173337"></t>
