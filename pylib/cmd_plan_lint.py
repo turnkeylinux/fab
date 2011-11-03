@@ -5,9 +5,10 @@ Package ordering is not changed
 
 Arguments:
   <plan>            Path to read plan from
-  <pool>            Relative or absolute pool path
 
 Options:
+  -p --pool         Mandatory: Relative or absolute pool path
+                               Defaults to environment: POOL
   -i --inplace      Edit plan inplace
 """
 
@@ -20,11 +21,11 @@ import getopt
 import help
 import debinfo
 from pool import Pool
-from common import fatal
+from common import get_poolpath, fatal
 
 @help.usage(__doc__)
 def usage():
-    print >> sys.stderr, "Syntax: %s [-options] <plan> <pool>" % sys.argv[0]
+    print >> sys.stderr, "Syntax: %s [-options] <plan>" % sys.argv[0]
 
 def parse_plan(plan):
     packages = set()
@@ -86,26 +87,32 @@ def plan_lint(plan_path, pool_path):
 
 def main():
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], ":ih", ["inplace"])
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "p:ih",
+                                                    ["pool=",
+                                                     "inplace"])
     except getopt.GetoptError, e:
         usage(e)
 
     if not args:
         usage()
     
-    if not len(args) in (2, 3):
+    if not len(args) == 1:
         usage("bad number of arguments")
 
     inplace = False
+    pool_path = None
     for opt, val in opts:
         if opt == '-h':
             usage()
 
         if opt in ('-i', '--inplace'):
             inplace = True
-    
+        
+        if opt in ('-p', '--pool'):
+            pool_path = val
+
     plan_path = args[0]
-    pool_path = args[1]
+    pool_path = get_poolpath(pool_path)
     
     newplan = plan_lint(plan_path, pool_path)
 
