@@ -82,7 +82,10 @@ def plan_lint(plan_path, pool_path):
             output.append("%s # %s" % (expr.ljust(column_len),
                                        description.capitalize()))
 
-    output.append('\n')
+    lastline = output[-1]
+    if lastline is not '':
+        output.append('')
+
     return "\n".join(output)
 
 def main():
