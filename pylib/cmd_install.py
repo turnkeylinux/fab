@@ -68,6 +68,7 @@ def main():
                 input = sys.stdin
             else:
                 input = file(val, "r")
+                cpp_opts += [ ("-I", os.path.dirname(val)) ]
 
         elif opt in ('-p', '--pool'):
             pool_path = val

@@ -87,7 +87,9 @@
 <v t="loni.20120103150913"><vh>bugfix: package installation prioritization</vh></v>
 <v t="zaril.20120115022049" a="E"><vh>fab cli design amendment</vh>
 <v t="loni.20120124160345"><vh>-p --pool or POOL</vh></v>
-<v t="loni.20120124164315" a="TV"><vh>fab-spec-install -&gt; fab-install</vh></v>
+<v t="loni.20120124164315" a="E"><vh>fab-spec-install -&gt; fab-install</vh>
+<v t="loni.20120124212451" a="TV"><vh>cpp</vh></v>
+</v>
 </v>
 </v>
 </v>
@@ -1369,6 +1371,23 @@ Option:
   -p --pool         Mandatory: Relative or absolute pool path
                                Defaults to environment: POOL
   --no-deps         Do not resolve and install package dependencies
+
+
+</t>
+<t tx="loni.20120124212451">fab-install must be able to process plans
+plans must be resolved, and cpp processed
+
+cpp problem:
+    current cpp code takes plan as plan_path, not plan data
+    
+    solutions:
+        in fab-install, when we get path/file as input, use that
+            no - that means we can't get plan as stdin
+            
+        write data to temp file, and pass that to cpp
+            easiest solution, but ugly workaround
+            
+        update cpp code to pass data via stdin if its not a file
 
 
 </t>
