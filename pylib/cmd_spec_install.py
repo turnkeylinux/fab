@@ -3,8 +3,11 @@
 
 Arguments:
   <spec>            Path to read spec from (- for stdin)
-  <pool>            Relative or absolute pool path
   <chroot>          Path to chroot
+
+Option:
+  -p --pool         Mandatory: Relative or absolute pool path
+                               Defaults to environment: POOL
 
 """
 
@@ -16,11 +19,11 @@ import getopt
 import help
 import installer
 from installer import Installer
-from common import fatal
+from common import get_poolpath, fatal
 
 @help.usage(__doc__)
 def usage():
-    print >> sys.stderr, "Syntax: %s <spec> <pool> <chroot>" % sys.argv[0]
+    print >> sys.stderr, "Syntax: %s [-options] <spec> <chroot>" % sys.argv[0]
 
 
 def spec_install(pool_path, spec_fh, chroot_path):
@@ -39,23 +42,31 @@ def spec_install(pool_path, spec_fh, chroot_path):
     
 def main():
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "")
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "p:h", ["pool="])
     except getopt.GetoptError, e:
         usage(e)
 
     if sys.argv.count("-") == 1:
         args.insert(0, "-")
 
-    if not len(args) == 3:
-        usage()
+    if not len(args) == 2:
+        usage("bad number of arguments")
 
     if args[0] == '-':
         spec_fh = sys.stdin
     else:
         spec_fh = file(args[0], "r")
 
-    pool_path = args[1]
-    chroot_path = args[2]
+    pool_path = None
+    for opt, val in opts:
+        if opt == '-h':
+            usage()
+
+        if opt in ('-p', '--pool'):
+            pool_path = val
+
+    chroot_path = args[1]
+    pool_path = get_poolpath(pool_path)
     
     if not os.path.isdir(chroot_path):
         fatal("chroot does not exist: " + chroot_path)
