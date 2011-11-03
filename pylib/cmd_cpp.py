@@ -2,7 +2,7 @@
 """Pre-process a plan
 
 Arguments:
-  <plan>         Path to read plan from (- for stdin)
+  <plan>         Path to read plan from
                  If path/to/plan, dir of plan will be searched for header files
 
 """
