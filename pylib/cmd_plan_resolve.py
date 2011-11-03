@@ -3,14 +3,13 @@
 
 Arguments:
   <plan>            Path to read plan from (- for stdin)
-  <pool>            Relative or absolute pool path
-
-Optional Arguments:
-  bootstrap         Extract list of installed packages from the bootstrap and
+  [bootstrap]       Extract list of installed packages from the bootstrap and
                     append to the plan
 
 Options:
-  --output=         Path to spec-output (default is stdout)
+  -p --pool         Mandatory: Relative or absolute pool path
+                               Defaults to environment: POOL
+  -o --output       Path to spec-output (default is stdout)
 
 """
 
@@ -23,11 +22,11 @@ import help
 import cpp
 from plan import Plan
 from chroot import Chroot
-from common import fatal
+from common import get_poolpath, fatal
 
 @help.usage(__doc__ + cpp.__doc__)
 def usage():
-    print >> sys.stderr, "Syntax: %s [-options] <plan> <pool> [ /path/to/bootstrap ]" % sys.argv[0]
+    print >> sys.stderr, "Syntax: %s [-options] <plan> [ /path/to/bootstrap ]" % sys.argv[0]
 
 def plan_resolve(cpp_opts, plan_path, pool_path, bootstrap_path):
     cpp_opts += [ ("-U", "linux") ]
@@ -52,17 +51,20 @@ def plan_resolve(cpp_opts, plan_path, pool_path, bootstrap_path):
 def main():
     cpp_opts, args = cpp.getopt(sys.argv[1:])
     try:
-        opts, args = getopt.getopt(args, "o:h", ["output="])
+        opts, args = getopt.getopt(args, "op:h", 
+                                   ["output=",
+                                    "pool="])
     except getopt.GetoptError, e:
         usage(e)
 
     if not args:
         usage()
     
-    if not len(args) in (2, 3):
+    if not len(args) in (1, 2):
         usage("bad number of arguments")
 
     output_path = None
+    pool_path = None
     for opt, val in opts:
         if opt == '-h':
             usage()
@@ -70,11 +72,14 @@ def main():
         if opt in ('-o', '--output'):
             output_path = val
     
+        if opt in ('-p', '--pool'):
+            pool_path = val
+
     plan_path = args[0]
-    pool_path = args[1]
-    
+    pool_path = get_poolpath(pool_path)
+
     try:
-        bootstrap_path = args[2]
+        bootstrap_path = args[1]
     except IndexError:
         bootstrap_path = None
 

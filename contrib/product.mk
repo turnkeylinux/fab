@@ -26,6 +26,7 @@ FAB_TMPDIR ?= $(FAB_PATH)/tmp
 
 export FAB_PLAN_INCLUDE_PATH
 export FAB_TMPDIR
+export POOL
 
 # default locations of product build inputs
 PLAN ?= plan/main
@@ -147,7 +148,7 @@ endef
 # target: root.spec
 root.spec/deps ?= $(STAMPS_DIR)/bootstrap $(wildcard plan/*)
 define root.spec/body
-	fab-plan-resolve --output=$O/root.spec $(PLAN) $(POOL) $O/bootstrap
+	fab-plan-resolve --output=$O/root.spec $(PLAN) $O/bootstrap
 endef
 
 # target: root.build

@@ -2,8 +2,8 @@
 <?xml-stylesheet ekr_test?>
 <leo_file>
 <leo_header file_format="2" tnodes="0" max_tnode_index="0" clone_windows="0"/>
-<globals body_outline_ratio="0.468684759916">
-	<global_window_position top="0" left="1278" height="958" width="894"/>
+<globals body_outline_ratio="0.410934744268">
+	<global_window_position top="0" left="5" height="709" width="1134"/>
 	<global_log_window_position top="0" left="0" height="0" width="0"/>
 </globals>
 <preferences/>
@@ -85,13 +85,16 @@
 </v>
 <v t="loni.20111206170905"><vh>regression testing</vh></v>
 <v t="loni.20120103150913"><vh>bugfix: package installation prioritization</vh></v>
+<v t="zaril.20120115022049" a="E"><vh>fab cli design amendment</vh>
+<v t="loni.20120124160345" a="V"><vh>-p --pool or POOL</vh></v>
+<v t="loni.20120124164315"><vh>fab-spec-install -&gt; fab-install</vh></v>
+</v>
 </v>
 </v>
 <v t="loni.20110928132411" a="E"><vh>bugs/wishlist</vh>
-<v t="zaril.20120115022525.1" a="TV"><vh>product.mk: develop root.patched/ scripts mechanism</vh></v>
+<v t="zaril.20120115022525.1"><vh>product.mk: develop root.patched/ scripts mechanism</vh></v>
 <v t="zaril.20120115022525"><vh>conditional development/production builds</vh></v>
 <v t="zaril.20120115022333"><vh>plan comments</vh></v>
-<v t="zaril.20120115022049"><vh>fab cli design amendment</vh></v>
 <v t="loni.20111121182213.1"><vh>handling dependencies in virtual packages</vh></v>
 <v t="zaril.20120115021505"><vh>product.mk: product recipe</vh></v>
 <v t="zaril.20120115021505.1"><vh>product.mk: usb product build</vh></v>
@@ -1268,6 +1271,71 @@ Selecting previously deselected package linux-image-386.
 Unpacking linux-image-386 (from .../linux-image-386_2.6.20.15.14_i386.deb) ...
 
 </t>
+<t tx="loni.20120124160345">1) -p --pool
+A mandatory option, with the default being set by the POOL environment variable.
+
+Specifying the pool in the command line (e.g., -p /turnkey/fab/pools/rocky),
+overrides the POOL environment variable.
+
+Rational:
+* makes it easier to use fab-plan-resolve and fab-spec-install interactively,
+for development/debugging purposes.
+* the pool is not input so much as a configuration/context in which the fab
+operates.
+* cleans up the argument list in the Makefile
+
+$ export POOL=/turnkey/fab/pools/rocky
+$ fab-plan-resolve plan/main
+$ fab-plan-resolve plan/main bootstrap
+
+
+affected commands:
+    plan-resolve [-options] &lt;plan&gt; &lt;pool&gt; [ /path/to/bootstrap ]
+    plan-lint [-options] &lt;plan&gt; &lt;pool&gt;
+    spec-install &lt;spec&gt; &lt;pool&gt; &lt;chroot&gt;
+    
+    
+</t>
+<t tx="loni.20120124164315">2) fab-spec-install -&gt; fab-install
+
+I would like to extend and generalize the functionality of fab-spec-install so
+it can install plans and package names as well.
+
+Usage scenarios:
+$ fab-install root.patched jed
+
+Will resolve all of the dependencies for the latest version of jed in the pool
+and install all of them into root.patched. This should be equivalent to
+something like (assuming 1 has already been implemented):
+
+	echo jed &gt; tmp-plan
+	fab-plan-resolve tmp-plan &gt; tmp-spec
+	fab-spec-install tmp-spec root.patched
+
+$ fab-install root.patched xjed jed
+
+Installs more than one package into root.patched
+
+$ fab-install root.patched jed=1.2.3
+
+Will "resolve" all of the dependencies for this specific version of jed in the
+pool and install all of them into root.patched.
+
+$ fab-install root.patched root.spec
+
+Recognizes that root.spec is a file and processes it accordingly.
+
+Equivalent to:
+	fab-install root.patched $(cat root.spec)
+
+$ fab-install root.patched plan/main
+
+Does what you would expect.
+
+Note that this would eliminate the distinction between specs and plans for
+fab-install, which would magically support both.
+
+I think this is the right thing to do.</t>
 <t tx="zaril.20110904173229">@nocolor
 </t>
 <t tx="zaril.20110904173337"></t>
@@ -1656,72 +1724,7 @@ a product recipe is created during the creation of a new product
         * debootstrap scripts
         * spec analysis code</t>
 <t tx="zaril.20120115021505.3">* same idea as oldfab/package-analysis</t>
-<t tx="zaril.20120115022049">I would like to make some changes to fab's cli to make it easier to use
-interactively during development/debugging.
-
-1) -p --pool
-A mandatory option, with the default being set by the POOL environment variable.
-
-Specifying the pool in the command line (e.g., -p /turnkey/fab/pools/rocky),
-overrides the POOL environment variable.
-
-Rational:
-* makes it easier to use fab-plan-resolve and fab-spec-install interactively,
-for development/debugging purposes.
-* the pool is not input so much as a configuration/context in which the fab
-operates.
-* cleans up the argument list in the Makefile
-
-$ export POOL=/turnkey/fab/pools/rocky
-$ fab-plan-resolve plan/main
-$ fab-plan-resolve plan/main bootstrap
-
-2) fab-spec-install -&gt; fab-install
-
-I would like to extend and generalize the functionality of fab-spec-install so
-it can install plans and package names as well.
-
-Usage scenarios:
-$ fab-install root.patched jed
-
-Will resolve all of the dependencies for the latest version of jed in the pool
-and install all of them into root.patched. This should be equivalent to
-something like (assuming 1 has already been implemented):
-
-	echo jed &gt; tmp-plan
-	fab-plan-resolve tmp-plan &gt; tmp-spec
-	fab-spec-install tmp-spec root.patched
-
-$ fab-install root.patched xjed jed
-
-Installs more than one package into root.patched
-
-$ fab-install root.patched jed=1.2.3
-
-Will "resolve" all of the dependencies for this specific version of jed in the
-pool and install all of them into root.patched.
-
-$ fab-install root.patched root.spec
-
-Recognizes that root.spec is a file and processes it accordingly.
-
-Equivalent to:
-	fab-install root.patched $(cat root.spec)
-
-$ fab-install root.patched plan/main
-
-Does what you would expect.
-
-Note that this would eliminate the distinction between specs and plans for
-fab-install, which would magically support both.
-
-I think this is the right thing to do.
-
-What do you think?
-
-Cheers,
-Liraz
-
+<t tx="zaril.20120115022049">
 
 
 
