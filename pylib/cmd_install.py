@@ -50,7 +50,7 @@ def plan_resolve(cpp_opts, pre_processed, pool_path, resolve_deps):
 def main():
     cpp_opts, args = cpp.getopt(sys.argv[1:])
     try:
-        opts, args = getopt.gnu_getopt(args, 'ip:',
+        opts, args = getopt.gnu_getopt(args, 'i:p:',
                                    ['input=', 'pool=', 'no-deps'])
     except getopt.GetoptError, e:
         usage(e)

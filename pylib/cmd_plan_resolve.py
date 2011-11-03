@@ -51,7 +51,7 @@ def plan_resolve(cpp_opts, plan_path, pool_path, bootstrap_path):
 def main():
     cpp_opts, args = cpp.getopt(sys.argv[1:])
     try:
-        opts, args = getopt.getopt(args, "op:h", 
+        opts, args = getopt.getopt(args, "o:p:h",
                                    ["output=",
                                     "pool="])
     except getopt.GetoptError, e:
