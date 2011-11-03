@@ -6,6 +6,9 @@ from os.path import *
 import executil
 from common import get_tmpdir, mkdir
 
+class Error(Exception):
+    pass
+
 def chdir(method):
     def wrapper(self, *args, **kws):
         orig_cwd = os.getcwd()
@@ -24,7 +27,7 @@ class Pool:
     def __init__(self, path):
         self.path = path
         if not isdir(join(self.path, ".pool")):
-            raise Error("pool does not exist" + path)
+            raise Error("pool does not exist", path)
 
     @chdir
     def get(self, packages, outdir=None):
