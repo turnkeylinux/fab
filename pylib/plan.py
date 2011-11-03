@@ -75,9 +75,9 @@ class Plan:
         """remove package from plan """
         self.packages.remove(package)
 
-    def process(self, plan_path, cpp_opts):
+    def process(self, plan, cpp_opts):
         """process plan through cpp, then parse it and add packages to plan """
-        processed_plan = cpp.cpp(plan_path, cpp_opts)
+        processed_plan = cpp.cpp(plan, cpp_opts)
         packages = self._parse_processed_plan(processed_plan)
         
         for package in packages:
