@@ -74,7 +74,7 @@ def apply_removelist(rmlist_fh, root_path, dstpath=None):
 
 def main():
     args = sys.argv[1:]
-    if not len(args) == 2:
+    if len(args) != 2:
         usage()
 
     removelist, root_path = args
