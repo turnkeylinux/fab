@@ -4,7 +4,7 @@
 Arguments:
   <removelist>      Path to read removelist from (- for stdin)
                     Entries may be negated by prefixing a `!'
-  <srcpath>         Path containing removelist entries (ie. chroot)
+  <root>            Root path relative to which we remove entries
 
 Options:
   --dstpath=        Path to directory which will store removed items
@@ -58,7 +58,7 @@ def _move(entry, srcpath, dstpath):
     else:
         warn("entry does not exist: " + entry)
 
-def apply_removelist(rmlist_fh, srcpath, dstpath=None):
+def apply_removelist(rmlist_fh, root_path, dstpath=None):
     remove, restore = parse_list(rmlist_fh.read())
 
     remove_dstpath = False
@@ -66,14 +66,13 @@ def apply_removelist(rmlist_fh, srcpath, dstpath=None):
         dstpath = get_tmpdir()
         remove_dstpath = True
 
-
-    # move entries out of srcpath
+    # move entries out of root_path
     for entry in remove:
-        _move(entry, srcpath, dstpath)
+        _move(entry, root_path, dstpath)
 
-    # move entries back into srcpath
+    # move entries back into root_path
     for entry in restore:
-        _move(entry, dstpath, srcpath)
+        _move(entry, dstpath, root_path)
 
     if remove_dstpath:
         shutil.rmtree(dstpath)
@@ -96,16 +95,16 @@ def main():
     else:
         rmlist_fh = file(args[0], "r")
 
-    srcpath = args[1]
+    root_path = args[1]
 
-    if not os.path.isdir(srcpath):
-        fatal("srcpath does not exist: " + srcpath)
+    if not os.path.isdir(root_path):
+        fatal("root path does not exist: " + root_path)
 
     kws = {}
     for opt, val in opts:
         kws[opt[2:]] = val
 
-    apply_removelist(rmlist_fh, srcpath, **kws)
+    apply_removelist(rmlist_fh, root_path, **kws)
 
         
 if __name__=="__main__":
