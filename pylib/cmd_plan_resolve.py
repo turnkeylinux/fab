@@ -20,7 +20,7 @@ import getopt
 
 import help
 import cpp
-from plan import Plan
+import plan
 from chroot import Chroot
 from common import get_poolpath, fatal
 
@@ -28,25 +28,15 @@ from common import get_poolpath, fatal
 def usage():
     print >> sys.stderr, "Syntax: %s [-options] <plan> [ /path/to/bootstrap ]" % sys.argv[0]
 
-def plan_resolve(cpp_opts, plan_path, pool_path, bootstrap_path):
-    cpp_opts += [ ("-U", "linux") ]
-    
-    plan = Plan(pool_path)
-    plan.process(plan_path, cpp_opts)
-    
-    if bootstrap_path:
-        if not os.path.isdir(bootstrap_path):
-            fatal("bootstrap does not exist: " + bootstrap_path)
+def bootstrap_packages(bootstrap_path):
+    if not os.path.isdir(bootstrap_path):
+        fatal("bootstrap does not exist: " + bootstrap_path)
 
-        chroot = Chroot(bootstrap_path, chrootmounts=False)
-        output = chroot.execute("dpkg-query --show -f='${Package}\\n'",
-                                get_stdout=True)
+    chroot = Chroot(bootstrap_path, chrootmounts=False)
+    output = chroot.execute("dpkg-query --show -f='${Package}\\n'",
+                            get_stdout=True)
 
-        for package in output.splitlines():
-            plan.add(package)
-
-    spec = plan.resolve_to_spec()
-    return "\n".join(spec.list())
+    return set(output.splitlines())
 
 def main():
     cpp_opts, args = cpp.getopt(sys.argv[1:])
@@ -80,10 +70,13 @@ def main():
 
     try:
         bootstrap_path = args[1]
+        packages = bootstrap_packages(bootstrap_path)
     except IndexError:
-        bootstrap_path = None
+        packages = set()
 
-    spec = plan_resolve(cpp_opts, plan_path, pool_path, bootstrap_path)
+    spec = plan.resolve(plan_path, pool_path, cpp_opts, packages)
+    spec = "\n".join(spec) + "\n"
+
     if output_path is None:
         print spec
     else:

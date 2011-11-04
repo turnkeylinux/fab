@@ -125,6 +125,7 @@ class Plan:
         
 
 def resolve(plan_path, pool_path, cpp_opts, extra_pkgs, resolve_deps=True):
+    """convenience function processes and resolves plans/packages"""
     cpp_opts += [ ("-U", "linux") ]
 
     plan = Plan(pool_path)
