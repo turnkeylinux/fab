@@ -44,7 +44,7 @@ ISOLABEL ?= $(shell basename $(shell pwd))
 STAMPS_DIR = $O/stamps
 
 define remove-deck
-	@if deck -t $1; then \
+	@if deck --isdeck $1; then \
 		if [ "$$(basename $1)" = "root.tmp" ] && deck --isdirty $1; then \
 			echo "error: root.tmp is dirty with manual changes. To continue: deck -D $(strip $1)"; \
 			exit 1; \
@@ -56,7 +56,7 @@ endef
 
 all: $O/product.iso
 
-_redeck = if deck -t $1; then deck $1; fi
+_redeck = if deck --isdeck $1; then deck $1; fi
 redeck:
 	$(call _redeck, $O/bootstrap)
 	$(call _redeck, $O/root.build)
@@ -154,7 +154,7 @@ endef
 # target: root.build
 root.build/deps ?= $(STAMPS_DIR)/bootstrap $(STAMPS_DIR)/root.spec
 define root.build/body
-	if ! deck -t $O/root.build; then deck $O/bootstrap $O/root.build; fi
+	if ! deck --isdeck $O/root.build; then deck $O/bootstrap $O/root.build; fi
 	fab-install --no-deps $O/root.build $O/root.spec
 endef
 
