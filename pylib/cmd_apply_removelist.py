@@ -53,24 +53,20 @@ def _move(entry, srcpath, dstpath):
     else:
         warn("entry does not exist: " + entry)
 
-def apply_removelist(removelist_fh, root_path, dstpath=None):
+def apply_removelist(removelist_fh, root_path):
     remove, restore = parse_list(removelist_fh.read())
 
-    remove_dstpath = False
-    if not dstpath:
-        dstpath = get_tmpdir()
-        remove_dstpath = True
-
+    tmpdir = get_tmpdir()
+    
     # move entries out of root_path
     for entry in remove:
-        _move(entry, root_path, dstpath)
+        _move(entry, root_path, tmpdir)
 
     # move entries back into root_path
     for entry in restore:
-        _move(entry, dstpath, root_path)
+        _move(entry, tmpdir, root_path)
 
-    if remove_dstpath:
-        shutil.rmtree(dstpath)
+    shutil.rmtree(tmpdir)
 
 def main():
     args = sys.argv[1:]
