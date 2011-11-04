@@ -53,11 +53,8 @@ def _move(entry, srcpath, dstpath):
     dst = join(dstpath, dirname(entry))
 
     if exists(src):
-        mkdir(dst)
-        if isdir(src):
-            executil.system("mv -f %s/* %s/" % (dirname(src), dst))
-        else:
-            executil.system("mv -f %s %s/" % (src, dst))
+        mkdir(dirname(dst))
+        shutil.move(src, dst)
     else:
         warn("entry does not exist: " + entry)
 
