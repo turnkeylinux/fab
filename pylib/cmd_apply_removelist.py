@@ -53,8 +53,8 @@ def _move(entry, srcpath, dstpath):
     else:
         warn("entry does not exist: " + entry)
 
-def apply_removelist(rmlist_fh, root_path, dstpath=None):
-    remove, restore = parse_list(rmlist_fh.read())
+def apply_removelist(removelist_fh, root_path, dstpath=None):
+    remove, restore = parse_list(removelist_fh.read())
 
     remove_dstpath = False
     if not dstpath:
