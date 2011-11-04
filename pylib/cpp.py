@@ -10,7 +10,6 @@
 
 import os
 import sys
-from subprocess import *
 
 from executil import getoutput
 
@@ -53,16 +52,6 @@ def getopt(argv):
               
     return opts, argv
 
-def _getoutput(command, input=None):
-    p = Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    output = p.communicate(input)[0]
-
-    error = p.returncode
-    if error:
-        raise Error("command non-zero exitcode (%d)" % error, 
-                    output, command, input)
-    return output
-
 def cpp(input, cpp_opts=[]):
     """preprocess <input> through cpp -> preprocessed output
        input may be path/to/file or iterable data type
@@ -76,10 +65,5 @@ def cpp(input, cpp_opts=[]):
     if include_path:
         args.append("-I" + include_path)
 
-    if os.path.isfile(input):
-        return getoutput("cpp", input, *args)
-    else:
-        command = ["cpp"]
-        command.extend(args)
-        return _getoutput(command, input)
+    return getoutput("cpp", input, *args)
 

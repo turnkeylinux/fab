@@ -2,7 +2,7 @@
 <?xml-stylesheet ekr_test?>
 <leo_file>
 <leo_header file_format="2" tnodes="0" max_tnode_index="0" clone_windows="0"/>
-<globals body_outline_ratio="0.410934744268">
+<globals body_outline_ratio="0.383597883598">
 	<global_window_position top="0" left="5" height="709" width="1134"/>
 	<global_log_window_position top="0" left="0" height="0" width="0"/>
 </globals>
@@ -88,7 +88,8 @@
 <v t="zaril.20120115022049" a="E"><vh>fab cli design amendment</vh>
 <v t="loni.20120124160345"><vh>-p --pool or POOL</vh></v>
 <v t="loni.20120124164315" a="E"><vh>fab-spec-install -&gt; fab-install</vh>
-<v t="loni.20120124212451" a="TV"><vh>cpp</vh></v>
+<v t="loni.20120124212451"><vh>cpp</vh></v>
+<v t="loni.20120125090839" a="TV"><vh>update</vh></v>
 </v>
 </v>
 </v>
@@ -1390,6 +1391,22 @@ cpp problem:
         update cpp code to pass data via stdin if its not a file
 
 
+</t>
+<t tx="loni.20120125090839">i don't like the kludge code added to support stdin, it has manifested itself throughout the code...
+
+if we really need it in the future, i will add it back in a better way...
+
+
+Syntax: %s [-options] &lt;chroot&gt; &lt; inputfile | package[=version] ... &gt;
+
+Argument:
+  &lt;chroot&gt;          Path to chroot
+    
+Option:
+  -p --pool         Mandatory: Relative or absolute pool path
+                               Defaults to environment: POOL
+  --no-deps         Do not resolve and install package dependencies
+  
 </t>
 <t tx="zaril.20110904173229">@nocolor
 </t>

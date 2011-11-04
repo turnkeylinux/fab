@@ -75,9 +75,9 @@ class Plan:
         """remove package from plan """
         self.packages.remove(package)
 
-    def process(self, plan, cpp_opts):
+    def process(self, plan_path, cpp_opts):
         """process plan through cpp, then parse it and add packages to plan """
-        processed_plan = cpp.cpp(plan, cpp_opts)
+        processed_plan = cpp.cpp(plan_path, cpp_opts)
         packages = self._parse_processed_plan(processed_plan)
         
         for package in packages:
@@ -124,4 +124,20 @@ class Plan:
         return spec
         
 
+def resolve(plan_path, pool_path, cpp_opts, extra_pkgs, resolve_deps=True):
+    cpp_opts += [ ("-U", "linux") ]
+
+    plan = Plan(pool_path)
+
+    if plan_path is not None:
+        plan.process(plan_path, cpp_opts)
+
+    plan.packages.update(extra_pkgs)
+    packages = set(plan.packages)
+
+    if resolve_deps:
+        spec = plan.resolve_to_spec()
+        packages = spec.list()
+
+    return packages
 
