@@ -42,16 +42,17 @@ def parse_list(raw):
 
     return remove, restore
 
-def _move(entry, srcpath, dstpath):
-    entry = entry.lstrip("/")
-    src = join(srcpath, entry)
-    dst = join(dstpath, dirname(entry))
+def _move(entry, source_root_path, dest_root_path):
+    entry = entry.strip("/")
+    source_path = join(source_root_path, entry)
+    dest_path = join(dest_root_path, entry)
 
-    if exists(src):
-        mkdir(dirname(dst))
-        shutil.move(src, dst)
-    else:
+    if not exists(source_path):
         warn("entry does not exist: " + entry)
+        return
+
+    mkdir(dirname(dest_path))
+    shutil.move(source_path, dest_path)
 
 def apply_removelist(removelist_fh, root_path):
     remove, restore = parse_list(removelist_fh.read())
