@@ -5,11 +5,6 @@ Arguments:
   <removelist>      Path to read removelist from (- for stdin)
                     Entries may be negated by prefixing a `!'
   <root>            Root path relative to which we remove entries
-
-Options:
-  --dstpath=        Path to directory which will store removed items
-                    If not specified, FAB_TMPDIR will be used, and deleted
-                    when finished.
 """
 
 import os
@@ -78,34 +73,20 @@ def apply_removelist(rmlist_fh, root_path, dstpath=None):
         shutil.rmtree(dstpath)
 
 def main():
-    try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "",
-                                       ['dstpath='])
-    except getopt.GetoptError, e:
-        usage(e)
-
-    if sys.argv.count("-") == 1:
-        args.insert(0, "-")
-    
+    args = sys.argv[1:]
     if not len(args) == 2:
         usage()
-    
-    if args[0] == '-':
-        rmlist_fh = sys.stdin
-    else:
-        rmlist_fh = file(args[0], "r")
 
-    root_path = args[1]
+    removelist, root_path = args
+    if removelist == '-':
+        removelist_fh = sys.stdin
+    else:
+        removelist_fh = file(args[0], "r")
 
     if not os.path.isdir(root_path):
         fatal("root path does not exist: " + root_path)
 
-    kws = {}
-    for opt, val in opts:
-        kws[opt[2:]] = val
-
-    apply_removelist(rmlist_fh, root_path, **kws)
-
+    apply_removelist(removelist_fh, root_path)
         
 if __name__=="__main__":
     main()
