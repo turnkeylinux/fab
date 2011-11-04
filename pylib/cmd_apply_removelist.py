@@ -22,11 +22,11 @@ from common import fatal, warn, mkdir, get_tmpdir
 def usage():
     print >> sys.stderr, "Syntax: %s [-options] <removelist> <srcpath>" % sys.argv[0]
 
-def parse_list(raw):
+def parse_list(s):
     remove = []
     restore = []
     
-    for expr in raw.splitlines():
+    for expr in s.splitlines():
         expr = re.sub(r'#.*', '', expr)
         expr = expr.strip()
         if not expr:
