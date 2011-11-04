@@ -22,7 +22,7 @@ from common import fatal, warn, mkdir, get_tmpdir
 def usage():
     print >> sys.stderr, "Syntax: %s [-options] <removelist> <srcpath>" % sys.argv[0]
 
-def parse_list(s):
+def parse_removelist(s):
     remove = []
     restore = []
     
@@ -55,7 +55,7 @@ def _move(entry, source_root_path, dest_root_path):
     shutil.move(source_path, dest_path)
 
 def apply_removelist(removelist_fh, root_path):
-    remove, restore = parse_list(removelist_fh.read())
+    remove, restore = parse_removelist(removelist_fh.read())
 
     tmpdir = get_tmpdir()
     
