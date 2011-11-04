@@ -48,7 +48,7 @@ def parse_list(raw):
     return remove, restore
 
 def _move(entry, srcpath, dstpath):
-    entry = re.sub("^/","", entry)
+    entry = entry.lstrip("/")
     src = join(srcpath, entry)
     dst = join(dstpath, dirname(entry))
 
