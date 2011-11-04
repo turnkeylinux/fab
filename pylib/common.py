@@ -26,7 +26,7 @@ def get_tmpdir():
         raise Error('FAB_TMPDIR is not absolute path')
 
     mkdir(tmpdir)
-    return tempfile.mkdtemp(prefix="fab", dir=tmpdir)
+    return tempfile.mkdtemp(prefix="fab-", dir=tmpdir)
 
 ## cli common
 def fatal(s):
