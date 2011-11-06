@@ -32,6 +32,23 @@ class Spec(dict):
         
     exists = dict.has_key
 
+class _PackagesTempDir(dict):
+    def __new__(cls, dir):
+        return dict.__new__(cls)
+    
+    def __init__(self, dir):
+        for fname in os.listdir(dir):
+            try:
+                package_name = deb.parse_filename(fname)[0]
+                self[package_name] = join(dir, fname)
+            except deb.Error:
+                continue
+
+        self.dir = dir
+
+    def __del__(self):
+        shutil.rmtree(self.dir)
+
 class Plan(set):
     @staticmethod
     def _parse_plan_file(path, cpp_opts=[]):
@@ -74,20 +91,8 @@ class Plan(set):
         resolved = set()
         unresolved = self.copy()
 
-        def _parse_package_dir(package_dir):
-            """return dict of packages: key=pkgname, value=pkgpath"""
-            package_paths = {}
-
-            for filename in os.listdir(package_dir):
-                if filename.endswith(".deb"):
-                    name = deb.parse_filename(filename)[0]
-                    package_paths[name] = join(package_dir, filename)
-
-            return package_paths
-
         while unresolved:
-            package_dir = self.pool.get(unresolved)
-            package_paths = _parse_package_dir(package_dir)
+            pkgs_tmpdir = _PackagesTempDir(self.pool.get(unresolved))
             
             depends = set()
             for pkg in unresolved:
@@ -97,8 +102,8 @@ class Plan(set):
                         name = pkg.split(relation)[0]
                         break
 
-                version = deb.get_version(package_paths[name])
-                deps = deb.get_depends(package_paths[name], self.pool)
+                version = deb.get_version(pkgs_tmpdir[name])
+                deps = deb.get_depends(pkgs_tmpdir[name], self.pool)
 
                 if not deb.checkversion(pkg, version):
                     raise Error("dependency version error", pkg, version)
@@ -114,6 +119,4 @@ class Plan(set):
             unresolved = depends
             unresolved.difference_update(resolved)
             
-            shutil.rmtree(package_dir)
-        
         return spec
