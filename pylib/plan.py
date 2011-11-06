@@ -72,7 +72,7 @@ class Plan(set):
         spec = Spec()
         
         resolved = set()
-        toresolve = self.copy()
+        unresolved = self.copy()
 
         def _parse_package_dir(package_dir):
             """return dict of packages: key=pkgname, value=pkgpath"""
@@ -85,12 +85,12 @@ class Plan(set):
 
             return package_paths
 
-        while toresolve:
-            package_dir = self.pool.get(toresolve)
+        while unresolved:
+            package_dir = self.pool.get(unresolved)
             package_paths = _parse_package_dir(package_dir)
             
             depends = set()
-            for pkg in toresolve:
+            for pkg in unresolved:
                 name = pkg
                 for relation in ('>=', '>>', '<=', '<<', '='):
                     if relation in pkg:
@@ -111,8 +111,8 @@ class Plan(set):
 
                 depends.update(deps)
 
-            toresolve = depends
-            toresolve.difference_update(resolved)
+            unresolved = depends
+            unresolved.difference_update(resolved)
             
             shutil.rmtree(package_dir)
         
