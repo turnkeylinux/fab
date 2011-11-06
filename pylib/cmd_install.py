@@ -27,7 +27,7 @@ from common import fatal
 
 @help.usage(__doc__)
 def usage():
-    print >> sys.stderr, "Syntax: %s [-options] <chroot> ( path/to/plan | package[=version] ) ..."  % sys.argv[0]
+    print >> sys.stderr, "Syntax: %s [-options] <chroot> ( - | path/to/plan | package[=version] ) ..."  % sys.argv[0]
 
 def main():
     cpp_opts, args = cpp.getopt(sys.argv[1:])
@@ -59,10 +59,10 @@ def main():
 
     plan = Plan()
     for arg in args[1:]:
-        if not exists(arg):
-            plan.add(arg)
-        else:
+        if arg == "-" or exists(arg):
             plan |= Plan.init_from_file(arg, cpp_opts, pool_path)
+        else:
+            plan.add(arg)
 
     if not opt_no_deps:
         packages = list(plan.resolve())
