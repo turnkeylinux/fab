@@ -17,9 +17,12 @@ class CliWrapper(pyproject.CliWrapper):
     
     INSTALL_PATH = dirname(__file__)
 
-    COMMANDS_USAGE_ORDER = ['plan-lint', 'cpp', 'chroot', 
+    COMMANDS_USAGE_ORDER = ['cpp', 'chroot', 
                             '',
-                            'plan-resolve', 'install',
+                            'plan-lint', 'plan-resolve',
+                            '',
+                            'install',
+                            '',
                             'apply-removelist', 'apply-overlay']
     
 if __name__ == '__main__':
