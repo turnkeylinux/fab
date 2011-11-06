@@ -44,14 +44,14 @@ def main():
         usage("bad number of arguments")
 
     pool_path = None
-    opt_resolve_deps = True
+    opt_no_deps = False
 
     for opt, val in opts:
         if opt in ('-p', '--pool'):
             pool_path = val
 
         elif opt in ('--no-deps'):
-            opt_resolve_deps = False
+            opt_no_deps = True
 
     chroot_path = args[0]
     if not os.path.isdir(chroot_path):
@@ -64,7 +64,7 @@ def main():
         else:
             plan |= Plan.init_from_file(arg, cpp_opts, pool_path)
 
-    if opt_resolve_deps:
+    if not opt_no_deps:
         packages = list(plan.resolve())
     else:
         packages = list(plan)
