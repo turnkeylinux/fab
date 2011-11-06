@@ -3,6 +3,8 @@
 
 """
 Configuration environment variables:
+    POOL                    Path to the package pool
+    
     FAB_PLAN_INCLUDE_PATH   Global include path for plan preprocessing
     FAB_TMPDIR              Temporary storage (defaults to /var/tmp)
 
