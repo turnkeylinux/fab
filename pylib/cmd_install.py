@@ -27,7 +27,7 @@ from common import fatal
 
 @help.usage(__doc__)
 def usage():
-    print >> sys.stderr, "Syntax: %s [-options] <chroot> < inputfile | package[=version] ... >"  % sys.argv[0]
+    print >> sys.stderr, "Syntax: %s [-options] <chroot> ( path/to/plan | package[=version] ) ..."  % sys.argv[0]
 
 def main():
     cpp_opts, args = cpp.getopt(sys.argv[1:])
