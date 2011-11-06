@@ -1,13 +1,3 @@
-"""Optional arbitrary CPP options to effect plan preprocessing:
-  -D <name[=def]>  Predefine name as a macro, with supplied definition
-                   If definition is not supplied, default is 1
-  -U <name>        Cancel any previous definition of name
-  -I <dir>         Include dir to add to list of dirs searched for header files
-
-  Refer to cpp documentation (eg. man cpp) for options full description
-
-"""
-
 import os
 import sys
 
@@ -56,7 +46,6 @@ def cpp(input, cpp_opts=[]):
     """preprocess <input> through cpp -> preprocessed output
        input may be path/to/file or iterable data type
     """
-
     args = []
     for opt, val in cpp_opts:
         args.append(opt + val)

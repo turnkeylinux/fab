@@ -10,6 +10,8 @@ Options:
   -p --pool=PATH    set pool path (default: $FAB_POOL_PATH)
   -o --output       Path to spec-output (default is stdout)
 
+  (Also accepts fab-cpp options to effect plan preprocessing)
+
 """
 
 import os
@@ -23,7 +25,7 @@ import plan
 from chroot import Chroot
 from common import fatal
 
-@help.usage(__doc__ + cpp.__doc__)
+@help.usage(__doc__)
 def usage():
     print >> sys.stderr, "Syntax: %s [-options] <plan> [ /path/to/bootstrap ]" % sys.argv[0]
 

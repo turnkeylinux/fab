@@ -9,6 +9,7 @@ Options:
   -p --pool=PATH    set pool path (default: $FAB_POOL_PATH)
   --no-deps         Do not resolve and install package dependencies
 
+  (Also accepts fab-cpp options to effect plan preprocessing)
 """
 
 import re
@@ -22,7 +23,7 @@ import plan
 from installer import Installer
 from common import fatal
 
-@help.usage(__doc__ + cpp.__doc__)
+@help.usage(__doc__)
 def usage():
     print >> sys.stderr, "Syntax: %s [-options] <chroot> < inputfile | package[=version] ... >"  % sys.argv[0]
 
