@@ -41,17 +41,15 @@ class Pool:
             outdir = get_tmpdir()
 
         mkdir(outdir)
-        toget = []
-        for package in packages:
-            name = package
+        def get_package_name(package):
             for relation in ('>>', '>=', '<=', '<<'):
                 if relation in package:
-                    name = package.split(relation)[0]
-                    break
+                    return package.split(relation)[0].strip()
 
-            toget.append(name)
-
-        executil.system('pool-get', '--strict', outdir, *toget)
+            return package.strip()
+            
+        packages = [ get_package_name(package) for package in packages ]
+        executil.system('pool-get', '--strict', outdir, *packages)
 
         return outdir
 
