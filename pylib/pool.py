@@ -42,11 +42,11 @@ class Pool:
 
         mkdir(outdir)
         toget = []
-        for pkg in packages:
-            name = pkg
+        for package in packages:
+            name = package
             for relation in ('>>', '>=', '<=', '<<'):
-                if relation in pkg:
-                    name, version = pkg.split(relation)
+                if relation in package:
+                    name, version = package.split(relation)
                     break
 
             toget.append(name)
