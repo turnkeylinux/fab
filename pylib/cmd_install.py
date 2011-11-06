@@ -7,7 +7,7 @@ If a package is specified without a version, install the newest version.
 
 Options:
   -p --pool=PATH    set pool path (default: $FAB_POOL_PATH)
-  --no-deps         Do not resolve and install package dependencies
+  -n --no-deps      Do not resolve and install package dependencies
 
   (Also accepts fab-cpp options to effect plan preprocessing)
 """
@@ -32,7 +32,7 @@ def usage():
 def main():
     cpp_opts, args = cpp.getopt(sys.argv[1:])
     try:
-        opts, args = getopt.gnu_getopt(args, 'p:',
+        opts, args = getopt.gnu_getopt(args, 'np:',
                                    ['pool=', 'no-deps'])
     except getopt.GetoptError, e:
         usage(e)
@@ -50,7 +50,7 @@ def main():
         if opt in ('-p', '--pool'):
             pool_path = val
 
-        elif opt in ('--no-deps'):
+        elif opt in ('-n', '--no-deps'):
             opt_no_deps = True
 
     chroot_path = args[0]
