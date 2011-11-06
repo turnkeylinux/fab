@@ -28,7 +28,7 @@ class Pool:
         if path is None:
             path = os.environ.get('FAB_POOL_PATH')
             if path is None:
-                raise Error('FAB_POOL_PATH could not be found')
+                raise Error('FAB_POOL_PATH not set in environment')
 
         self.path = realpath(path)
         if not isdir(join(self.path, ".pool")):
