@@ -46,7 +46,7 @@ class Pool:
             name = package
             for relation in ('>>', '>=', '<=', '<<'):
                 if relation in package:
-                    name, version = package.split(relation)
+                    name = package.split(relation)[0]
                     break
 
             toget.append(name)
