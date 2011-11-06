@@ -24,8 +24,13 @@ def chdir(method):
     return wrapper
 
 class Pool:
-    def __init__(self, path):
-        self.path = path
+    def __init__(self, path=None):
+        if path is None:
+            path = os.environ.get('FAB_POOL_PATH')
+            if path is None:
+                raise Error('FAB_POOL_PATH could not be found')
+
+        self.path = realpath(path)
         if not isdir(join(self.path, ".pool")):
             raise Error("pool does not exist", path)
 

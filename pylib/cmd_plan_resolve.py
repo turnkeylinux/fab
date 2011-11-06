@@ -21,7 +21,7 @@ import help
 import cpp
 import plan
 from chroot import Chroot
-from common import get_poolpath, fatal
+from common import fatal
 
 @help.usage(__doc__ + cpp.__doc__)
 def usage():
@@ -65,7 +65,6 @@ def main():
             pool_path = val
 
     plan_path = args[0]
-    pool_path = get_poolpath(pool_path)
 
     try:
         bootstrap_path = args[1]

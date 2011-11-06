@@ -20,7 +20,7 @@ import help
 import cpp
 import plan
 from installer import Installer
-from common import get_poolpath, fatal
+from common import fatal
 
 @help.usage(__doc__ + cpp.__doc__)
 def usage():
@@ -53,8 +53,6 @@ def main():
     chroot_path = args[0]
     input = args[1:]
 
-    pool_path = get_poolpath(pool_path)
-    
     if not os.path.isdir(chroot_path):
         fatal("chroot does not exist: " + chroot_path)
 
