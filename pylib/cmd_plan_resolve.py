@@ -21,7 +21,7 @@ import getopt
 
 import help
 import cpp
-import plan
+from plan import Plan
 from chroot import Chroot
 from common import fatal
 
@@ -74,15 +74,14 @@ def main():
     except IndexError:
         packages = set()
 
-    spec = plan.resolve(plan_path, pool_path, cpp_opts, packages)
-    spec = "\n".join(spec) + "\n"
+    plan = Plan.init_from_file(plan_path, cpp_opts, pool_path)
+    spec = plan.resolve()
 
     if output_path is None:
         print spec
     else:
-        open(output_path, "w").write(spec)
-    
-    
+        open(output_path, "w").write(str(spec) + "\n")
+        
 if __name__=="__main__":
     main()
 

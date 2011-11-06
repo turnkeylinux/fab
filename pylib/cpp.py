@@ -46,7 +46,8 @@ def cpp(input, cpp_opts=[]):
     """preprocess <input> through cpp -> preprocessed output
        input may be path/to/file or iterable data type
     """
-    args = []
+    args = [ "-Ulinux" ]
+
     for opt, val in cpp_opts:
         args.append(opt + val)
 

@@ -17,37 +17,26 @@ class Spec(dict):
     
     def add(self, name, version):
         """add package name and version to spec"""
-        self.__setitem__(name, version)
+        self[name] = version
 
-    def list(self, sep="="):
+    def remove(self, name):
+        del self[name]
+
+    def __iter__(self):
         """return list of packages, as name(sep)version"""
-        packages = []
-        for item in self.items():
-            packages.append(item[0] + sep + item[1])
-        
-        return packages
+        for name, version in self.items():
+            yield "%s=%s" % (name, version)
 
+    def __str__(self):
+        return "\n".join(list(self))
+        
     exists = dict.has_key
 
-class Plan:
-    def __init__(self, pool_path):
-        self.pool = Pool(pool_path)
-        self.packages = set()
-    
+class Plan(set):
     @staticmethod
-    def _parse_package_dir(package_dir):
-        """return dict of packages: key=pkgname, value=pkgpath"""
-        package_paths = {}
-
-        for filename in os.listdir(package_dir):
-            if filename.endswith(".deb"):
-                name = deb.parse_filename(filename)[0]
-                package_paths[name] = join(package_dir, filename)
-
-        return package_paths
-
-    @staticmethod
-    def _parse_processed_plan(processed_plan):
+    def _parse_plan_file(path, cpp_opts=[]):
+        """process plan through cpp, then parse it and add packages to plan """
+        processed_plan = cpp.cpp(path, cpp_opts)
         packages = set()
         for expr in processed_plan.splitlines():
             expr = re.sub(r'#.*', '', expr)
@@ -67,32 +56,38 @@ class Plan:
 
         return packages
 
-    def add(self, package):
-        """add package to plan"""
-        self.packages.add(package)
+    @classmethod
+    def init_from_file(cls, plan_file_path, cpp_opts=[], pool_path=None):
+        return cls(cls._parse_plan_file(plan_file_path, cpp_opts), pool_path)
 
-    def remove(self, package):
-        """remove package from plan """
-        self.packages.remove(package)
+    def __new__(cls, iterable=(), pool_path=None):
+        return set.__new__(cls, iterable)
+    
+    def __init__(self, iterable=(), pool_path=None):
+        set.__init__(self, iterable)
+        self.pool = Pool(pool_path)
 
-    def process(self, plan_path, cpp_opts):
-        """process plan through cpp, then parse it and add packages to plan """
-        processed_plan = cpp.cpp(plan_path, cpp_opts)
-        packages = self._parse_processed_plan(processed_plan)
-        
-        for package in packages:
-            self.packages.add(package)
-
-    def resolve_to_spec(self):
-        """resolve plan and its dependencies recursively, return spec"""
+    def resolve(self):
+        """resolve plan and its dependencies recursively -> return spec"""
         spec = Spec()
         
         resolved = set()
-        toresolve = self.packages.copy()
+        toresolve = self.copy()
+
+        def _parse_package_dir(package_dir):
+            """return dict of packages: key=pkgname, value=pkgpath"""
+            package_paths = {}
+
+            for filename in os.listdir(package_dir):
+                if filename.endswith(".deb"):
+                    name = deb.parse_filename(filename)[0]
+                    package_paths[name] = join(package_dir, filename)
+
+            return package_paths
 
         while toresolve:
             package_dir = self.pool.get(toresolve)
-            package_paths = self._parse_package_dir(package_dir)
+            package_paths = _parse_package_dir(package_dir)
             
             depends = set()
             for pkg in toresolve:
@@ -122,23 +117,3 @@ class Plan:
             shutil.rmtree(package_dir)
         
         return spec
-        
-
-def resolve(plan_path, pool_path, cpp_opts, extra_pkgs, resolve_deps=True):
-    """convenience function processes and resolves plans/packages"""
-    cpp_opts += [ ("-U", "linux") ]
-
-    plan = Plan(pool_path)
-
-    if plan_path is not None:
-        plan.process(plan_path, cpp_opts)
-
-    plan.packages.update(extra_pkgs)
-    packages = set(plan.packages)
-
-    if resolve_deps:
-        spec = plan.resolve_to_spec()
-        packages = spec.list()
-
-    return packages
-

@@ -14,12 +14,14 @@ Options:
 
 import re
 import os
+from os.path import *
+
 import sys
 import getopt
 
 import help
 import cpp
-import plan
+from plan import Plan
 from installer import Installer
 from common import fatal
 
@@ -52,24 +54,23 @@ def main():
             opt_resolve_deps = False
 
     chroot_path = args[0]
-    input = args[1:]
-
     if not os.path.isdir(chroot_path):
         fatal("chroot does not exist: " + chroot_path)
 
-    if os.path.isfile(input[0]):
-        plan_path = input[0]
-        packages = set(input[1:])
+    plan = Plan()
+    for arg in args[1:]:
+        if not exists(arg):
+            plan.add(arg)
+        else:
+            plan |= Plan.init_from_file(arg, cpp_opts, pool_path)
+
+    if opt_resolve_deps:
+        packages = list(plan.resolve())
     else:
-        plan_path = None
-        packages = set(input)
-
-    packages = plan.resolve(plan_path, pool_path, cpp_opts, packages,
-                            opt_resolve_deps)
-
+        packages = list(plan)
+        
     installer = Installer(chroot_path, pool_path)
     installer.install(packages)
-
 
 if __name__=="__main__":
     main()
