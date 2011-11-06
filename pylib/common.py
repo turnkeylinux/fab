@@ -13,9 +13,9 @@ def mkdir(path):
 
 def get_poolpath(path=None):
     if path is None:
-        path = os.environ.get('POOL')
+        path = os.environ.get('FAB_POOL_PATH')
         if path is None:
-            raise Error('POOL could not be found')
+            raise Error('FAB_POOL_PATH could not be found')
         
     return os.path.realpath(path)
         

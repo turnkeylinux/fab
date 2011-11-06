@@ -24,9 +24,9 @@ CDROOT ?= $(FAB_PATH)/cdroots/bootsplash
 FAB_PLAN_INCLUDE_PATH ?= $(FAB_PATH)/common-plans
 FAB_TMPDIR ?= $(FAB_PATH)/tmp
 
+export FAB_POOL_PATH = $(POOL)
 export FAB_PLAN_INCLUDE_PATH
 export FAB_TMPDIR
-export POOL
 
 # default locations of product build inputs
 PLAN ?= plan/main

@@ -7,8 +7,7 @@ Arguments:
                     append to the plan
 
 Options:
-  -p --pool         Mandatory: Relative or absolute pool path
-                               Defaults to environment: POOL
+  -p --pool=PATH    set pool path (default: $FAB_POOL_PATH)
   -o --output       Path to spec-output (default is stdout)
 
 """

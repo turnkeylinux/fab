@@ -6,8 +6,7 @@ Plan and spec type input files are accepted.
 If a package is specified without a version, install the newest version.
 
 Options:
-  -p --pool         Mandatory: Relative or absolute pool path
-                               Defaults to environment: POOL
+  -p --pool=PATH    set pool path (default: $FAB_POOL_PATH)
   --no-deps         Do not resolve and install package dependencies
 
 """

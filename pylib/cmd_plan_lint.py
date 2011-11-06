@@ -7,8 +7,7 @@ Arguments:
   <plan>            Path to read plan from
 
 Options:
-  -p --pool         Mandatory: Relative or absolute pool path
-                               Defaults to environment: POOL
+  -p --pool=PATH    set pool path (default: $FAB_POOL_PATH)
   -i --inplace      Edit plan inplace
 """
 
