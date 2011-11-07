@@ -6,6 +6,7 @@ from os.path import *
 
 import cpp
 import deb
+import debinfo
 import executil
 from pool import Pool
 
@@ -48,6 +49,59 @@ class _PackagesTempDir(dict):
 
     def __del__(self):
         shutil.rmtree(self.dir)
+
+def parse_depends(content):
+    """content := array (eg. stuff.split(','))"""
+    depends = []
+    for d in content:
+        m = re.match("(.*) \((.*) (.*)\)", d.strip())
+        if m:
+            depends.append((m.group(1), m.group(3), m.group(2)))
+        else:
+            depends.append((d.strip(), '', ''))
+    
+    return depends
+    
+def parse_name(name):
+    #TODO: solve the provides/virtual issue properly
+    virtuals = {'awk':                       'mawk',
+                'perl5':                     'perl',
+                'perlapi-5.8.7':             'perl-base',
+                'perlapi-5.8.8':             'perl-base',
+                'mail-transport-agent':      'postfix',
+                'libapt-pkg-libc6.4-6-3.53': 'apt',
+                'libapt-inst-libc6.4-6-1.1': 'apt-utils',
+                'aufs-modules':              'aufs-modules-2.6.20-15-386'
+               }
+
+    if name in virtuals:
+        return virtuals[name]
+    
+    return name
+
+def get_depends(package_path, pool):
+    """return package dependencies"""
+    deps = set()
+    control = debinfo.get_control_fields(package_path)
+
+    if control.has_key('Depends'):
+        for depend in parse_depends(control['Depends'].split(",")):
+            if "|" in depend[0]:
+                for d in parse_depends(depend[0].split("|")):
+                    depname = parse_name(d[0])
+                    dep = depname + d[2] + d[1]
+
+                    # gotcha: if package exists, but not the specified version
+                    # an error will be raised in checkversion
+                    if pool.exists(depname):
+                        break
+            else:
+                depname = parse_name(depend[0])
+                dep = depname + depend[2] + depend[1]
+
+            deps.add(dep)
+
+    return deps
 
 class Plan(set):
     @staticmethod
@@ -113,7 +167,7 @@ class Plan(set):
                 resolved.add(name)
                 resolved.add(name + "=" + version)
 
-                depends |= deb.get_depends(pkgs_tmpdir[name], self.pool)
+                depends |= get_depends(pkgs_tmpdir[name], self.pool)
 
             unresolved = depends - resolved
             
