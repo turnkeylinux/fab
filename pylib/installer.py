@@ -1,15 +1,37 @@
-
 import os
+import md5
 import shutil
 from os.path import *
 
-import deb
+import debinfo
 import executil
 from chroot import Chroot
 from pool import Pool
 
 class Error(Exception):
     pass
+
+def get_package_index(packagedir):
+    def filesize(path):
+        return str(os.stat(path).st_size)
+
+    def md5sum(path):
+        return str(md5.md5(open(path, 'rb').read()).hexdigest())
+
+    index = []
+    for package in os.listdir(packagedir):
+        path = os.path.join(packagedir, package)
+        if path.endswith('.deb'):
+            control = debinfo.get_control_fields(path)
+            for field in control.keys():
+                index.append(field + ": " + control[field])
+
+            index.append("Filename: " + path)
+            index.append("Size: " + filesize(path))
+            index.append("MD5sum: " + md5sum(path))
+            index.append("")
+
+    return index
 
 def fakestartstop(method):
     """decorator for fake start-stop-daemon
@@ -124,7 +146,7 @@ class Installer:
         os.remove(indexfile)
 
     def _apt_genindex(self, packagedir, indexfile):
-        index = deb.get_package_index(packagedir)
+        index = get_package_index(packagedir)
         file(indexfile, "w").write("\n".join(index))
 
         self.chroot.execute("apt-cache gencaches")

@@ -5,8 +5,8 @@ import shutil
 from os.path import *
 
 import cpp
-import deb
 import debinfo
+import debversion
 import executil
 from pool import Pool
 
@@ -40,15 +40,46 @@ class _PackagesTempDir(dict):
     def __init__(self, dir):
         for fname in os.listdir(dir):
             try:
-                package_name = deb.parse_filename(fname)[0]
+                package_name = parse_filename(fname)[0]
                 self[package_name] = join(dir, fname)
-            except deb.Error:
+            except Error:
                 continue
 
         self.dir = dir
 
     def __del__(self):
         shutil.rmtree(self.dir)
+
+def get_version(package_path):
+    """return package version"""
+    control = debinfo.get_control_fields(package_path)
+    return control['Version']
+
+def parse_filename(filename):
+    if not filename.endswith(".deb"):
+        raise Error("not a package `%s'" % filename)
+
+    return filename.split("_")[:2]
+
+def checkversion(package, version):
+    """compare package := name(relation)ver and version by relation"""
+    relations = {'<<': [-1],
+                 '<=': [-1,0],
+                 '=':  [0],
+                 '>=': [0,1],
+                 '>>': [1]
+                }
+
+    #gotcha: can't use relations.keys() due to ordering
+    for relation in ('>=', '>>', '<=', '<<', '='):
+        if relation in package:
+            name, ver = package.split(relation)
+            if debversion.compare(version, ver) in relations[relation]:
+                return True
+
+            return False
+
+    return True
 
 def parse_depends(content):
     """content := array (eg. stuff.split(','))"""
@@ -156,9 +187,9 @@ class Plan(set):
                         name = pkg.split(relation)[0]
                         break
 
-                version = deb.get_version(pkgs_tmpdir[name])
+                version = get_version(pkgs_tmpdir[name])
 
-                if not deb.checkversion(pkg, version):
+                if not checkversion(pkg, version):
                     raise Error("dependency version error", pkg, version)
 
                 spec.add(name, version)
