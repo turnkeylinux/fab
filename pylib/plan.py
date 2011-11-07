@@ -85,7 +85,7 @@ class Plan(set):
         self.pool = Pool(pool_path)
 
     def resolve(self):
-        """resolve plan and its dependencies recursively -> return spec"""
+        """resolve plan dependencies recursively -> return spec"""
         spec = Spec()
         
         resolved = set()
