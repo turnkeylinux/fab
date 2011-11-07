@@ -117,6 +117,6 @@ class Plan(set):
                 depends.update(deps)
 
             unresolved = depends
-            unresolved.difference_update(resolved)
+            unresolved = unresolved - resolved
             
         return spec
