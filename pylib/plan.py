@@ -103,7 +103,6 @@ class Plan(set):
                         break
 
                 version = deb.get_version(pkgs_tmpdir[name])
-                deps = deb.get_depends(pkgs_tmpdir[name], self.pool)
 
                 if not deb.checkversion(pkg, version):
                     raise Error("dependency version error", pkg, version)
@@ -114,7 +113,7 @@ class Plan(set):
                 resolved.add(name)
                 resolved.add(name + "=" + version)
 
-                depends.update(deps)
+                depends |= deb.get_depends(pkgs_tmpdir[name], self.pool)
 
             unresolved = depends - resolved
             
