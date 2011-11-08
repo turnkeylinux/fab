@@ -208,16 +208,25 @@ class Plan(set):
                 spec.add(dep.name, version)
                 resolved.add(dep)
 
-                if 'Depends' in control_fields:
-                    for arg in control_fields['Depends'].split(","):
-                        if "|" not in arg:
-                            new_deps.add(Dependency(arg))
-                        else:
-                            for alternative in arg.split("|"):
-                                alternative = Dependency(alternative)
-                                if self.pool.exists(alternative.name):
-                                    new_deps.add(alternative)
-                                    break
+                def parse_depends(val):
+                    if val is None or val.strip() == "":
+                        return []
+
+                    return re.split("\s*,\s*", val.strip())
+
+                raw_depends = []
+                for field_name in ('Pre-Depends', 'Depends'):
+                    raw_depends += parse_depends(control_fields.get(field_name))
+                    
+                for raw_depend in raw_depends:
+                    if "|" not in raw_depend:
+                        new_deps.add(Dependency(raw_depend))
+                    else:
+                        for alternative in raw_depend.split("|"):
+                            alternative = Dependency(alternative)
+                            if self.pool.exists(alternative.name):
+                                new_deps.add(alternative)
+                                break
 
             unresolved = new_deps - resolved
             
