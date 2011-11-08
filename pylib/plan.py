@@ -223,8 +223,14 @@ class Plan(set):
                         new_deps.add(Dependency(raw_depend))
                         continue
 
-                    for alternative in raw_depend.split("|"):
-                        alternative = Dependency(alternative)
+                    alternatives = [ Dependency(alt) for alt in raw_depend.split("|") ]
+
+                    # continue if any of the alternatives are already in resolved or unresolved sets
+                    if set(alternatives) & (resolved | unresolved):
+                        continue
+
+                    # add the first alternative that exists in the pool to set of new dependencies
+                    for alternative in alternatives:
                         if self.pool.exists(alternative.name):
                             new_deps.add(alternative)
                             break
