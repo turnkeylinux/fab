@@ -33,108 +33,125 @@ class Spec(dict):
         
     exists = dict.has_key
 
-class _PackagesTempDir(dict):
+class TempPackageDir(dict):
     def __new__(cls, dir):
         return dict.__new__(cls)
     
     def __init__(self, dir):
         for fname in os.listdir(dir):
-            try:
-                package_name = parse_filename(fname)[0]
-                self[package_name] = join(dir, fname)
-            except Error:
+            if not fname.endswith(".deb"):
                 continue
+            
+            package_name = fname.split("_")[0]
+            self[package_name] = join(dir, fname)
 
         self.dir = dir
 
     def __del__(self):
         shutil.rmtree(self.dir)
 
-def get_version(package_path):
-    """return package version"""
-    control = debinfo.get_control_fields(package_path)
-    return control['Version']
+class Dependency:
+    """This class represents a dependency.
 
-def parse_filename(filename):
-    if not filename.endswith(".deb"):
-        raise Error("not a package `%s'" % filename)
+    The restriction parameters are parsed and can be accessed
+    as attributes but for now they are ignored when calculating equality.
 
-    return filename.split("_")[:2]
+    Whether two dependencies are equal depends only on the name.
+    """
+    class Restrict:
+        RELATIONS = {'<<': (-1,),
+                     '<=': (-1,0),
+                     '=':  (0,),
+                     '>=': (0,1),
+                     '>>': (1,),
+                     }
 
-def checkversion(package, version):
-    """compare package := name(relation)ver and version by relation"""
-    relations = {'<<': [-1],
-                 '<=': [-1,0],
-                 '=':  [0],
-                 '>=': [0,1],
-                 '>>': [1]
-                }
+        def __init__(self, relation, version):
+            if relation not in self.RELATIONS:
+                raise Error("bad relation (%s)" % relation)
 
-    #gotcha: can't use relations.keys() due to ordering
-    for relation in ('>=', '>>', '<=', '<<', '='):
-        if relation in package:
-            name, ver = package.split(relation)
-            if debversion.compare(version, ver) in relations[relation]:
+            self.relation = relation
+            self.version = version
+
+        def __hash__(self):
+            return hash(self.relation) ^ hash(self.version)
+
+        def __eq__(a, b):
+            if b is None:
+                return False
+            
+            return a.relation == b.relation and a.version == b.version
+
+        def __contains__(self, version):
+            true_results = self.RELATIONS[self.relation]
+
+            if debversion.compare(version, self.version) in true_results:
                 return True
 
             return False
 
-    return True
+        def __str__(self):
+            return self.relation + " " + self.version
 
-def parse_depends(content):
-    """content := array (eg. stuff.split(','))"""
-    depends = []
-    for d in content:
-        m = re.match("(.*) \((.*) (.*)\)", d.strip())
-        if m:
-            depends.append((m.group(1), m.group(3), m.group(2)))
-        else:
-            depends.append((d.strip(), '', ''))
-    
-    return depends
-    
-def parse_name(name):
-    #TODO: solve the provides/virtual issue properly
-    virtuals = {'awk':                       'mawk',
-                'perl5':                     'perl',
-                'perlapi-5.8.7':             'perl-base',
-                'perlapi-5.8.8':             'perl-base',
-                'mail-transport-agent':      'postfix',
-                'libapt-pkg-libc6.4-6-3.53': 'apt',
-                'libapt-inst-libc6.4-6-1.1': 'apt-utils',
-                'aufs-modules':              'aufs-modules-2.6.20-15-386'
-               }
+    @staticmethod
+    def _handle_virtual_names(name):
+        #TODO: solve the provides/virtual issue properly
+        virtuals = {'awk':                       'mawk',
+                    'perl5':                     'perl',
+                    'perlapi-5.8.7':             'perl-base',
+                    'perlapi-5.8.8':             'perl-base',
+                    'mail-transport-agent':      'postfix',
+                    'libapt-pkg-libc6.4-6-3.53': 'apt',
+                    'libapt-inst-libc6.4-6-1.1': 'apt-utils',
+                    'aufs-modules':              'aufs-modules-2.6.20-15-386'
+                   }
 
-    if name in virtuals:
-        return virtuals[name]
-    
-    return name
+        if name in virtuals:
+            return virtuals[name]
 
-def get_depends(package_path, pool):
-    """return package dependencies"""
-    try:
-        control_depends = debinfo.get_control_fields(package_path)['Depends']
-    except KeyError:
-        return set()
+        return name
 
-    deps = set()
-    for depend in parse_depends(control_depends.split(",")):
-        if "|" in depend[0]:
-            for d in parse_depends(depend[0].split("|")):
-                depname = parse_name(d[0])
-                dep = depname + d[2] + d[1]
+    def __init__(self, string):
+        """initialize Dependency from a control file formatted dependency
+        e.g.,
+            libgpmg1 (>= 1.19.6-1)
+        """
+        string = string.strip()
 
-                # gotcha: if package exists, but not the specified version
-                # an error will be raised in checkversion
-                if pool.exists(depname):
-                    break
-        else:
-            depname = parse_name(depend[0])
-            dep = depname + depend[2] + depend[1]
+        m = re.match(r'([a-z0-9][a-z0-9\+\-\.]+)(?:\s+\((.*?)\))?$', string)
+        if not m:
+            raise Error("illegally formatted dependency (%s)" % string)
 
-        deps.add(dep)
+        self.name = self._handle_virtual_names(m.group(1))
+        parens = m.group(2)
 
-    return deps
+        self.restrict = None
+        if parens:
+            m = re.match(r'([<>=]+)\s+([\w\-\.\+\:]+)$', parens)
+            if not m:
+                raise Error("illegal dependency restriction (%s)" % parens)
+
+            relation, version = m.groups()
+            self.restrict = Dependency.Restrict(relation, version)
+
+    def __str__(self):
+        if not self.restrict:
+            return self.name
+        
+        return "%s (%s)" % (self.name, str(self.restrict))
+
+    def __hash__(self):
+        return hash(self.name)
+
+    def __eq__(a, b):
+        return a.name == b.name
+
+    def is_version_ok(self, version):
+        """compare package := name(relation)ver and version by relation"""
+        if not self.restrict:
+            return True
+
+        return version in self.restrict
 
 class Plan(set):
     @staticmethod
@@ -176,32 +193,32 @@ class Plan(set):
         spec = Spec()
         
         resolved = set()
-        unresolved = self.copy()
+        unresolved = set([ Dependency(pkg) for pkg in self ])
 
         while unresolved:
-            pkgs_tmpdir = _PackagesTempDir(self.pool.get(unresolved))
+            pkgdir = TempPackageDir(self.pool.get(map(lambda d: d.name, unresolved)))
             
-            depends = set()
-            for pkg in unresolved:
-                name = pkg
-                for relation in ('>=', '>>', '<=', '<<', '='):
-                    if relation in pkg:
-                        name = pkg.split(relation)[0]
-                        break
+            new_deps = set()
+            for dep in unresolved:
+                control_fields = debinfo.get_control_fields(pkgdir[dep.name])
+                
+                version = control_fields['Version']
+                if not dep.is_version_ok(version):
+                    raise Error("dependency '%s' incompatible with newest pool version (%s)" % (dep, version))
+                spec.add(dep.name, version)
+                resolved.add(dep)
 
-                version = get_version(pkgs_tmpdir[name])
+                if 'Depends' in control_fields:
+                    for arg in control_fields['Depends'].split(","):
+                        if "|" not in arg:
+                            new_deps.add(Dependency(arg))
+                        else:
+                            for alternative in arg.split("|"):
+                                alternative = Dependency(alternative)
+                                if self.pool.exists(alternative.name):
+                                    new_deps.add(alternative)
+                                    break
 
-                if not checkversion(pkg, version):
-                    raise Error("dependency version error", pkg, version)
-
-                spec.add(name, version)
-
-                resolved.add(pkg)
-                resolved.add(name)
-                resolved.add(name + "=" + version)
-
-                depends |= get_depends(pkgs_tmpdir[name], self.pool)
-
-            unresolved = depends - resolved
+            unresolved = new_deps - resolved
             
         return spec
