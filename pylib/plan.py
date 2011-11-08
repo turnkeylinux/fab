@@ -127,7 +127,7 @@ class Dependency:
 
         self.restrict = None
         if parens:
-            m = re.match(r'([<>=]+)\s+([\w\-\.\+\:]+)$', parens)
+            m = re.match(r'([<>=]+)\s+([\w\~\-\.\+\:]+)$', parens)
             if not m:
                 raise Error("illegal dependency restriction (%s)" % parens)
 
