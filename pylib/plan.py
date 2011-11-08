@@ -242,7 +242,7 @@ class Plan(set):
                 spec.add(dep.name, version)
                 resolved.add(dep)
                 
-                new_deps |= self._get_new_deps(pkg_control, resolved | unresolved)
+                new_deps |= self._get_new_deps(pkg_control, resolved | unresolved | new_deps)
 
             unresolved = new_deps - resolved
             
