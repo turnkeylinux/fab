@@ -221,12 +221,13 @@ class Plan(set):
                 for raw_depend in raw_depends:
                     if "|" not in raw_depend:
                         new_deps.add(Dependency(raw_depend))
-                    else:
-                        for alternative in raw_depend.split("|"):
-                            alternative = Dependency(alternative)
-                            if self.pool.exists(alternative.name):
-                                new_deps.add(alternative)
-                                break
+                        continue
+
+                    for alternative in raw_depend.split("|"):
+                        alternative = Dependency(alternative)
+                        if self.pool.exists(alternative.name):
+                            new_deps.add(alternative)
+                            break
 
             unresolved = new_deps - resolved
             
