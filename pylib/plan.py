@@ -196,7 +196,7 @@ class Plan(set):
         unresolved = set([ Dependency(pkg) for pkg in self ])
 
         while unresolved:
-            pkgdir = TempPackageDir(self.pool.get(map(lambda d: d.name, unresolved)))
+            pkgdir = TempPackageDir(self.pool.get([ d.name for d in unresolved ]))
             
             new_deps = set()
             for dep in unresolved:
