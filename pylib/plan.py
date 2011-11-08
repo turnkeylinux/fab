@@ -188,6 +188,38 @@ class Plan(set):
         set.__init__(self, iterable)
         self.pool = Pool(pool_path)
 
+    def _get_new_deps(self, pkg_control, old_deps):
+        def parse_depends(val):
+            if val is None or val.strip() == "":
+                return []
+
+            return re.split("\s*,\s*", val.strip())
+
+        new_deps = set()
+        
+        raw_depends = []
+        for field_name in ('Pre-Depends', 'Depends'):
+            raw_depends += parse_depends(pkg_control.get(field_name))
+
+        for raw_depend in raw_depends:
+            if "|" not in raw_depend:
+                new_deps.add(Dependency(raw_depend))
+                continue
+
+            alternatives = [ Dependency(alt) for alt in raw_depend.split("|") ]
+
+            # continue if any of the alternatives are already in resolved or unresolved sets
+            if set(alternatives) & old_deps:
+                continue
+
+            # add the first alternative that exists in the pool to set of new dependencies
+            for alternative in alternatives:
+                if self.pool.exists(alternative.name):
+                    new_deps.add(alternative)
+                    break
+
+        return new_deps
+    
     def resolve(self):
         """resolve plan dependencies recursively -> return spec"""
         spec = Spec()
@@ -202,40 +234,15 @@ class Plan(set):
             
             new_deps = set()
             for dep in unresolved:
-                control_fields = debinfo.get_control_fields(pkgdir[dep.name])
-                
-                version = control_fields['Version']
+                pkg_control = debinfo.get_control_fields(pkgdir[dep.name])
+
+                version = pkg_control['Version']
                 if not dep.is_version_ok(version):
                     raise Error("dependency '%s' incompatible with newest pool version (%s)" % (dep, version))
                 spec.add(dep.name, version)
                 resolved.add(dep)
-
-                def parse_depends(val):
-                    if val is None or val.strip() == "":
-                        return []
-
-                    return re.split("\s*,\s*", val.strip())
-
-                raw_depends = []
-                for field_name in ('Pre-Depends', 'Depends'):
-                    raw_depends += parse_depends(control_fields.get(field_name))
-                    
-                for raw_depend in raw_depends:
-                    if "|" not in raw_depend:
-                        new_deps.add(Dependency(raw_depend))
-                        continue
-
-                    alternatives = [ Dependency(alt) for alt in raw_depend.split("|") ]
-
-                    # continue if any of the alternatives are already in resolved or unresolved sets
-                    if set(alternatives) & (resolved | unresolved):
-                        continue
-
-                    # add the first alternative that exists in the pool to set of new dependencies
-                    for alternative in alternatives:
-                        if self.pool.exists(alternative.name):
-                            new_deps.add(alternative)
-                            break
+                
+                new_deps |= self._get_new_deps(pkg_control, resolved | unresolved)
 
             unresolved = new_deps - resolved
             
