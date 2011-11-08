@@ -112,25 +112,27 @@ def parse_name(name):
 
 def get_depends(package_path, pool):
     """return package dependencies"""
+    try:
+        control_depends = debinfo.get_control_fields(package_path)['Depends']
+    except KeyError:
+        return set()
+
     deps = set()
-    control = debinfo.get_control_fields(package_path)
+    for depend in parse_depends(control_depends.split(",")):
+        if "|" in depend[0]:
+            for d in parse_depends(depend[0].split("|")):
+                depname = parse_name(d[0])
+                dep = depname + d[2] + d[1]
 
-    if control.has_key('Depends'):
-        for depend in parse_depends(control['Depends'].split(",")):
-            if "|" in depend[0]:
-                for d in parse_depends(depend[0].split("|")):
-                    depname = parse_name(d[0])
-                    dep = depname + d[2] + d[1]
+                # gotcha: if package exists, but not the specified version
+                # an error will be raised in checkversion
+                if pool.exists(depname):
+                    break
+        else:
+            depname = parse_name(depend[0])
+            dep = depname + depend[2] + depend[1]
 
-                    # gotcha: if package exists, but not the specified version
-                    # an error will be raised in checkversion
-                    if pool.exists(depname):
-                        break
-            else:
-                depname = parse_name(depend[0])
-                dep = depname + depend[2] + depend[1]
-
-            deps.add(dep)
+        deps.add(dep)
 
     return deps
 
