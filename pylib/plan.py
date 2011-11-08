@@ -196,6 +196,8 @@ class Plan(set):
         unresolved = set([ Dependency(pkg) for pkg in self ])
 
         while unresolved:
+            # get newest package versions of unresolved dependencies from the pool
+            # and pray they don't conflict with our dependency restrictions
             pkgdir = TempPackageDir(self.pool.get([ d.name for d in unresolved ]))
             
             new_deps = set()
