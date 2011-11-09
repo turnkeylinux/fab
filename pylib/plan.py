@@ -33,17 +33,25 @@ class Spec(dict):
         
     exists = dict.has_key
 
-class TempPackageDir(dict):
-    def __new__(cls, dir):
+class PackageGetter(dict):
+    def __new__(cls, deps, pool):
         return dict.__new__(cls)
     
-    def __init__(self, dir):
+    def __init__(self, deps, pool):
+        deps = dict([ (d.name, d) for d in deps ])
+        dir = pool.get(deps, strict=False)
+        
         for fname in os.listdir(dir):
             if not fname.endswith(".deb"):
                 continue
             
             package_name = fname.split("_")[0]
-            self[package_name] = join(dir, fname)
+            self[deps[package_name]] = join(dir, fname)
+
+        missing = set(deps) - set(self)
+        for dep in missing:
+            self[dep] = None
+        self.missing = missing
 
         self.dir = dir
 
@@ -144,6 +152,9 @@ class Dependency:
         return hash(self.name)
 
     def __eq__(a, b):
+        if type(b) == str:
+            return a.name == b
+        
         return a.name == b.name
 
     def is_version_ok(self, version):
@@ -226,15 +237,17 @@ class Plan(set):
         
         resolved = set()
         unresolved = set([ Dependency(pkg) for pkg in self ])
-
         while unresolved:
             # get newest package versions of unresolved dependencies from the pool
             # and pray they don't conflict with our dependency restrictions
-            pkgdir = TempPackageDir(self.pool.get([ d.name for d in unresolved ]))
-            
+            packages = PackageGetter(unresolved, self.pool)
             new_deps = set()
             for dep in unresolved:
-                pkg_control = debinfo.get_control_fields(pkgdir[dep.name])
+                package_path = packages[dep]
+                if not package_path:
+                    continue
+                
+                pkg_control = debinfo.get_control_fields(package_path)
 
                 version = pkg_control['Version']
                 if not dep.is_version_ok(version):

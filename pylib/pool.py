@@ -35,14 +35,18 @@ class Pool:
             raise Error("pool does not exist", path)
 
     @chdir
-    def get(self, packages, outdir=None):
+    def get(self, packages, outdir=None, strict=True):
         """get packages (iterable object) from pool, return output dir"""
         if outdir is None:
             outdir = get_tmpdir()
 
         mkdir(outdir)
-        executil.system('pool-get', '--strict', outdir, *packages)
 
+        command = "pool-get --quiet "
+        if strict:
+            command += " --strict"
+            
+        executil.system(command, outdir, *packages)
         return outdir
 
     @chdir
