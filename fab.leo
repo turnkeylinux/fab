@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet ekr_test?>
 <leo_file>
-<leo_header file_format="2" tnodes="0" max_tnode_index="0" clone_windows="0"/>
-<globals body_outline_ratio="0.383597883598">
-	<global_window_position top="0" left="5" height="709" width="1134"/>
+<leo_header file_format="2" tnodes="0" max_tnode_index="1" clone_windows="0"/>
+<globals body_outline_ratio="0.280082987552">
+	<global_window_position top="-1" left="482" height="964" width="788"/>
 	<global_log_window_position top="0" left="0" height="0" width="0"/>
 </globals>
 <preferences/>
@@ -14,7 +14,7 @@
 <v t="loni.20111001190214.1"><vh>initial release</vh></v>
 </v>
 <v t="loni.20111001190214.2" a="E"><vh>development log</vh>
-<v t="loni.20111001190214.3"><vh>v0.5 - initial release</vh>
+<v t="loni.20111001190214.3" a="E"><vh>v0.5 - initial release</vh>
 <v t="zaril.20110904173337"><vh>design</vh>
 <v t="zaril.20110904173337.1"><vh>brainstorming</vh></v>
 <v t="zaril.20110904173337.3"><vh>terminology</vh></v>
@@ -85,20 +85,22 @@
 </v>
 <v t="loni.20111206170905"><vh>regression testing</vh></v>
 <v t="loni.20120103150913"><vh>bugfix: package installation prioritization</vh></v>
-<v t="zaril.20120115022049" a="E"><vh>fab cli design amendment</vh>
+<v t="zaril.20120115022049"><vh>fab cli design amendment</vh>
 <v t="loni.20120124160345"><vh>-p --pool or POOL</vh></v>
-<v t="loni.20120124164315" a="E"><vh>fab-spec-install -&gt; fab-install</vh>
+<v t="loni.20120124164315"><vh>fab-spec-install -&gt; fab-install</vh>
 <v t="loni.20120124212451"><vh>cpp</vh></v>
-<v t="loni.20120125090839" a="TV"><vh>update</vh></v>
+<v t="loni.20120125090839"><vh>update</vh></v>
 </v>
 </v>
+<v t="zaril.20120130143450.2"><vh>add stuff to dependencies</vh></v>
+<v t="loni.20111121182213.1" a="TV"><vh>correct handling dependencies on virtual packages</vh></v>
 </v>
 </v>
 <v t="loni.20110928132411" a="E"><vh>bugs/wishlist</vh>
+<v t="zaril.20120130153104"><vh>should Makefile show dirty changes in root.tmp?</vh></v>
 <v t="zaril.20120115022525.1"><vh>product.mk: develop root.patched/ scripts mechanism</vh></v>
 <v t="zaril.20120115022525"><vh>conditional development/production builds</vh></v>
 <v t="zaril.20120115022333"><vh>plan comments</vh></v>
-<v t="loni.20111121182213.1"><vh>handling dependencies in virtual packages</vh></v>
 <v t="zaril.20120115021505"><vh>product.mk: product recipe</vh></v>
 <v t="zaril.20120115021505.1"><vh>product.mk: usb product build</vh></v>
 <v t="zaril.20120115021505.2"><vh>apt -&gt; dpkg</vh></v>
@@ -1101,8 +1103,26 @@ sys     0m2.816s
 </t>
 <t tx="loni.20111121182213">we can further optimize by caching package dependencies?
     </t>
-<t tx="loni.20111121182213.1">email:
-    handling dependencies in virtual packages
+<t tx="loni.20111121182213.1">LOGIC
+    build set of missing packages
+    build set of provided packages
+
+    when there are no more unresolved packages (missing - provided)
+        if its not empty - raise an exception with the list of missing packages
+
+    provided can't limit the version
+
+Q: can a package provide multiple virtuals?
+A: yes and they do
+    grep-available -s Package,Provides -F Provides -e '.'
+
+Package: linux-image-2.6.20-15-386
+Provides: linux-image, linux-image-2.6, fuse-module, ndiswrapper-modules-1.9, ivtv-
+modules, kvm-modules-2
+
+=== #1 email
+
+handling dependencies in virtual packages
 
 Its best not to include virtual packages in plans directly. They are however
 brought in via dependencies. So how do you resolve them without hardwiring
@@ -1126,7 +1146,85 @@ have to wait for apt-ftparchive to re-extract the control fields from the
 packages yet again - which is only necessary because you're using apt instead of
 invoking dpkg (yes I understand your rational - documented in the Leo workflow)
 
+=== #2 email
 
+1) If you read section 7.4 - Virtual packages - Provides of the Debian Policy
+Manual, you'll see that the terminology I use is in fact correct.
+
+Maybe you are confusing virtual packages with meta packages (packages that are
+empty except for other dependencies)?
+
+2) apt handles virtual packages in the same way I am proposing to handle virtual
+packages - by asking the user to specifically select a real package to satisfy
+the dependency:
+
+# apt-get install awk
+Reading package lists... Done
+Building dependency tree
+Reading state information... Done
+Package awk is a virtual package provided by:
+  original-awk 2005-04-24-1
+  mawk 1.3.3-11ubuntu2
+  gawk 1:3.1.5.dfsg-4build1
+You should explicitly select one to install.
+E: Package awk has no installation candidate
+
+3) I don't understand why you think the pool has the missing info. Only the user
+has it.
+
+For example, how could the pool decide whether to install mawk or gawk to
+satisfy awk?
+
+I came across various alternatives for handling virtual packages when I was
+researching how to automatically resolve build dependencies in deckdebuild.
+Debian's alternatives to deckdebuild (which suck pretty bad IMO), solve this
+with global configuration maps in which you specify which real packages will
+resolve which virtual package, which is probably ok for building packages, but
+not for building products. Currently fab does the same thing, only the
+configuration map is hardwired into the code.
+
+BTW, deckdebuild solves this by requiring you to properly configure your
+buildroot with all the real packages you want so that virtual packages are
+already satisfied. Pre-installing build dependencies also saves some time
+setting up the buildroot when you build a package.
+
+My design amendment proposes a simple solution - instead of having a global map
+(the current solution) or a per-product map, how can we use the existing plan to
+describe how to resolve virtual packages? Simple - make sure your plan includes
+(either directly or indirectly via dependency) a real package that satisfies the
+dependency on the virtual package!
+
+The reason I like this solution is that it doesn't add any extra parts from the
+product develops perspective.
+
+4) Yes, solving this problem will inevitably add some complexity to the
+plan-resolve logic, but unless you have a better proposal I will claim this is
+*essential* complexity (I.e., the kind you have to live with), in which case the
+only real question is how to do it in a clean and simple way, not whether to do it.
+
+I'd like to point out that you don't need extra communication lines / new
+interface with the pool to get the information you need. If you ask the pool to
+dump packages in a new directory (e.g., in --quiet mode so it doesn't litter the
+output with too many error messages) then by running debinfo on the new
+directory contents you have the set of packages which the pool did give you, and
+by subtracting that from the set of packages you asked for, you get a list of
+packages which the pool didn't give you, either because they are missing or
+because they are virtual packages.
+
+Meanwhile by parsing the Provides header you also get a mapping of which virtual
+packages are already satisfied and you can take those packages off your list of
+packages that are MIA (Missing in Action).
+
+You don't immediately complain in the first pass because maybe the virtual
+package is resolved (I.e., via non-virtual dependency) by a package you'll only
+get from the pool via a non-virtual dependency in later passes.
+
+Only when you have finished the final pass and there are still missing packages
+in your list that haven't been resolved - you complain that the packages are
+missing from the pool (it doesn't really matter whether they are virtual
+packages or real packages).
+
+If you have a better idea, lets hear it.
 
 
 
@@ -1865,6 +1963,30 @@ things that either detected or configured at boot time, such as, for example:
 20xconfig
 23networking
 
+</t>
+<t tx="zaril.20120130143450.2">Q: recommended or suggested?
+A:
+    Suggests, because it is perfectly reasonable to use fab to build root filesystems and not package them into ISOs
+
+    Recommended
+
+cdrkit
+squashfs-tools?
+
+Recommends
+
+    This declares a strong, but not absolute, dependency.
+
+    The Recommends field should list packages that would be found together with this one in all but unusual installations.
+
+Suggests
+
+    This is used to declare that one package may be more useful with one or more others. Using this field tells the packaging system and the user that the listed packages are related to this one and can perhaps enhance its usefulness, but that installing this one without them is perfectly reasonable.
+</t>
+<t tx="zaril.20120130153104">no, but we could/should make it easy to use deck to do this
+
+use deck to do that?
+deck could show contents of layer?
 </t>
 </tnodes>
 </leo_file>

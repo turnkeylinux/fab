@@ -101,24 +101,6 @@ class Dependency:
         def __str__(self):
             return self.relation + " " + self.version
 
-    @staticmethod
-    def _handle_virtual_names(name):
-        #TODO: solve the provides/virtual issue properly
-        virtuals = {'awk':                       'mawk',
-                    'perl5':                     'perl',
-                    'perlapi-5.8.7':             'perl-base',
-                    'perlapi-5.8.8':             'perl-base',
-                    'mail-transport-agent':      'postfix',
-                    'libapt-pkg-libc6.4-6-3.53': 'apt',
-                    'libapt-inst-libc6.4-6-1.1': 'apt-utils',
-                    'aufs-modules':              'aufs-modules-2.6.20-15-386'
-                   }
-
-        if name in virtuals:
-            return virtuals[name]
-
-        return name
-
     def __init__(self, string):
         """initialize Dependency from a control file formatted dependency
         e.g.,
@@ -130,7 +112,7 @@ class Dependency:
         if not m:
             raise Error("illegally formatted dependency (%s)" % string)
 
-        self.name = self._handle_virtual_names(m.group(1))
+        self.name = m.group(1)
         parens = m.group(2)
 
         self.restrict = None
@@ -231,11 +213,22 @@ class Plan(set):
 
         return new_deps
     
+    @staticmethod
+    def _get_provided(pkg_control):
+        raw_provided = pkg_control.get('Provides')
+        if raw_provided is None or raw_provided.strip() == "":
+            return set()
+
+        return set(re.split("\s*,\s*", raw_provided.strip()))
+    
     def resolve(self):
         """resolve plan dependencies recursively -> return spec"""
         spec = Spec()
         
         resolved = set()
+        missing = set()
+        provided = set()
+        
         unresolved = set([ Dependency(pkg) for pkg in self ])
         while unresolved:
             # get newest package versions of unresolved dependencies from the pool
@@ -256,7 +249,12 @@ class Plan(set):
                 resolved.add(dep)
                 
                 new_deps |= self._get_new_deps(pkg_control, resolved | unresolved | new_deps)
+                provided |= self._get_provided(pkg_control)
 
             unresolved = new_deps - resolved
+            missing = (missing | packages.missing) - provided
+
+        if missing:
+            raise Error("broken dependencies: " + ", ".join(map(str, missing)))
             
         return spec
