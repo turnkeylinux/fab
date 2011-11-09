@@ -33,90 +33,33 @@ def get_package_index(packagedir):
 
     return index
 
-def fakestartstop(method):
-    """decorator for fake start-stop-daemon
-       backup real, create fake, finally restore real
-    """
-    def wrapper(self, *args, **kws):
-        path = join(self.chroot.path, "sbin/start-stop-daemon")
-        path_orig = path + ".orig"
-        if not exists(path_orig):
-            shutil.move(path, path_orig)
-            fake = "#!/bin/sh\n" \
-                  "echo\n" \
-                  "echo \"Warning: Fake start-stop-daemon called\"\n"
+class RestorableFile(file):
+    @staticmethod
+    def _get_orig_path(path):
+        i = 1
+        while True:
+            orig_path = "%s.orig.%d" % (path, i)
+            if not exists(orig_path):
+                return orig_path
 
-            open(path, "w").write(fake)
-            os.chmod(path, 0755)
+            i += 1
+    
+    def __init__(self, path):
+        self.orig_path = None
+        if exists(path):
+            self.orig_path = self._get_orig_path(path)
+            shutil.move(path, self.orig_path)
+        self.path = path
 
-        try:
-            ret = method(self, *args, **kws)
-        finally:
-            shutil.move(path_orig, path)
+        file.__init__(self, path, "w")
 
-        return ret
-
-    return wrapper
-
-def defer_update_initramfs(method):
-    """decorator to defer and compound update-initramfs execution
-       intercept calls and log them, finally execute unique calls in order
-    """
-    def wrapper(self, *args, **kws):
-        defer_log = "var/lib/update-initramfs.deferred"
-
-        path = join(self.chroot.path, "usr/sbin/update-initramfs")
-        path_orig = path + ".orig"
-        if exists(path_orig):
-            raise Error("file shouldn't exist: " + path_orig)
-        
-        shutil.move(path, path_orig)
-        defer = "#!/bin/sh\n" \
-                "echo\n" \
-                "echo \"Warning: Deferring update-initramfs $@\"\n" \
-                "echo \"update-initramfs $@\" >> %s\n" % join("/", defer_log)
-
-        open(path, "w").write(defer)
-        os.chmod(path, 0755)
-
-        try:
-            ret = method(self, *args, **kws)
-        finally:
-            shutil.move(path_orig, path)
-            defer_log = join(self.chroot.path, defer_log)
-
-            if exists(defer_log):
-                deferred = [ command.strip()
-                             for command in file(defer_log, 'r').readlines() ]
-                for command in set(deferred):
-                    self.chroot.execute(command)
-
-                os.remove(defer_log)
-
-        return ret
-
-    return wrapper
-
-def sources_list(method):
-    """decorator for sources.list
-       backup current, create local version, finally restore current
-    """
-    def wrapper(self, *args, **kws):
-        path = join(self.chroot.path, "etc/apt/sources.list")
-        path_orig = path + ".orig"
-        if not exists(path_orig):
-            shutil.move(path, path_orig)
-            open(path, "w").write("deb file:/// local debs\n")
-
-        try:
-            ret = method(self, *args, **kws)
-        finally:
-            shutil.move(path_orig, path)
-
-        return ret
-
-    return wrapper
-
+    def restore(self):
+        if self.orig_path:
+            shutil.move(self.orig_path, self.path)
+            self.orig_path = None
+            
+    def __del__(self):
+        self.restore()
 
 class Installer:
     def __init__(self, chroot_path, pool_path):
@@ -151,11 +94,28 @@ class Installer:
 
         self.chroot.execute("apt-cache gencaches")
 
-    @sources_list
-    @fakestartstop
-    @defer_update_initramfs
     def _apt_install(self, packages):
         high, regular = self._prioritize_packages(packages)
+
+        sources_list = RestorableFile(join(self.chroot.path, "etc/apt/sources.list"))
+        print >> sources_list, "deb file:/// local debs"
+        sources_list.close()
+
+        fake_start_stop = RestorableFile(join(self.chroot.path, "sbin/start-stop-daemon"))
+        fake_start_stop.write("#!/bin/sh\n" +
+                              "echo\n" +
+                              "echo \"Warning: Fake start-stop-daemon called\"\n")
+        fake_start_stop.close()
+        os.chmod(fake_start_stop.path, 0755)
+
+        defer_log = "var/lib/update-initramfs.deferred"
+        fake_update_initramfs = RestorableFile(join(self.chroot.path, "usr/sbin/update-initramfs"))
+        fake_update_initramfs.write("#!/bin/sh\n" +
+                                    "echo\n" +
+                                    "echo \"Warning: Deferring update-initramfs $@\"\n" +
+                                    "echo \"update-initramfs $@\" >> /%s\n" % defer_log)
+        fake_update_initramfs.close()
+        os.chmod(fake_update_initramfs.path, 0755)
 
         for packages in (high, regular):
             if packages:
@@ -164,6 +124,16 @@ class Installer:
 
                 self.chroot.execute(cmd)
 
+        fake_update_initramfs.restore()
+        defer_log = join(self.chroot.path, defer_log)
+        if exists(defer_log):
+            deferred = [ command.strip()
+                         for command in file(defer_log, 'r').readlines() ]
+            for command in set(deferred):
+                self.chroot.execute(command)
+
+            os.remove(defer_log)
+            
     def install(self, packages):
         """install packages into chroot """
         packagedir = join(self.chroot.path, "var/cache/apt/archives")
