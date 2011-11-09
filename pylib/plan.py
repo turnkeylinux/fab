@@ -38,9 +38,13 @@ class PackageGetter(dict):
         return dict.__new__(cls)
     
     def __init__(self, deps, pool):
-        deps = dict([ (d.name, d) for d in deps ])
-        dir = pool.get(deps, strict=False)
+        def f(dep):
+            if not dep.restrict or dep.restrict.relation != "=":
+                return dep.name
+            return "%s=%s" % (dep.name, dep.restrict.version)
+        dir = pool.get(map(f, deps), strict=False)
         
+        deps = dict([ (d.name, d) for d in deps ])
         for fname in os.listdir(dir):
             if not fname.endswith(".deb"):
                 continue
@@ -228,8 +232,15 @@ class Plan(set):
         resolved = set()
         missing = set()
         provided = set()
-        
-        unresolved = set([ Dependency(pkg) for pkg in self ])
+
+        def reformat2dep(pkg):
+            if '=' not in pkg:
+                return pkg
+
+            name, version = pkg.split("=", 1)
+            return "%s (= %s)" % (name, version)
+
+        unresolved = set([ Dependency(reformat2dep(pkg)) for pkg in self ])
         while unresolved:
             # get newest package versions of unresolved dependencies from the pool
             # and pray they don't conflict with our dependency restrictions
