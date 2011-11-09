@@ -33,7 +33,9 @@ def get_package_index(packagedir):
 
     return index
 
-class RestorableFile(file):
+class RevertibleFile(file):
+    """File that automatically reverts to previous state on destruction
+       or if the revert method is invoked"""
     @staticmethod
     def _get_orig_path(path):
         i = 1
@@ -53,7 +55,7 @@ class RestorableFile(file):
 
         file.__init__(self, path, "w")
 
-    def restore(self):
+    def revert(self):
         if self.orig_path:
             shutil.move(self.orig_path, self.path)
             self.orig_path = None
@@ -63,7 +65,7 @@ class RestorableFile(file):
             self.path = None
             
     def __del__(self):
-        self.restore()
+        self.revert()
 
 class Installer:
     def __init__(self, chroot_path, pool_path):
@@ -101,11 +103,11 @@ class Installer:
     def _apt_install(self, packages):
         high, regular = self._prioritize_packages(packages)
 
-        sources_list = RestorableFile(join(self.chroot.path, "etc/apt/sources.list"))
+        sources_list = RevertibleFile(join(self.chroot.path, "etc/apt/sources.list"))
         print >> sources_list, "deb file:/// local debs"
         sources_list.close()
 
-        fake_start_stop = RestorableFile(join(self.chroot.path, "sbin/start-stop-daemon"))
+        fake_start_stop = RevertibleFile(join(self.chroot.path, "sbin/start-stop-daemon"))
         fake_start_stop.write("#!/bin/sh\n" +
                               "echo\n" +
                               "echo \"Warning: Fake start-stop-daemon called\"\n")
@@ -113,7 +115,7 @@ class Installer:
         os.chmod(fake_start_stop.path, 0755)
 
         defer_log = "var/lib/update-initramfs.deferred"
-        fake_update_initramfs = RestorableFile(join(self.chroot.path, "usr/sbin/update-initramfs"))
+        fake_update_initramfs = RevertibleFile(join(self.chroot.path, "usr/sbin/update-initramfs"))
         fake_update_initramfs.write("#!/bin/sh\n" +
                                     "echo\n" +
                                     "echo \"Warning: Deferring update-initramfs $@\"\n" +
@@ -128,7 +130,7 @@ class Installer:
 
                 self.chroot.execute(cmd)
 
-        fake_update_initramfs.restore()
+        fake_update_initramfs.revert()
         defer_log = join(self.chroot.path, defer_log)
         if exists(defer_log):
             deferred = [ command.strip()
