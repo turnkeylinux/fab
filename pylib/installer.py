@@ -57,6 +57,10 @@ class RestorableFile(file):
         if self.orig_path:
             shutil.move(self.orig_path, self.path)
             self.orig_path = None
+            self.path = None
+        elif self.path:
+            os.remove(self.path)
+            self.path = None
             
     def __del__(self):
         self.restore()
