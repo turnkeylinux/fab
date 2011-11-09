@@ -41,14 +41,6 @@ class Pool:
             outdir = get_tmpdir()
 
         mkdir(outdir)
-        def filter_relations(package):
-            for relation in ('>>', '>=', '<=', '<<'):
-                if relation in package:
-                    return package.split(relation)[0].strip()
-
-            return package.strip()
-            
-        packages = [ filter_relations(package) for package in packages ]
         executil.system('pool-get', '--strict', outdir, *packages)
 
         return outdir
