@@ -1,4 +1,3 @@
-
 import re
 import os
 import shutil
@@ -24,7 +23,7 @@ class Spec(dict):
         del self[name]
 
     def __iter__(self):
-        """return list of packages, as name(sep)version"""
+        """return list of packages, as name=version"""
         for name, version in self.items():
             yield "%s=%s" % (name, version)
 
