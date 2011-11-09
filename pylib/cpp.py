@@ -1,7 +1,12 @@
 import os
 import sys
 
-from executil import getoutput
+import subprocess
+PIPE = subprocess.PIPE
+
+from executil import ExecError
+class ExecError(ExecError):
+    pass
 
 CPP_ARGS = ("-I", "-D", "-U")
 
@@ -55,5 +60,13 @@ def cpp(input, cpp_opts=[]):
     if include_path:
         args.append("-I" + include_path)
 
-    return getoutput("cpp", input, *args)
+    command = ["cpp", input]
+    if args:
+        command += args
 
+    p = subprocess.Popen(command, stdout=PIPE, stderr=PIPE)
+    err = p.wait()
+    if err:
+        raise ExecError(" ".join(command), err, p.stderr.read())
+
+    return p.stdout.read()
