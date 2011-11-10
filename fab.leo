@@ -2,7 +2,7 @@
 <?xml-stylesheet ekr_test?>
 <leo_file>
 <leo_header file_format="2" tnodes="0" max_tnode_index="1" clone_windows="0"/>
-<globals body_outline_ratio="0.485477178423">
+<globals body_outline_ratio="0.423236514523">
 	<global_window_position top="0" left="482" height="964" width="788"/>
 	<global_log_window_position top="0" left="0" height="0" width="0"/>
 </globals>
@@ -74,7 +74,7 @@
 <v t="loni.20110928121323"><vh>optimize makefile with deck</vh></v>
 </v>
 </v>
-<v t="loni.20111009174710" a="E"><vh>unreleased</vh>
+<v t="loni.20111009174710"><vh>v0.6</vh>
 <v t="loni.20111009174710.1"><vh>plan-resolve include bootstrap</vh></v>
 <v t="loni.20111010161023"><vh>plan-resolve - interactive calculation</vh></v>
 <v t="loni.20111121155941"><vh>optimizations</vh>
@@ -98,10 +98,12 @@
 <v t="zaril.20120204022939"><vh>support c-style comments in plan-lint</vh></v>
 </v>
 </v>
+<v t="zaril.20120204224652" a="E"><vh>unreleased</vh></v>
 </v>
 <v t="loni.20110928132411" a="E"><vh>bugs/wishlist</vh>
-<v t="zaril.20120115022525.1" a="TV"><vh>product.mk: develop root.patched/ scripts mechanism</vh>
+<v t="zaril.20120115022525.1" a="TV"><vh>product.mk: develop scripted configuration mechanism</vh>
 <v t="zaril.20120204023832"><vh>EMAIL</vh></v>
+<v t="zaril.20120204224450"><vh>port casper stuff to conf.d</vh></v>
 </v>
 <v t="zaril.20120115022525"><vh>conditional development/production builds</vh></v>
 <v t="zaril.20120130153104"><vh>should Makefile show dirty changes in root.tmp?</vh></v>
@@ -1927,20 +1929,58 @@ a product are included conditionally during preprocessing, depending on a
 product.mk variable. Even then I think the default should still be optimized for
 development builds because they are more common than production/release builds.
 </t>
-<t tx="zaril.20120115022525.1">* IDEAS
-fab-chroot -f?
-    or maybe cat script | fab-chroot
+<t tx="zaril.20120115022525.1">* SUMMARY
+two components
+    fab-chroot
+    product.mk changes
 
-    cat script | fab-chroot root.tmp
+fab-chroot
+    fab-chroot -f?
+        or maybe cat script | fab-chroot
+    
+        cat script | fab-chroot root.tmp
+    
+    fab-chroot -q (don't print command?)
+        quiet
+    
+    parse the shebang to decide where to pump it to
+        if no shebang, pump it to default
+   
+product.mk
+    looks for conf.d
+        if it exists, executes everything in it that is mode 755
+            using fab-chroot -f -q conf.d/script
 
-fab-chroot -q (don't print command?)
-    quiet
+no inheritance mechanism for now
 
-if its not chmod 755 don't execute it??
+* TESTS
+hello world in default (dash?), bash, python, perl
+non-executable
+
+* IDEAS
 Q: what do about false exits from fab-chroot?
 
 Q: do we need to mount filesystems for each script?
 A: no, if we need to mount filesystems we can do that in one of the scripts
+
+Q: what do we call the scripts directory?
+    scripts.d
+    conf.d
+    post.d
+    patch.d
+    custom.d
+
+* inheritance IDEAS
+
+let the future take care of itself
+
+union mount/deck + overlay
+allow this to be done by overriding the Makefile
+
+if conf.d is "built" by merging components, does it have to be in build?
+
+prevent code duplication by calling code inside the chroot
+    install non-trivial setup scripts inside packages
 
 Q: how do we allow inheritance?
     I.e., we probably wouldn't want to reimplement scripts over and over again
@@ -1950,15 +1990,7 @@ maybe create scripts directory that is inherited and overridden?
     BASE_SCRIPTS
 
 Q: how do we share scripts between products?
-
-Q: what do we call the scripts directory?
-    scripts.d
-    conf.d
-    post.d
-    patch.d
-    
-prevent code duplication by calling code inside the chroot
-    install non-trivial setup scripts inside packages
+   
 </t>
 <t tx="zaril.20120130143450.2">Q: recommended or suggested?
 A:
@@ -2056,5 +2088,7 @@ things that either detected or configured at boot time, such as, for example:
 13swap
 20xconfig
 23networking</t>
+<t tx="zaril.20120204224450"></t>
+<t tx="zaril.20120204224652"></t>
 </tnodes>
 </leo_file>
