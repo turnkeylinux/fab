@@ -19,7 +19,7 @@ class CliWrapper(pyproject.CliWrapper):
 
     COMMANDS_USAGE_ORDER = ['cpp', 'chroot', 
                             '',
-                            'plan-lint', 'plan-resolve',
+                            'plan-annotate', 'plan-resolve',
                             '',
                             'install',
                             '',

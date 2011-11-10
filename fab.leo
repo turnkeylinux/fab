@@ -2,7 +2,7 @@
 <?xml-stylesheet ekr_test?>
 <leo_file>
 <leo_header file_format="2" tnodes="0" max_tnode_index="1" clone_windows="0"/>
-<globals body_outline_ratio="0.122406639004">
+<globals body_outline_ratio="0.485477178423">
 	<global_window_position top="0" left="482" height="964" width="788"/>
 	<global_log_window_position top="0" left="0" height="0" width="0"/>
 </globals>
@@ -94,13 +94,15 @@
 </v>
 <v t="zaril.20120130143450.2"><vh>add stuff to dependencies</vh></v>
 <v t="loni.20111121182213.1"><vh>correct handling dependencies on virtual packages</vh></v>
-<v t="zaril.20120115022333" a="E"><vh>plan comments</vh>
-<v t="zaril.20120204022939" a="TV"><vh>support c-style comments in plan-lint</vh></v>
+<v t="zaril.20120115022333"><vh>plan comments</vh>
+<v t="zaril.20120204022939"><vh>support c-style comments in plan-lint</vh></v>
 </v>
 </v>
 </v>
 <v t="loni.20110928132411" a="E"><vh>bugs/wishlist</vh>
-<v t="zaril.20120115022525.1"><vh>product.mk: develop root.patched/ scripts mechanism</vh></v>
+<v t="zaril.20120115022525.1" a="TV"><vh>product.mk: develop root.patched/ scripts mechanism</vh>
+<v t="zaril.20120204023832"><vh>EMAIL</vh></v>
+</v>
 <v t="zaril.20120115022525"><vh>conditional development/production builds</vh></v>
 <v t="zaril.20120130153104"><vh>should Makefile show dirty changes in root.tmp?</vh></v>
 <v t="zaril.20120115021505"><vh>product.mk: product recipe</vh></v>
@@ -1925,54 +1927,38 @@ a product are included conditionally during preprocessing, depending on a
 product.mk variable. Even then I think the default should still be optimized for
 development builds because they are more common than production/release builds.
 </t>
-<t tx="zaril.20120115022525.1">fab-chroot -f?
+<t tx="zaril.20120115022525.1">* IDEAS
+fab-chroot -f?
     or maybe cat script | fab-chroot
 
-do this like sh does it
+    cat script | fab-chroot root.tmp
 
-IDEA: add infrastructure to allow scripts to be run to patch root.patched
+fab-chroot -q (don't print command?)
+    quiet
 
-I just noticed an opportunity to clean up the boot sequence and optimize it at
-the same time.
+if its not chmod 755 don't execute it??
+Q: what do about false exits from fab-chroot?
 
-Most of the casper-bottom scripts can and should be either removed (*) or moved
-to product fabrication, to be applied to root.patched:
+Q: do we need to mount filesystems for each script?
+A: no, if we need to mount filesystems we can do that in one of the scripts
 
-10adduser
-14locales
-15autologin (*)
-18hostname
-19keyboard (?)
-22gnome_panel_data (*)
-22screensaver (*)
-23etc_modules (*)
-24preseed
-25configure_init
-30accessibility (*)
-31disable_update_notifier (*)
-32disable_hibernation (*)
-33disable_binary_drivers (*)
-33enable_apport_crashes (*)
-34disable_kwallet (*)
-35fix_language_selector (*)
-40install_driver_updates (*)
-41apt_cdrom (*)
+Q: how do we allow inheritance?
+    I.e., we probably wouldn't want to reimplement scripts over and over again
+    it needs to be gittable?
 
-(*) - probably best to just remove this altogether
+maybe create scripts directory that is inherited and overridden?
+    BASE_SCRIPTS
 
-The primary motivation for moving this stuff elsewhere is based on engineering
-principles. casper is a global package, and hard wiring Ubuntu's defaults into
-all our products is simply wrong. This stuff has to be configurable at a per
-product level.
+Q: how do we share scripts between products?
 
-The only scripts that have a legitimate right to exist in casper-bottom are
-things that either detected or configured at boot time, such as, for example:
-
-05mountpoints
-13swap
-20xconfig
-23networking
-
+Q: what do we call the scripts directory?
+    scripts.d
+    conf.d
+    post.d
+    patch.d
+    
+prevent code duplication by calling code inside the chroot
+    install non-trivial setup scripts inside packages
 </t>
 <t tx="zaril.20120130143450.2">Q: recommended or suggested?
 A:
@@ -2030,5 +2016,45 @@ use a prefix for lint comments
 
 Q: does lint ignore CPP directives?
 </t>
+<t tx="zaril.20120204023832">I just noticed an opportunity to clean up the boot sequence and optimize it at
+the same time.
+
+Most of the casper-bottom scripts can and should be either removed (*) or moved
+to product fabrication, to be applied to root.patched:
+
+10adduser
+14locales
+15autologin (*)
+18hostname
+19keyboard (?)
+22gnome_panel_data (*)
+22screensaver (*)
+23etc_modules (*)
+24preseed
+25configure_init
+30accessibility (*)
+31disable_update_notifier (*)
+32disable_hibernation (*)
+33disable_binary_drivers (*)
+33enable_apport_crashes (*)
+34disable_kwallet (*)
+35fix_language_selector (*)
+40install_driver_updates (*)
+41apt_cdrom (*)
+
+(*) - probably best to just remove this altogether
+
+The primary motivation for moving this stuff elsewhere is based on engineering
+principles. casper is a global package, and hard wiring Ubuntu's defaults into
+all our products is simply wrong. This stuff has to be configurable at a per
+product level.
+
+The only scripts that have a legitimate right to exist in casper-bottom are
+things that either detected or configured at boot time, such as, for example:
+
+05mountpoints
+13swap
+20xconfig
+23networking</t>
 </tnodes>
 </leo_file>
