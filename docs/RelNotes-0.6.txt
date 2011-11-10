@@ -1,0 +1,31 @@
+v0.6 Release Notes
+==================
+
+(251 commits since last release)
+
+* added plan-annotate command: annotate plan by appending short package description comments
+  * support c-style comments
+  * will by default annotate only unannotated expressions
+
+* added contrib/product.mk: inheritable Makefile template for building products
+
+* cli interfaces changes
+  * pool now defaults to $FAB_POOL_PATH
+  * replaced spec-install with more powerful install command
+  * apply-overlay: added --preserve option
+                 (perserve mode, ownership and timestamps)
+  * plan-resolve: removed --exclude option from plan-resolve
+  * removed fab-chroot-umount (obsolete)
+
+* plan resolver changes
+  * global calculation -> interative calculation
+  * added support for Pre-Depends
+  * don't resolve alternatives if any have already been seen by resolver (also an optimization)
+  * eliminated hardwired virtual package table kludge
+
+* major optimizations: to plan resolving and package installation
+* robustness: never ignore errors + added many sanity checks
+* refactorings: deep, extensive refactorings across the board
+* removed apt-ftparchive depedency: generating package index internally
+* bugfixes: many small bugfixes
+* debian/Suggests: added genisoimage, wodim and squashfs-tools
