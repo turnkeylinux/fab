@@ -2,8 +2,8 @@
 <?xml-stylesheet ekr_test?>
 <leo_file>
 <leo_header file_format="2" tnodes="0" max_tnode_index="1" clone_windows="0"/>
-<globals body_outline_ratio="0.280082987552">
-	<global_window_position top="-1" left="482" height="964" width="788"/>
+<globals body_outline_ratio="0.122406639004">
+	<global_window_position top="0" left="482" height="964" width="788"/>
 	<global_log_window_position top="0" left="0" height="0" width="0"/>
 </globals>
 <preferences/>
@@ -93,14 +93,16 @@
 </v>
 </v>
 <v t="zaril.20120130143450.2"><vh>add stuff to dependencies</vh></v>
-<v t="loni.20111121182213.1" a="TV"><vh>correct handling dependencies on virtual packages</vh></v>
+<v t="loni.20111121182213.1"><vh>correct handling dependencies on virtual packages</vh></v>
+<v t="zaril.20120115022333" a="E"><vh>plan comments</vh>
+<v t="zaril.20120204022939" a="TV"><vh>support c-style comments in plan-lint</vh></v>
+</v>
 </v>
 </v>
 <v t="loni.20110928132411" a="E"><vh>bugs/wishlist</vh>
-<v t="zaril.20120130153104"><vh>should Makefile show dirty changes in root.tmp?</vh></v>
 <v t="zaril.20120115022525.1"><vh>product.mk: develop root.patched/ scripts mechanism</vh></v>
 <v t="zaril.20120115022525"><vh>conditional development/production builds</vh></v>
-<v t="zaril.20120115022333"><vh>plan comments</vh></v>
+<v t="zaril.20120130153104"><vh>should Makefile show dirty changes in root.tmp?</vh></v>
 <v t="zaril.20120115021505"><vh>product.mk: product recipe</vh></v>
 <v t="zaril.20120115021505.1"><vh>product.mk: usb product build</vh></v>
 <v t="zaril.20120115021505.2"><vh>apt -&gt; dpkg</vh></v>
@@ -1906,21 +1908,29 @@ a product recipe is created during the creation of a new product
 
 
 </t>
-<t tx="zaril.20120115022333">problem: there doesn't exist a decent mechanism for annotating plans
+<t tx="zaril.20120115022333">
+problem: there doesn't exist a decent mechanism for annotating plans?
+GOTCHA: if we implement our own comment stripping format, we'd have to process include files ourselves
 
-IDEA: c-style comments?
-	//
-	/* */
+solution: use c-style comments
+    c-style comments? (both styles)
+        //
+        /* */
 
-GOTCHA: make sure annotation survives plan-lint
 
-</t>
+
+   </t>
 <t tx="zaril.20120115022525">When we reach production, we can change the plan so that the development bits of
 a product are included conditionally during preprocessing, depending on a
 product.mk variable. Even then I think the default should still be optimized for
 development builds because they are more common than production/release builds.
 </t>
-<t tx="zaril.20120115022525.1">IDEA: add infrastructure to allow scripts to be run to patch root.patched
+<t tx="zaril.20120115022525.1">fab-chroot -f?
+    or maybe cat script | fab-chroot
+
+do this like sh does it
+
+IDEA: add infrastructure to allow scripts to be run to patch root.patched
 
 I just noticed an opportunity to clean up the boot sequence and optimize it at
 the same time.
@@ -1987,6 +1997,38 @@ Suggests
 
 use deck to do that?
 deck could show contents of layer?
+</t>
+<t tx="zaril.20120204022939">logic:
+    substitute multi-line comments for tags
+    parse the plan line by line
+    skip any lines that start with a comment (any type)
+    skip lines are already commented
+    if no comment exists on a line, add package description as comment
+
+* RANDOM IDEAS
+if its already commented - don't add a comment
+    e.g., only comment uncommented packages
+
+    don't update package descriptions
+        if the user wants the package description to update he can delete the old comment
+
+use different comments for plan-lint package descriptions and different comments for manual comments
+
+    # lint package description
+    // manual comment
+    /* manual 
+    comment */
+
+    Q: how would we handle mixing of comment styles?
+
+use a prefix for lint comments
+
+// @ package description
+# lint: package description
+
+# desc: package description
+
+Q: does lint ignore CPP directives?
 </t>
 </tnodes>
 </leo_file>

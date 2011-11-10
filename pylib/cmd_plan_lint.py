@@ -19,6 +19,9 @@ import getopt
 
 import help
 import debinfo
+
+from md5 import md5
+
 from pool import Pool
 from common import fatal
 
@@ -27,8 +30,12 @@ def usage():
     print >> sys.stderr, "Syntax: %s [-options] <plan>" % sys.argv[0]
 
 def parse_plan(plan):
+    # strip c-style comments
+    plan = re.sub(r'(?s)/\*.*?\*/', '', plan)
+    plan = re.sub(r'//.*', '', plan)
+    
     packages = set()
-    for expr in plan:
+    for expr in plan.split('\n'):
         expr = re.sub(r'#.*', '', expr)
         expr = expr.strip()
         if not expr:
@@ -61,31 +68,35 @@ def get_packages_info(packages, pool_path):
 def plan_lint(plan_path, pool_path):
     package_info = {}
 
-    plan = file(plan_path, 'r').readlines()
+    plan = file(plan_path, 'r').read().strip()
 
     packages = parse_plan(plan)
     packages_info = get_packages_info(packages, pool_path)
 
-    column_len = max([ len(package) + 5 for package in packages ])
+    column_len = max([ len(package) for package in packages ])
 
-    output = []
-    for expr in plan:
-        expr = expr.strip()
-        if expr.startswith('#') or expr == '':  # skip comments/includes/blanks
-            output.append(expr)
+    comments = {}
+    def get_comment_key(m):
+        comment = m.group(1)
+        key = md5(comment).hexdigest()
+        comments[key] = comment
+        return "$" + key
+    
+    plan = re.sub(r'(?s)(/\*.*?\*/)', get_comment_key, plan)
+    plan_linted = ""
+    
+    for line in plan.split('\n'):
+        if re.search(r'#|\$|//', line) or line.strip() == "":
+            plan_linted += line + "\n"
+            continue
 
-        else:
-            expr = re.sub(r'#.*', '', expr)     # clean off old comments
-            expr = expr.strip()
-            description = packages_info[expr.lstrip("!")]
-            output.append("%s # %s" % (expr.ljust(column_len),
-                                       description.capitalize()))
+        expr = line.strip()
+        description = packages_info[expr.lstrip("!")]
+        plan_linted += "%s # %s\n" % (expr.ljust(column_len + 3),
+                                      description)
 
-    lastline = output[-1]
-    if lastline is not '':
-        output.append('')
-
-    return "\n".join(output)
+    plan_linted = re.sub(r'\$(\S+)', lambda m: comments[m.group(1)], plan_linted)
+    return plan_linted
 
 def main():
     try:
