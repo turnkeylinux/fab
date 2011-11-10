@@ -68,21 +68,26 @@ class Chroot:
     def _umount(cls, device):
         executil.system("umount", "-f", device)
 
+    def _prepare_command(self, *command):
+        env = ['/usr/bin/env', '-i', 'HOME=/root', 'TERM=${TERM}', 'LC_ALL=C',
+               'PATH=/usr/sbin:/usr/bin:/sbin:/bin',
+               'DEBIAN_FRONTEND=noninteractive',
+               'DEBIAN_PRIORITY=critical']
+
+        command = executil.fmt_command(*command)
+        return ("chroot", self.path, 'sh', '-c', " ".join(env) + " " + command)
+    
     @chrootmounts
-    def execute(self, command, get_stdout=False):
-        """execute system command in chroot"""
-        args = ['/usr/bin/env', '-i', 'HOME=/root', 'TERM=${TERM}', 'LC_ALL=C',
-                'PATH=/usr/sbin:/usr/bin:/sbin:/bin',
-                'DEBIAN_FRONTEND=noninteractive',
-                'DEBIAN_PRIORITY=critical']
+    def system(self, *command):
+        """execute system command in chroot -> None"""
+        print "chroot %s %s" % (paths.make_relative(os.getcwd(), self.path),
+                                " ".join(command))
+        
+        executil.system(*self._prepare_command(*command))
 
-        chroot_args = (self.path, 'sh', '-c', " ".join(args) + " " + command)
+    @chrootmounts
+    def getoutput(self, *command):
+        return executil.getoutput(*self._prepare_command(*command))
 
-        if get_stdout:
-            return executil.getoutput("chroot", *chroot_args)
-        else:
-            print "chroot %s %s" % (paths.make_relative(os.getcwd(), self.path),
-                                    command)
-            executil.system("chroot", *chroot_args)
 
 

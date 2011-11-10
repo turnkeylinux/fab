@@ -91,14 +91,14 @@ class Installer:
         return high, regular
 
     def _apt_clean(self, indexfile):
-        self.chroot.execute("apt-get clean")
+        self.chroot.system("apt-get clean")
         os.remove(indexfile)
 
     def _apt_genindex(self, packagedir, indexfile):
         index = get_package_index(packagedir)
         file(indexfile, "w").write("\n".join(index))
 
-        self.chroot.execute("apt-cache gencaches")
+        self.chroot.system("apt-cache gencaches")
 
     def _apt_install(self, packages):
         high, regular = self._prioritize_packages(packages)
@@ -126,9 +126,7 @@ class Installer:
         for packages in (high, regular):
             if packages:
                 args = ['install', '--force-yes', '--assume-yes', '--allow-unauthenticated']
-                cmd = "apt-get " + " ".join(args) + " " + " ".join(packages)
-
-                self.chroot.execute(cmd)
+                self.chroot.system("apt-get", *(args + packages))
 
         fake_update_initramfs.revert()
         defer_log = join(self.chroot.path, defer_log)
@@ -136,7 +134,7 @@ class Installer:
             deferred = [ command.strip()
                          for command in file(defer_log, 'r').readlines() ]
             for command in set(deferred):
-                self.chroot.execute(command)
+                self.chroot.system(command)
 
             os.remove(defer_log)
             

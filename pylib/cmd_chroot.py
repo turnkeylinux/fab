@@ -41,18 +41,13 @@ def main():
     if len(args) == 1:
         args.append("/bin/bash")
         
-    if not len(args) == 2:
-        usage()
-    
     chroot_path = args[0]
-    command = args[1]
     
     if not os.path.isdir(chroot_path):
         fatal("chroot does not exist: " + chroot_path)
 
     chroot = Chroot(chroot_path, chrootmounts=chrootmounts)
-    chroot.execute(command)
-
+    chroot.system(*args[1:])
         
 if __name__=="__main__":
     main()

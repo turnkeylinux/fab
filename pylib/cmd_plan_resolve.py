@@ -34,8 +34,7 @@ def bootstrap_packages(bootstrap_path):
         fatal("bootstrap does not exist: " + bootstrap_path)
 
     chroot = Chroot(bootstrap_path, chrootmounts=False)
-    output = chroot.execute("dpkg-query --show -f='${Package}\\n'",
-                            get_stdout=True)
+    output = chroot.getoutput("dpkg-query --show -f='${Package}\\n'")
 
     return set(output.splitlines())
 
