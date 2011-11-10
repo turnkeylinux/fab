@@ -1,5 +1,5 @@
 #!/usr/bin/python
-"""Apply overlay ontop of given path
+"""Apply overlay on top of given path
 
 Arguments:
   <overlay>         Path to overlay

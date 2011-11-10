@@ -1,7 +1,7 @@
 #!/usr/bin/python
-"""Add short description comment to each package in plan
-CPP includes, comments and blank lines are skipped
-Package ordering is not changed
+"""Annotate plan by appending short package description comments
+
+(comments, cpp macros and already annotated packages are ignored)
 
 Arguments:
   <plan>            Path to read plan from
