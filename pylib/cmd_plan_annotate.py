@@ -1,5 +1,5 @@
 #!/usr/bin/python
-"""Annotate plan by appending short package description comments
+"""Annotate plan with short package descriptions
 
 (comments, cpp macros and already annotated packages are ignored)
 
