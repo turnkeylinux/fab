@@ -33,6 +33,7 @@ PLAN ?= plan/main
 ROOT_OVERLAY ?= overlay
 CDROOT_OVERLAY ?= cdroot.overlay
 REMOVELIST ?= removelist
+CONF_SCRIPTS ?= conf.d
 
 INITRAMFS_PACKAGES ?= busybox-initramfs casper
 
@@ -93,6 +94,7 @@ define help/body
 	@echo '  ROOT_OVERLAY               $(value ROOT_OVERLAY)'
 	@echo '  CDROOT_OVERLAY             $(value CDROOT_OVERLAY)'
 	@echo '  REMOVELIST                 $(value REMOVELIST)'
+	@echo '  CONF_SCRIPTS               $(value CONF_SCRIPTS)'
 	@echo
 	@echo '# Product output variables   [VALUE]'
 	@echo '  O                          $(value O)'
@@ -164,7 +166,7 @@ ifeq ($(wildcard $(REMOVELIST)),)
 REMOVELIST =
 endif
 
-root.patched/deps ?= $(STAMPS_DIR)/root.build $(REMOVELIST)
+root.patched/deps ?= $(STAMPS_DIR)/root.build $(REMOVELIST) $(wildcard $(CONF_SCRIPTS)/*)
 define root.patched/body
 	$(call remove-deck, $O/root.patched)
 	deck $O/root.build $O/root.patched
@@ -177,6 +179,11 @@ define root.patched/body
 	fi
 	fab-chroot $O/root.patched "cp /usr/share/base-files/dot.bashrc /etc/skel/.bashrc"
 	fab-chroot $O/root.patched "rm -rf /boot/*.bak"
+	@for script in $(CONF_SCRIPTS)/*; do \
+		[ -x "$$script" ] || continue; \
+		echo fab-chroot $O/root.patched --script $$script; \
+		fab-chroot $O/root.patched --script $$script || exit $$?; \
+	done
 endef
 
 root.tmp/deps ?= $(STAMPS_DIR)/root.patched
