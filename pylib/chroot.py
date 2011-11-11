@@ -49,15 +49,12 @@ class MagicMounts:
         self.umount()
 
 class Chroot:
-    def __init__(self, path, magicmounts=True):
+    def __init__(self, path):
         if os.getuid() != 0:
             raise Error("root privileges required for chroot")
 
         self.path = realpath(path)
-        if magicmounts:
-            self.magicmounts = MagicMounts(self.path)
-        else:
-            self.magicmounts = None
+        self.magicmounts = MagicMounts(self.path)
 
     def _prepare_command(self, *command):
         env = ['/usr/bin/env', '-i', 'HOME=/root', 'TERM=${TERM}', 'LC_ALL=C',

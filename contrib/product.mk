@@ -172,7 +172,7 @@ define root.patched/body
 	if [ -d $(ROOT_OVERLAY) ]; then \
 		fab-apply-overlay $(ROOT_OVERLAY) $O/root.patched; \
 		if [ -e $(ROOT_OVERLAY)/etc/casper.conf ]; then \
-			fab-chroot --mount $O/root.patched "update-initramfs -u"; \
+			fab-chroot $O/root.patched "update-initramfs -u"; \
 		fi \
 	fi
 	fab-chroot $O/root.patched "cp /usr/share/base-files/dot.bashrc /etc/skel/.bashrc"
