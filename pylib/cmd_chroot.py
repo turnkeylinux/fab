@@ -1,8 +1,8 @@
 #!/usr/bin/python
-"""Executes command in chroot
+"""Executes command in a new root
 
 Arguments:
-  <chroot>          Path to chroot
+  <newroot>         Path to new root
   command           Command to execute in chroot
                     If no command is specified, /bin/bash is assumed (shell)
 """
@@ -16,7 +16,7 @@ from common import fatal
 
 @help.usage(__doc__)
 def usage():
-    print >> sys.stderr, "Syntax: %s <chroot> [command]" % sys.argv[0]
+    print >> sys.stderr, "Syntax: %s <newroot> [command]" % sys.argv[0]
 
 def main():
     args = sys.argv[1:]
@@ -26,12 +26,12 @@ def main():
     if len(args) == 1:
         args.append("/bin/bash")
         
-    chroot_path = args[0]
+    newroot = args[0]
     
-    if not os.path.isdir(chroot_path):
-        fatal("chroot does not exist: " + chroot_path)
+    if not os.path.isdir(newroot):
+        fatal("chroot does not exist: " + newroot)
 
-    chroot = Chroot(chroot_path)
+    chroot = Chroot(newroot)
     chroot.system(*args[1:])
         
 if __name__=="__main__":
