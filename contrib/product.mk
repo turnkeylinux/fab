@@ -180,9 +180,13 @@ define root.patched/body
 	fab-chroot $O/root.patched "cp /usr/share/base-files/dot.bashrc /etc/skel/.bashrc"
 	fab-chroot $O/root.patched "rm -rf /boot/*.bak"
 	@for script in $(CONF_SCRIPTS)/*; do \
-		[ -x "$$script" ] || continue; \
-		echo fab-chroot $O/root.patched --script $$script; \
-		fab-chroot $O/root.patched --script $$script || exit $$?; \
+		[ -f "$$script" ] && [ -x "$$script" ] || continue; \
+		args_path=$(CONF_SCRIPTS)/args/$$(basename $$script); \
+		args="$$([ -f $$args_path ] && (cat $$args_path | sed 's/#.*//'))"; \
+		[ -n "$$args" ] && args="-- $$args"; \
+		\
+		echo fab-chroot $O/root.patched --script $$script $$args; \
+		fab-chroot $O/root.patched --script $$script $$args; \
 	done
 endef
 
