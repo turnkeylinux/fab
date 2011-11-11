@@ -3,7 +3,12 @@
 
 Options:
   -s --script=PATH	 Run script inside chroot
-  
+
+Usage examples:
+  chroot path/to/chroot echo hello
+  chroot path/to/chroot "ls -la /"
+  chroot path/to/chroot -- ls -la /
+  chroot path/to/chroot --script scripts/printargs arg1 arg2
 """
 import os
 from os.path import *
