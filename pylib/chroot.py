@@ -63,8 +63,8 @@ class Chroot:
         self.magicmounts = MagicMounts(self.path)
 
     def _prepare_command(self, *command):
-        env = ['/usr/bin/env', '-i' ] + [ name + "=" + val
-                                          for name, val in self.environ.items() ]
+        env = ['env', '-i' ] + [ name + "=" + val
+                                 for name, val in self.environ.items() ]
 
         command = executil.fmt_command(*command)
         return ("chroot", self.path, 'sh', '-c', " ".join(env) + " " + command)
