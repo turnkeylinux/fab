@@ -56,7 +56,7 @@ class Chroot:
         self.environ = { 'HOME': '/root',
                          'TERM': os.environ['TERM'],
                          'LC_ALL': 'C',
-                         'PATH': '/usr/sbin:/usr/bin:/sbin:/bin' }
+                         'PATH': "/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/bin:/usr/sbin" }
         self.environ.update(environ)
 
         self.path = realpath(newroot)
