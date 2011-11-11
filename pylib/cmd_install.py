@@ -2,8 +2,9 @@
 """
 Install packages into chroot
 
-Plan and spec type input files are accepted.
-If a package is specified without a version, install the newest version.
+Arguments:
+  <packages> := ( - | path/to/plan | path/to/spec | package[=version] ) ...
+                If a version isn't specified, the newest version is implied.
 
 Options:
   -p --pool=PATH    set pool path (default: $FAB_POOL_PATH)
@@ -27,7 +28,7 @@ from common import fatal
 
 @help.usage(__doc__)
 def usage():
-    print >> sys.stderr, "Syntax: %s [-options] <chroot> ( - | path/to/plan | package[=version] ) ..."  % sys.argv[0]
+    print >> sys.stderr, "Syntax: %s [-options] <chroot> <packages>" % sys.argv[0]
 
 def main():
     cpp_opts, args = cpp.getopt(sys.argv[1:])
