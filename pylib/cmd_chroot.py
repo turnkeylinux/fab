@@ -15,8 +15,19 @@ import tempfile
 import shutil
 
 import help
-from chroot import Chroot
+from chroot import Chroot as _Chroot
 from common import fatal
+
+from executil import ExecError
+
+class Chroot(_Chroot):
+    def system(self, *command):
+        try:
+            _Chroot.system(self, *command)
+        except ExecError, e:
+            return e.exitcode
+
+        return 0
 
 @help.usage(__doc__)
 def usage():
@@ -35,9 +46,11 @@ def chroot_script(newroot, script_path, *args):
     shutil.copy(script_path, script_path_chroot)
     
     os.chmod(script_path_chroot, 0755)
-    chroot.system(paths.make_relative(chroot.path, script_path_chroot),
-                  *args)
+    err = chroot.system(paths.make_relative(chroot.path, script_path_chroot),
+                        *args)
     shutil.rmtree(tmpdir)
+
+    return err
 
 def main():
     try:
@@ -60,14 +73,16 @@ def main():
         fatal("not a directory: " + newroot)
 
     if script_path:
-        chroot_script(newroot, script_path, *args)
+        err = chroot_script(newroot, script_path, *args)
+        sys.exit(err)
         
     else:
         if not args:
             args = ('/bin/bash',)
 
-        Chroot(newroot).system(*args)
-
+        err = Chroot(newroot).system(*args)
+        sys.exit(err)
+            
 if __name__=="__main__":
     main()
 
