@@ -1,10 +1,5 @@
 #!/usr/bin/python
 """Executes command in a new root
-
-Arguments:
-  <newroot>         Path to new root
-  command           Command to execute in chroot
-                    If no command is specified, /bin/bash is assumed (shell)
 """
 import os
 import sys
@@ -16,7 +11,7 @@ from common import fatal
 
 @help.usage(__doc__)
 def usage():
-    print >> sys.stderr, "Syntax: %s <newroot> [command]" % sys.argv[0]
+    print >> sys.stderr, "Syntax: %s <newroot> [ command ... ]" % sys.argv[0]
 
 def main():
     args = sys.argv[1:]
