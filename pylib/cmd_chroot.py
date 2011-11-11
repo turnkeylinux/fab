@@ -41,7 +41,7 @@ def usage():
 
 def chroot_script(newroot, script_path, *args):
     if not isfile(script_path):
-        fatal("not a file: " + script_path)
+        fatal("no such script (%s)" % script_path)
 
     chroot = Chroot(newroot)
     tmpdir = tempfile.mkdtemp(dir=join(chroot.path, "tmp"),
@@ -75,7 +75,7 @@ def main():
     args = args[1:]
     
     if not isdir(newroot):
-        fatal("not a directory: " + newroot)
+        fatal("no such chroot (%s)" % newroot)
 
     if script_path:
         err = chroot_script(newroot, script_path, *args)
