@@ -33,10 +33,10 @@ def main():
     except getopt.GetoptError, e:
         usage(e)
 
-    chrootmounts = False
+    magicmounts = False
     for opt, val in opts:
         if opt == '--mount':
-            chrootmounts = True
+            magicmounts = True
 
     if len(args) == 1:
         args.append("/bin/bash")
@@ -46,7 +46,7 @@ def main():
     if not os.path.isdir(chroot_path):
         fatal("chroot does not exist: " + chroot_path)
 
-    chroot = Chroot(chroot_path, chrootmounts=chrootmounts)
+    chroot = Chroot(chroot_path, magicmounts=magicmounts)
     chroot.system(*args[1:])
         
 if __name__=="__main__":

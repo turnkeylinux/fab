@@ -2,15 +2,15 @@
 <?xml-stylesheet ekr_test?>
 <leo_file>
 <leo_header file_format="2" tnodes="0" max_tnode_index="1" clone_windows="0"/>
-<globals body_outline_ratio="0.423236514523">
-	<global_window_position top="0" left="1282" height="964" width="788"/>
+<globals body_outline_ratio="0.220954356846">
+	<global_window_position top="0" left="482" height="964" width="788"/>
 	<global_log_window_position top="0" left="0" height="0" width="0"/>
 </globals>
 <preferences/>
 <find_panel_settings/>
 <vnodes>
 <v t="zaril.20110904173229" a="E"><vh>Project</vh>
-<v t="loni.20111001190214" a="ETV"><vh>documentation</vh></v>
+<v t="loni.20111001190214" a="E"><vh>documentation</vh></v>
 <v t="loni.20111001190214.2" a="E"><vh>development log</vh>
 <v t="loni.20111001190214.3" a="E"><vh>v0.5 - initial release</vh>
 <v t="zaril.20110904173337"><vh>design</vh>
@@ -96,13 +96,15 @@
 <v t="zaril.20120204022939"><vh>support c-style comments in plan-lint</vh></v>
 </v>
 </v>
-<v t="zaril.20120204224652" a="E"><vh>unreleased</vh></v>
-</v>
-<v t="loni.20110928132411" a="E"><vh>bugs/wishlist</vh>
-<v t="zaril.20120115022525.1"><vh>product.mk: develop scripted configuration mechanism</vh>
+<v t="zaril.20120204224652" a="E"><vh>unreleased</vh>
+<v t="zaril.20120115022525.1" a="E"><vh>product.mk: develop scripted configuration mechanism</vh>
+<v t="zaril.20120204233609" a="TV"><vh>refactor chroot </vh></v>
 <v t="zaril.20120204023832"><vh>EMAIL</vh></v>
 <v t="zaril.20120204224450"><vh>port casper stuff to conf.d</vh></v>
 </v>
+</v>
+</v>
+<v t="loni.20110928132411" a="E"><vh>bugs/wishlist</vh>
 <v t="zaril.20120115022525"><vh>conditional development/production builds</vh></v>
 <v t="zaril.20120130153104"><vh>should Makefile show dirty changes in root.tmp?</vh></v>
 <v t="zaril.20120115021505"><vh>product.mk: product recipe</vh></v>
@@ -1945,6 +1947,8 @@ product.mk
         if it exists, executes everything in it that is mode 755
             using fab-chroot -f -q conf.d/script
 
+    part of creating root.patch after applying the overlay
+
 no inheritance mechanism for now
 
 * TESTS
@@ -2084,5 +2088,25 @@ things that either detected or configured at boot time, such as, for example:
 23networking</t>
 <t tx="zaril.20120204224450"></t>
 <t tx="zaril.20120204224652"></t>
+<t tx="zaril.20120204233609">TODO:
+
++ separate mounts to a different object?
+
+remove --mount option from fab-chroot
+    its a completely safe operation
+
+set environment in initialization
+add a few defaults
+    PATH
+        should be different PATH
+    HOME
+    TERM
+    LC_ALL
+
+print_system in init?
+
+
+
+</t>
 </tnodes>
 </leo_file>

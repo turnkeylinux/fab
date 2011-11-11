@@ -8,46 +8,17 @@ import executil
 class Error(Exception):
     pass
 
-def chrootmounts(method):
-    """decorator for mountpoints
-       mount/umount proc and dev/pts into/from chroot
-    """
-    def wrapper(self, *args, **kws):
-        mounted_proc_now = False
-        mounted_devpts_now = False
+class MagicMounts:
+    class Paths(paths.Paths):
+        files = [ "proc", "dev/pts" ]
         
-        proc_path = join(self.path, 'proc')
-        devpts_path = join(self.path, 'dev/pts')
+    def __init__(self, root="/"):
+        self.paths = self.Paths(root)
 
-        if self.chrootmounts:
-            if not self._is_mounted(proc_path):
-                self._mount('proc-chroot', proc_path, '-tproc')
-                mounted_proc_now = True
+        self.mounted_proc_myself = False
+        self.mounted_devpts_myself = False
 
-            if not self._is_mounted(devpts_path):
-                self._mount('devpts-chroot', devpts_path, '-tdevpts')
-                mounted_devpts_now = True
-
-        try:
-            ret = method(self, *args, **kws)
-        finally:
-            if mounted_proc_now:
-                self._umount(proc_path)
-
-            if mounted_devpts_now:
-                self._umount(devpts_path)
-
-        return ret
-
-    return wrapper
-
-class Chroot:
-    def __init__(self, path, chrootmounts=True):
-        if os.getuid() != 0:
-            raise Error("root privileges required for chroot")
-
-        self.path = realpath(path)
-        self.chrootmounts = chrootmounts
+        self.mount()
 
     @staticmethod
     def _is_mounted(dir):
@@ -56,17 +27,37 @@ class Chroot:
             return True
         return False
 
-    @classmethod
-    def _mount(cls, device, mountpath, options=None):
-        args = [device, mountpath]
-        if options:
-            args.append(options)
-            
-        executil.system("mount", *args)
+    def mount(self):
+        if not self._is_mounted(self.paths.proc):
+            executil.system("mount -t proc", "proc-chroot", self.paths.proc)
+            self.mounted_proc_myself = True
 
-    @classmethod
-    def _umount(cls, device):
-        executil.system("umount", "-f", device)
+        if not self._is_mounted(self.paths.dev.pts):
+            executil.system("mount -t devpts", "devpts-chroot", self.paths.dev.pts)
+            self.mounted_devpts_myself = True
+
+    def umount(self):
+        if self.mounted_devpts_myself:
+            executil.system("umount", self.paths.dev.pts)
+            self.mounted_devpts_myself = False
+
+        if self.mounted_proc_myself:
+            executil.system("umount", self.paths.proc)
+            self.mounted_proc_myself = False
+
+    def __del__(self):
+        self.umount()
+
+class Chroot:
+    def __init__(self, path, magicmounts=True):
+        if os.getuid() != 0:
+            raise Error("root privileges required for chroot")
+
+        self.path = realpath(path)
+        if magicmounts:
+            self.magicmounts = MagicMounts(self.path)
+        else:
+            self.magicmounts = None
 
     def _prepare_command(self, *command):
         env = ['/usr/bin/env', '-i', 'HOME=/root', 'TERM=${TERM}', 'LC_ALL=C',
@@ -77,15 +68,12 @@ class Chroot:
         command = executil.fmt_command(*command)
         return ("chroot", self.path, 'sh', '-c', " ".join(env) + " " + command)
     
-    @chrootmounts
     def system(self, *command):
         """execute system command in chroot -> None"""
         print "chroot %s %s" % (paths.make_relative(os.getcwd(), self.path),
                                 " ".join(command))
-        
         executil.system(*self._prepare_command(*command))
 
-    @chrootmounts
     def getoutput(self, *command):
         return executil.getoutput(*self._prepare_command(*command))
 
