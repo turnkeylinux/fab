@@ -67,8 +67,6 @@ class Chroot:
     
     def system(self, *command):
         """execute system command in chroot -> None"""
-        print "chroot %s %s" % (paths.make_relative(os.getcwd(), self.path),
-                                " ".join(command))
         executil.system(*self._prepare_command(*command))
 
     def getoutput(self, *command):
