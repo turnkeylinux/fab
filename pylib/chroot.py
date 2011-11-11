@@ -49,18 +49,25 @@ class MagicMounts:
         self.umount()
 
 class Chroot:
-    def __init__(self, path):
+    def __init__(self, path, environ={}):
         if os.getuid() != 0:
             raise Error("root privileges required for chroot")
+
+        self.environ = { 'HOME': '/root',
+                         'TERM': os.environ['TERM'],
+                         'LC_ALL': 'C',
+                         'PATH': '/usr/sbin:/usr/bin:/sbin:/bin',
+                         'DEBIAN_FRONTEND': 'noninteractive',
+                         'DEBIAN_PRIORITY': 'critical' }
+
+        self.environ.update(environ)
 
         self.path = realpath(path)
         self.magicmounts = MagicMounts(self.path)
 
     def _prepare_command(self, *command):
-        env = ['/usr/bin/env', '-i', 'HOME=/root', 'TERM=${TERM}', 'LC_ALL=C',
-               'PATH=/usr/sbin:/usr/bin:/sbin:/bin',
-               'DEBIAN_FRONTEND=noninteractive',
-               'DEBIAN_PRIORITY=critical']
+        env = ['/usr/bin/env', '-i' ] + [ name + "=" + val
+                                          for name, val in self.environ.items() ]
 
         command = executil.fmt_command(*command)
         return ("chroot", self.path, 'sh', '-c', " ".join(env) + " " + command)
