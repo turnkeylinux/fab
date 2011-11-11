@@ -3,9 +3,6 @@
 
 (comments, cpp macros and already annotated packages are ignored)
 
-Arguments:
-  <plan>            Path to read plan from
-
 Options:
   -p --pool=PATH    set pool path (default: $FAB_POOL_PATH)
   -i --inplace      Edit plan inplace
@@ -27,7 +24,7 @@ from common import fatal
 
 @help.usage(__doc__)
 def usage():
-    print >> sys.stderr, "Syntax: %s [-options] <plan>" % sys.argv[0]
+    print >> sys.stderr, "Syntax: %s [-options] path/to/plan" % sys.argv[0]
 
 def parse_plan(plan):
     # strip c-style comments
