@@ -65,6 +65,10 @@ define mount-deck
 endef
 
 redeck:
+	$(call mount-deck, $$(dirname $(PLAN)))
+	$(call mount-deck, $(ROOT_OVERLAY))
+	$(call mount-deck, $(CDROOT_OVERLAY))
+	$(call mount-deck, $(CONF_SCRIPTS))
 	$(call mount-deck, $O/bootstrap)
 	$(call mount-deck, $O/root.build)
 	$(call mount-deck, $O/root.patched)
