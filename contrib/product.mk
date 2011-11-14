@@ -277,7 +277,7 @@ updated-root-tmp:
 define updated-initramfs/body
 	rm -rf $O/product.iso
 	$(root.patched/body)
-	fab-install $O/root.patched $(INITRAMFS_PACKAGES)
+	fab-install --no-deps $O/root.patched $(INITRAMFS_PACKAGES)
 	cp $O/root.patched/boot/$(shell basename $(shell readlink $O/root.patched/initrd.img)) $O/cdroot/casper/initrd.gz
 	$(run-genisoimage)
 endef
