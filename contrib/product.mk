@@ -166,6 +166,21 @@ ifeq ($(wildcard $(REMOVELIST)),)
 REMOVELIST =
 endif
 
+define run-conf-scripts
+	@if [ -n "$(wildcard $1/*)" ]; then \
+		echo "\$$(call $0,$1)"; \
+	fi
+	@for script in $1/*; do \
+		[ -f "$$script" ] && [ -x "$$script" ] || continue; \
+		args_path=$(strip $1)/args/$$(basename $$script); \
+		args="$$([ -f $$args_path ] && (cat $$args_path | sed 's/#.*//'))"; \
+		[ -n "$$args" ] && args="-- $$args"; \
+		\
+		echo fab-chroot $O/root.patched --script $$script $$args; \
+		fab-chroot $O/root.patched --script $$script $$args; \
+	done
+endef
+
 root.patched/deps ?= $(STAMPS_DIR)/root.build $(REMOVELIST) $(wildcard $(CONF_SCRIPTS)/*)
 define root.patched/body
 	$(call remove-deck, $O/root.patched)
@@ -179,15 +194,7 @@ define root.patched/body
 	fi
 	fab-chroot $O/root.patched "cp /usr/share/base-files/dot.bashrc /etc/skel/.bashrc"
 	fab-chroot $O/root.patched "rm -rf /boot/*.bak"
-	@for script in $(CONF_SCRIPTS)/*; do \
-		[ -f "$$script" ] && [ -x "$$script" ] || continue; \
-		args_path=$(CONF_SCRIPTS)/args/$$(basename $$script); \
-		args="$$([ -f $$args_path ] && (cat $$args_path | sed 's/#.*//'))"; \
-		[ -n "$$args" ] && args="-- $$args"; \
-		\
-		echo fab-chroot $O/root.patched --script $$script $$args; \
-		fab-chroot $O/root.patched --script $$script $$args; \
-	done
+	$(call run-conf-scripts, $(CONF_SCRIPTS))
 endef
 
 root.tmp/deps ?= $(STAMPS_DIR)/root.patched
