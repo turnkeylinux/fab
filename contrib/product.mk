@@ -172,7 +172,7 @@ define run-conf-scripts
 	fi
 	@for script in $1/*; do \
 		[ -f "$$script" ] && [ -x "$$script" ] || continue; \
-		args_path=$(strip $1)/args/$$(basename $$script); \
+		args_path=$(strip $1)/args/$$(echo $$(basename $$script) | sed 's/^[^a-zA-Z]*//'); \
 		args="$$([ -f $$args_path ] && (cat $$args_path | sed 's/#.*//'))"; \
 		[ -n "$$args" ] && args="-- $$args"; \
 		\
