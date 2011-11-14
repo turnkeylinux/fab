@@ -57,11 +57,17 @@ endef
 
 all: $O/product.iso
 
-_redeck = if deck --isdeck $1; then deck $1; fi
+define mount-deck
+	@if deck --isdeck $1 && ! deck --ismounted $1; then \
+		echo deck $1; \
+		deck $1; \
+	fi
+endef
+
 redeck:
-	$(call _redeck, $O/bootstrap)
-	$(call _redeck, $O/root.build)
-	$(call _redeck, $O/root.patched)
+	$(call mount-deck, $O/bootstrap)
+	$(call mount-deck, $O/root.build)
+	$(call mount-deck, $O/root.patched)
 
 debug:
 	$(foreach v, $V, $(warning $v = $($v)))
