@@ -29,11 +29,8 @@ from common import fatal
 def usage():
     print >> sys.stderr, "Syntax: %s [-options] <plan> [ /path/to/bootstrap ]" % sys.argv[0]
 
-def bootstrap_packages(bootstrap_path):
-    if not os.path.isdir(bootstrap_path):
-        fatal("bootstrap does not exist: " + bootstrap_path)
-
-    chroot = Chroot(bootstrap_path)
+def list_packages(root):
+    chroot = Chroot(root)
     output = chroot.getoutput("dpkg-query --show -f='${Package}\\n'")
 
     return output.splitlines()
@@ -69,12 +66,15 @@ def main():
 
     try:
         bootstrap_path = args[1]
+        if not os.path.isdir(bootstrap_path):
+            fatal("bootstrap does not exist: " + root)
+
     except IndexError:
         bootstrap_path = None
 
     plan = Plan.init_from_file(plan_path, cpp_opts, pool_path)
     if bootstrap_path:
-        plan |= set(bootstrap_packages(bootstrap_path))
+        plan |= set(list_packages(bootstrap_path))
         
     spec = plan.resolve()
 
