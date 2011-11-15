@@ -69,11 +69,13 @@ def main():
 
     try:
         bootstrap_path = args[1]
-        packages = bootstrap_packages(bootstrap_path)
     except IndexError:
-        packages = set()
+        bootstrap_path = None
 
     plan = Plan.init_from_file(plan_path, cpp_opts, pool_path)
+    if bootstrap_path:
+        plan |= bootstrap_packages(bootstrap_path)
+        
     spec = plan.resolve()
 
     if output_path is None:
