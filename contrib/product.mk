@@ -38,7 +38,7 @@ CONF_SCRIPTS ?= conf.d
 INITRAMFS_PACKAGES ?= busybox-initramfs casper
 
 # build output path
-O ?= .
+O ?= build
 
 ISOLABEL ?= $(shell basename $(shell pwd))
 
