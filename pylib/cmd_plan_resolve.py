@@ -41,9 +41,9 @@ def bootstrap_packages(bootstrap_path):
 def main():
     cpp_opts, args = cpp.getopt(sys.argv[1:])
     try:
-        opts, args = getopt.getopt(args, "o:p:h",
-                                   ["output=",
-                                    "pool="])
+        opts, args = getopt.gnu_getopt(args, "o:p:h",
+                                       ["output=",
+                                        "pool="])
     except getopt.GetoptError, e:
         usage(e)
 
