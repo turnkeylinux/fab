@@ -36,7 +36,7 @@ def bootstrap_packages(bootstrap_path):
     chroot = Chroot(bootstrap_path)
     output = chroot.getoutput("dpkg-query --show -f='${Package}\\n'")
 
-    return set(output.splitlines())
+    return output.splitlines()
 
 def main():
     cpp_opts, args = cpp.getopt(sys.argv[1:])
@@ -74,7 +74,7 @@ def main():
 
     plan = Plan.init_from_file(plan_path, cpp_opts, pool_path)
     if bootstrap_path:
-        plan |= bootstrap_packages(bootstrap_path)
+        plan |= set(bootstrap_packages(bootstrap_path))
         
     spec = plan.resolve()
 
