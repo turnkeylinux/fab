@@ -2,13 +2,18 @@
 """Executes commands in a new root
 
 Options:
-  -s --script=PATH	 Run script inside chroot
+  -s --script=PATH	     Run script inside chroot
+  -e --env=VARNAME[: ...]    List of environment variable names to pass through
+                             default: $FAB_CHROOT_ENV
 
 Usage examples:
   chroot path/to/chroot echo hello
   chroot path/to/chroot "ls -la /"
   chroot path/to/chroot -- ls -la /
   chroot path/to/chroot --script scripts/printargs arg1 arg2
+
+  FOO=bar BAR=foo chroot path/to/chroot -e FOO:BAR env
+  
 """
 import os
 from os.path import *
@@ -36,14 +41,13 @@ class Chroot(_Chroot):
 
 @help.usage(__doc__)
 def usage():
-    print >> sys.stderr, "Syntax: %s <newroot> [ command ... ]" % sys.argv[0]
-    print >> sys.stderr, "Syntax: %s <newroot> --script path/to/executable [ args ]" % sys.argv[0]
+    print >> sys.stderr, "Syntax: %s [ -options ] <newroot> [ command ... ]" % sys.argv[0]
+    print >> sys.stderr, "Syntax: %s [ -options ] <newroot> --script path/to/executable [ args ]" % sys.argv[0]
 
-def chroot_script(newroot, script_path, *args):
+def chroot_script(chroot, script_path, *args):
     if not isfile(script_path):
         fatal("no such script (%s)" % script_path)
 
-    chroot = Chroot(newroot)
     tmpdir = tempfile.mkdtemp(dir=join(chroot.path, "tmp"),
                               prefix="chroot-script.")
 
@@ -57,16 +61,32 @@ def chroot_script(newroot, script_path, *args):
 
     return err
 
+def get_environ(env_conf):
+    environ = {}
+    if env_conf:
+        for var in env_conf.split(":"):
+            val = os.environ.get(var)
+            if val is not None:
+                environ[var] = val
+            
+    return environ
+
 def main():
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], 's:', [ 'script=' ])
+        opts, args = getopt.gnu_getopt(sys.argv[1:], 's:e:',
+                                       [ 'script=', 'env=' ])
     except getopt.GetoptError, e:
         usage(e)
 
+    env_conf = os.environ.get('FAB_CHROOT_ENV')
+    
     script_path = None
     for opt, val in opts:
         if opt in ('-s', '--script'):
             script_path = val
+
+        if opt in ('-e', '--env'):
+            env_conf = val
 
     if not args:
         usage()
@@ -77,15 +97,17 @@ def main():
     if not isdir(newroot):
         fatal("no such chroot (%s)" % newroot)
 
+    chroot = Chroot(newroot, environ=get_environ(env_conf))
+    
     if script_path:
-        err = chroot_script(newroot, script_path, *args)
+        err = chroot_script(chroot, script_path, *args)
         sys.exit(err)
         
     else:
         if not args:
             args = ('/bin/bash',)
 
-        err = Chroot(newroot).system(*args)
+        err = chroot.system(*args)
         sys.exit(err)
             
 if __name__=="__main__":
