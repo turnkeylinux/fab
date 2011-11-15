@@ -272,6 +272,8 @@ $O/product.iso: $(product.iso/deps) $(product.iso/deps/extra)
 	$(product.iso/body)
 	$(product.iso/post)
 
+product.iso: $O/product.iso
+
 # target: updated-root-tmp
 define updated-root-tmp/body
 	$(product.iso/body)
