@@ -113,6 +113,8 @@ define help/body
 	@echo
 	@echo '# build a target (default: product.iso)'
 	@echo '$$ make [target] [O=path/to/build/dir]'
+	@echo '  redeck        # deck unmounted input/output decks (e.g., after reboot)'
+	@echo
 	@echo '  clean         # clean all build targets'
 	@echo '  bootstrap     # minimal chrootable filesystem used to bootstrap the root'
 	@echo '  root.spec     # the spec from which root.build is built (I.e., resolved plan)'
