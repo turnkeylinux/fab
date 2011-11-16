@@ -2,7 +2,7 @@
 <?xml-stylesheet ekr_test?>
 <leo_file>
 <leo_header file_format="2" tnodes="0" max_tnode_index="1" clone_windows="0"/>
-<globals body_outline_ratio="0.159751037344">
+<globals body_outline_ratio="0.551867219917">
 	<global_window_position top="0" left="605" height="964" width="665"/>
 	<global_log_window_position top="0" left="0" height="0" width="0"/>
 </globals>
@@ -102,13 +102,13 @@
 </v>
 </v>
 <v t="zaril.20120204224652" a="E"><vh>unreleased</vh>
-<v t="zaril.20120115022525.1" a="E"><vh>product.mk: develop scripted configuration mechanism</vh>
+<v t="zaril.20120206152141"><vh>research readahead</vh></v>
 <v t="zaril.20120204233609"><vh>refactor chroot </vh></v>
+<v t="zaril.20120207045734"><vh>hack fab-chroot to support environment variables</vh></v>
+<v t="zaril.20120207044153" a="E"><vh>support deck inputs</vh></v>
+<v t="zaril.20120115022525.1"><vh>product.mk: develop scripted configuration mechanism</vh>
 <v t="zaril.20120206010049" a="E"><vh>support extension of script configuration mechanism</vh></v>
 <v t="zaril.20120206033113"><vh>support symbolic links in conf.d</vh></v>
-<v t="zaril.20120207044153" a="E"><vh>support deck inputs</vh></v>
-<v t="zaril.20120207045734"><vh>support environment variables</vh></v>
-<v t="zaril.20120206152141"><vh>research readahead</vh></v>
 <v t="zaril.20120204224450"><vh>port casper stuff to conf.d</vh>
 <v t="zaril.20120204023832"><vh>email: unnecessary or badly placed casper-bottom scripts</vh></v>
 <v t="zaril.20120208012919"><vh>research casper-bottom scripts</vh></v>
@@ -118,18 +118,22 @@
 <v t="zaril.20120206161341.1" a="E"><vh>configure user/root password</vh></v>
 </v>
 </v>
-<v t="zaril.20120115022525" a="ETV"><vh>conditional development/production builds</vh></v>
 </v>
+<v t="zaril.20120115022525"><vh>allow configuration variables to influence the build process</vh></v>
 </v>
 </v>
 <v t="loni.20110928132411" a="E"><vh>bugs/wishlist</vh>
+<v t="zaril.20120208061232"><vh>fab-query</vh></v>
+<v t="zaril.20120208061040"><vh>dependency promotion</vh></v>
+<v t="zaril.20120208060957"><vh>fab spec dependency annotation</vh></v>
+<v t="zaril.20120208061751"><vh>optimization: call pool via API, not CLI</vh></v>
+<v t="zaril.20120208061834"><vh>intelligent handling of dependency restrictions</vh></v>
 <v t="zaril.20120130153104"><vh>should Makefile show dirty changes in root.tmp?</vh></v>
 <v t="zaril.20120115021505"><vh>product.mk: product recipe</vh></v>
 <v t="zaril.20120115021505.1"><vh>product.mk: usb product build</vh></v>
 <v t="zaril.20120115021505.2"><vh>apt -&gt; dpkg</vh></v>
-<v t="zaril.20120115021505.3"><vh>spec-analysis</vh></v>
 <v t="loni.20111121190436"><vh>resume support?</vh></v>
-<v t="zaril.20120208011925"><vh>create smallest possible bootstrap</vh></v>
+<v t="zaril.20120208011925" a="TV"><vh>create smallest possible bootstrap</vh></v>
 </v>
 </v>
 </vnodes>
@@ -1854,7 +1858,6 @@ a product recipe is created during the creation of a new product
 * ideas:
         * debootstrap scripts
         * spec analysis code</t>
-<t tx="zaril.20120115021505.3">* same idea as oldfab/package-analysis</t>
 <t tx="zaril.20120115022049">
 
 
@@ -1887,7 +1890,7 @@ product.mk variable. Even then I think the default should still be optimized for
 development builds because they are more common than production/release builds.
 
 * SUMMARY
-    allow configuration variables to influence the build process
+allow configuration variables to influence the build process
         product Makefile (e.g., post/pre hooks)
         plan conditionals (during c-preprocessing)
         patch configuration scripts
@@ -2459,7 +2462,7 @@ A:
 
 
 </t>
-<t tx="zaril.20120208011925">target: skeleton
+<t tx="zaril.20120208011925">test target: skeleton
 </t>
 <t tx="zaril.20120208012919">01integrity_check
     if integrity-check in switches
@@ -2522,5 +2525,21 @@ A:
         disables readahead-list
 
     reaches skeleton via boot</t>
+<t tx="zaril.20120208060957">by default, append to spec as comments
+
+bootstrap plan &lt;package&gt; &lt;package&gt;* &lt;package&gt;**
+
+order of packages depends on the order they are brought in
+</t>
+<t tx="zaril.20120208061040">package* # promote recommended
+package** # promote suggests + recommended
+</t>
+<t tx="zaril.20120208061232">accept install arguments outputs Package type formatted output
+
+IDEA: we could mix and match output with grep-dctrl
+</t>
+<t tx="zaril.20120208061751">blocking: pyproject infrastructure
+</t>
+<t tx="zaril.20120208061834">The current logic is to pray that the newest package versions in the pool satisft the dependency restrictions and fail if it doesn't, even if an older version exists in the pool which does satisfy the restriction. This is a naive short term solution.</t>
 </tnodes>
 </leo_file>
