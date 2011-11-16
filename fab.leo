@@ -2,8 +2,8 @@
 <?xml-stylesheet ekr_test?>
 <leo_file>
 <leo_header file_format="2" tnodes="0" max_tnode_index="1" clone_windows="0"/>
-<globals body_outline_ratio="0.491701244813">
-	<global_window_position top="0" left="637" height="964" width="633"/>
+<globals body_outline_ratio="0.340248962656">
+	<global_window_position top="0" left="605" height="964" width="665"/>
 	<global_log_window_position top="0" left="0" height="0" width="0"/>
 </globals>
 <preferences/>
@@ -14,7 +14,7 @@
 <v t="zaril.20120206010821"><vh>overview</vh></v>
 <v t="zaril.20120206010821.1"><vh>terminology</vh></v>
 <v t="zaril.20120206010821.2"><vh>cli</vh></v>
-<v t="zaril.20120206010657" a="TV"><vh>inheriting from product.mk</vh></v>
+<v t="zaril.20120206010657"><vh>inheriting from product.mk</vh></v>
 </v>
 <v t="loni.20111001190214.2" a="E"><vh>development log</vh>
 <v t="loni.20111001190214.3" a="E"><vh>v0.5 - initial release</vh>
@@ -104,14 +104,25 @@
 <v t="zaril.20120204224652" a="E"><vh>unreleased</vh>
 <v t="zaril.20120115022525.1" a="E"><vh>product.mk: develop scripted configuration mechanism</vh>
 <v t="zaril.20120204233609"><vh>refactor chroot </vh></v>
+<v t="zaril.20120206010049" a="E"><vh>support extension of script configuration mechanism</vh></v>
+<v t="zaril.20120206033113"><vh>support symbolic links in conf.d</vh></v>
+<v t="zaril.20120207044153" a="E"><vh>support deck inputs</vh></v>
+<v t="zaril.20120207045734"><vh>support environment variables</vh></v>
+<v t="zaril.20120206152141"><vh>research readahead</vh></v>
 <v t="zaril.20120204224450" a="E"><vh>port casper stuff to conf.d</vh>
-<v t="zaril.20120204023832"><vh>EMAIL</vh></v>
-<v t="zaril.20120206010049" a="E"><vh>allow specify additional script directories</vh></v>
+<v t="zaril.20120204023832"><vh>email: unnecessary or badly placed casper-bottom scripts</vh></v>
+<v t="zaril.20120208012919" a="TV"><vh>research casper-bottom scripts</vh></v>
+<v t="zaril.20120206145455"><vh>determine what is essential to skeleton</vh>
+<v t="zaril.20120207133732"><vh>port scripts</vh></v>
+<v t="zaril.20120206161341" a="E"><vh>configure hostname</vh></v>
+<v t="zaril.20120206161341.1" a="E"><vh>configure user/root password</vh></v>
+</v>
 </v>
 </v>
 </v>
 </v>
 <v t="loni.20110928132411" a="E"><vh>bugs/wishlist</vh>
+<v t="zaril.20120207052028"><vh>conditional builds</vh></v>
 <v t="zaril.20120115022525"><vh>conditional development/production builds</vh></v>
 <v t="zaril.20120130153104"><vh>should Makefile show dirty changes in root.tmp?</vh></v>
 <v t="zaril.20120115021505"><vh>product.mk: product recipe</vh></v>
@@ -119,6 +130,7 @@
 <v t="zaril.20120115021505.2"><vh>apt -&gt; dpkg</vh></v>
 <v t="zaril.20120115021505.3"><vh>spec-analysis</vh></v>
 <v t="loni.20111121190436"><vh>resume support?</vh></v>
+<v t="zaril.20120208011925"><vh>create smallest possible bootstrap</vh></v>
 </v>
 </v>
 </vnodes>
@@ -2034,57 +2046,11 @@ things that either detected or configured at boot time, such as, for example:
 13swap
 20xconfig
 23networking</t>
-<t tx="zaril.20120204224450">01integrity_check*
-05mountpoints*
-10adduser*
-    move this
-        I don't think skeleton needs this though
+<t tx="zaril.20120204224450">Q: what does casper-reconfigure do?
+A: runcommandinroot "$root" dpkg-reconfigure -fnoninteractive --no-reload "$package"
+hypo: this is where xresprobe reconfiguration happens
 
-12fstab*
-13swap*
-14locales*
-    move/remove
-
-18hostname*
-19keyboard*
-20xconfig*
-23networking*
-24preseed*
-25configure_init*
-
-* IDEAS
-manually experiment with which scripts we really need
-    by deleting them directly from skeleton's initramfs 
-
-IDEAS:
-    filter comments and then cat it in
-
-    default
-    conf.d
-        HOSTNAME
-
-    via arguments?
-        name=val
-
-        eval?
-
-
-ec
-args
-opts
-etc
-var
-share
-contrib
-local
-
-
-CONF_SCRIPTS -&gt; PATCH_SCRIPTS
-
-* IDEAS:
-
-support symlinks in conf.d
-    global repository of configuration scripts</t>
+E: try integrity-check</t>
 <t tx="zaril.20120204224652"></t>
 <t tx="zaril.20120204233609">TODO:
 
@@ -2093,15 +2059,28 @@ support symlinks in conf.d
 + remove --mount option from fab-chroot
     its a completely safe operation
 </t>
-<t tx="zaril.20120206010049">* IDEAS:
+<t tx="zaril.20120206010049">SUMMARY 
+    adding individual scripts (not in conf.d)
+        calling fab-chroot --script directly on a single script
+
+    calling run-conf-scripts macro to add another script directory    
+
+Q: how do we apply an additional configuration scripts to root.patched?
+A: hook into root.patched/post and apply another one
+
+* IDEAS:
 
 run-conf-scripts product.mk macro
     so that we can add more scripts directories?
 
 maybe even a list of individual scripts?
-    no - how would we configure them?
+    we can do that by calling fab-chroot --script directly from a post hook
 
-maybe some mechanism to add directories?
+maybe extend fab-chroot to run script directories?
+    this would allow scripts to share code?
+        they can share code anyway, just they have to do it in the overlay or in the packages themselves (/usr/share...)
+
+
 
 </t>
 <t tx="zaril.20120206010657">Inheriting from product.mk is basically very similar to how you inherit from
@@ -2257,5 +2236,266 @@ Commands:
 
     apply-removelist    Remove files and folders according to removelist
     apply-overlay       Apply overlay on top of given path</t>
+<t tx="zaril.20120206033113">SUMMARY
+    symbolic links already work
+
+IDEA: we should be able to change precedence in conf.d without renaming args/&lt;file&gt;
+
+</t>
+<t tx="zaril.20120206145455">* IDEAS
+manually experiment with which scripts we really need
+    by deleting them directly from skeleton's initramfs 
+
+* REMOVE
+    10adduser
+    14locales
+    18hostname
+    24preseed
+    25confgure_init
+    
+* DISCOVERY: debconf-set-selections
+    debconf-get-selections
+    debconf-get-selections | ssh newhost debconf-set-selections
+        dumps debconf database to stdout
+
+* INSIGHT: we can/should use isolinux as a runtime configuration mechanism
+    get it from /proc/cmdline
+
+remove casper.conf from all products
+</t>
+<t tx="zaril.20120206152141">* SUMMARY
+
+two programs 
+    readahead-list &lt;file&gt;
+        loads a list from FILE and performs readahead(2) on each entry
+
+        called by /etc/init.d/readahead
+    
+    readahead-watch
+        called by /etc/init.d/readahead
+            if `profile' keyword is in command line
+                outputs to /etc/readahead/boot
+
+INSIGHT: in profile mode can be used to generate lists of files read
+    with readahead-watch
+
+disabled by casper by default
+
+uses readahead(2) system call?
+
+readahead-watch
+    could be used to automatically slim down the CD?
+
+/etc/readahead/ # lists of files to readahead
+    boot
+    desktop
+
+can be used to implement readahead of a files used to cold reboot
+    instead of stupid hack
+</t>
+<t tx="zaril.20120206161341">IDEA: a package full of useful shell functions
+    fatal
+    error
+    run-scripts
+    check if a variable is set</t>
+<t tx="zaril.20120206161341.1">SUMMARY
+    useradd # create a new user
+  
+        --create-home
+        -g group
+        --groups GROUP1,GROUP2,...
+        --password CRYPTPASS
+        
+        -shell
+        
+        useradd -D
+            show default values
+                (as in /etc/default/useradd)
+        
+    usermod # modify user account
+        same interface as useradd
+
+INSIGHT: if we want a default password shared by all products we can achieve that via bootstrap    
+    
+INSIGHT:
+    args conf separation overkill in many cases
+    we don't need to make everything reusable
+    the conf file itself can embed the configuration data
+    if the conf file is significantly complex, maybe we need to embed its
+        logic in a package
+        
+
+set root password
+
+create a user and set its password
+
+the password doesn't have to be encrypted here
+
+as long as its not saved in bash_history
+
+which groups
+
+copy skel
+
+shell
+
+
+Q: whats the simplest way to achieve that automatically?
+
+Q: should the password be encrypted?
+
+Q: how do I set the root password automagically??
+
+
+* SCRATCH
+</t>
+<t tx="zaril.20120207044153">SUMMARY:
+    all input directories can be decks
+    make redeck updated to redeck them after reboot
+
+IDEA: use deck to implement inheritance?
+    e.g., we deck a global location and then delete the stuff we don't want
+
+    Q: how would we deck it automatically?
+    A: if conf.d is a deck, we deck it
+        same with overlay, plan, cdroot.overlay
+
+IDEA: deck all directory based input to allow inheritance
+    decks WOULD hardwire system paths
+        they would have to be the same or else
+
+    and we would have to own it
+
+    how would the paths be decked?
+        with the redeck target
+
+Q: how can I get redeck to work every time automatically but not add overhead?
+A: has to be rerun every reboot
+    can we get the reboot information?
+        when we booted?</t>
+<t tx="zaril.20120207045734">* SUMMARY
+
+  -e --env=VARNAME[: ...]    List of environment variable names to pass through
+                             default: $FAB_CHROOT_ENV
+
+Usage example:
+
+  FOO=bar BAR=foo chroot path/to/chroot -e FOO:BAR env
+
+* SCRATCH
+-e --environment
+
+--envirnoment
+
+envlist
+
+envacl
+envpass
+
+varlist
+--varlist
+
+--args
+
+-e --env
+FAB_CHROOT_ENVIRONMENT 
+
+env allow
+env import
+
+pass in the entire environment?
+except for stuff in a blacklist?
+
+exclude
+
+env import
+
+env-include
+
+allow
+
+env-allow
+
+env-deny
+
+formats
+    one two three
+    one,two,three
+    one:two:three
+
+
+
+</t>
+<t tx="zaril.20120207052028"></t>
+<t tx="zaril.20120207133732">Q: should we solve the inheritance problem right now?
+A:
+    no make the scripts as simple as possible
+        so duplication is not an issue
+
+
+</t>
+<t tx="zaril.20120208011925">target: skeleton
+</t>
+<t tx="zaril.20120208012919">01integrity_check
+    if integrity-check in switches
+
+    performs an integrity check comparing files with md5sum signatures on CD
+        not a security check but a data corruption test
+
+        I don't think we have the signatures on board
+
+05mountpoints
+    moves mountpoints
+
+10adduser
+    creates the user based on casper.conf
+
+    move this
+        I don't think skeleton needs this anyhow
+
+12fstab
+    creates barebones /etc/fstab for live environment
+
+13swap
+    tries to detect swap partitions on local machine and activate them
+
+14locales
+    move/remove
+
+18hostname
+    move/remove
+
+19keyboard
+    configures keyboard layout
+
+20xconfig
+    runs xdebconfigurator
+    reconfigures xserver-xorg package
+
+23networking
+    parses netboot.config and creates resolv.conf from it
+
+24preseed
+    preseeds installation configuration
+
+        preseed/file=path/to/root/location
+        */*=*
+            question is */*
+            answer is =*
+        
+            set with casper-preseed
+                which uses debconf-communicate
+                    sets the value of the question and marks it as seen
+
+    these can be used by
+        various scripts
+        by the installer
+            
+25configure_init
+     a bunch of hacks 
+        disables postfix
+        disables readahead-list
+
+    reaches skeleton via boot</t>
 </tnodes>
 </leo_file>
