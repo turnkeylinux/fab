@@ -8,15 +8,6 @@ ifndef RELEASE
 $(warning RELEASE not defined - default paths for POOL and BOOTSTRAP may break)
 endif
 
-# (to disable set to empty string)
-MKSQUASHFS_COMPRESS ?= yes 
-MKSQUASHFS_VERBOSE ?=
-
-define MKSQUASHFS_OPTS
-$(if $(MKSQUASHFS_COMPRESS),, -noD -noI -noF -no-fragments) \
-$(if $(MKSQUASHFS_VERBOSE), -info)
-endef
-
 # FAB_PATH dependent infrastructural components
 POOL ?= $(FAB_PATH)/pools/$(RELEASE)
 BOOTSTRAP ?= $(FAB_PATH)/bootstraps/$(RELEASE)
@@ -84,10 +75,6 @@ define help/body
 	@echo
 	@echo '# Mandatory configuration variables:'
 	@echo '  FAB_PATH and RELEASE       used to calculate default paths for input variables'
-	@echo
-	@echo '# Build configuration variables:'
-	@echo '  MKSQUASHFS_COMPRESS        if not an empty string - mksquashfs uses compression'
-	@echo '  MKSQUASHFS_VERBOSE         if not an empty string - mksquashfs is verbose'
 	@echo
 	@echo '# Build context variables    [VALUE]'
 	@echo '  POOL                       $(value POOL)/'
@@ -225,7 +212,7 @@ define cdroot/body
 	cp $O/root.patched/boot/$(shell basename $(shell readlink $O/root.patched/vmlinuz)) $O/cdroot/casper/vmlinuz
 	cp $O/root.patched/boot/$(shell basename $(shell readlink $O/root.patched/initrd.img)) $O/cdroot/casper/initrd.gz
 
-	mksquashfs $O/root.patched $O/cdroot/casper/10root.squashfs $(MKSQUASHFS_OPTS)
+	mksquashfs $O/root.patched $O/cdroot/casper/10root.squashfs
 endef
 
 # construct target rules
@@ -259,10 +246,10 @@ define product.iso/body
 	@if deck --isdirty $O/root.tmp; then \
 		get_last_level="deck --get-level=last $O/root.tmp"; \
 		output=$O/cdroot/casper/20tmp.squashfs; \
-		echo "mksquashfs \$$($$get_last_level) $$output $(MKSQUASHFS_OPTS)"; \
+		echo "mksquashfs \$$($$get_last_level) $$output"; \
 		\
 		last_level=$$($$get_last_level); \
-		mksquashfs $$last_level $$output $(MKSQUASHFS_OPTS); \
+		mksquashfs $$last_level $$output; \
 	fi;
 	$(run-genisoimage)
 endef
