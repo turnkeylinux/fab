@@ -8,6 +8,10 @@ ifndef RELEASE
 $(warning RELEASE not defined - default paths for POOL and BOOTSTRAP may break)
 endif
 
+_CONF_VARS = RELEASE $(foreach var,$(CONF_VARS),$(if $($(var)), $(var)))
+export $(_CONF_VARS)
+export FAB_CHROOT_ENV = $(shell echo $(_CONF_VARS) | sed 's/ \+/:/g')
+
 # FAB_PATH dependent infrastructural components
 POOL ?= $(FAB_PATH)/pools/$(RELEASE)
 BOOTSTRAP ?= $(FAB_PATH)/bootstraps/$(RELEASE)
@@ -77,19 +81,22 @@ define help/body
 	@echo '  FAB_PATH and RELEASE       used to calculate default paths for input variables'
 	@echo
 	@echo '# Build context variables    [VALUE]'
+	@echo '  CONF_VARS                  $(value CONF_VARS)'
+	@echo
 	@echo '  POOL                       $(value POOL)/'
 	@echo '  BOOTSTRAP                  $(value BOOTSTRAP)/'
 	@echo '  CDROOT                     $(value CDROOT)/'
 	@echo '  FAB_PLAN_INCLUDE_PATH      $(value FAB_PLAN_INCLUDE_PATH)/'
 	@echo '  FAB_TMPDIR                 $(value FAB_TMPDIR)/'
 	@echo
-	@echo '# Product input variables    [VALUE]'  
+	@echo '# Product input variables    [VALUE]'
 	@echo '  PLAN                       $(value PLAN)'
 	@echo '  ROOT_OVERLAY               $(value ROOT_OVERLAY)/'
 	@echo '  CDROOT_OVERLAY             $(value CDROOT_OVERLAY)/'
 	@echo '  REMOVELIST                 $(value REMOVELIST)'
 	@echo '  CONF_SCRIPTS               $(value CONF_SCRIPTS)/'
 	@echo
+
 	@echo '# Product output variables   [VALUE]'
 	@echo '  O                          $(value O)/'
 	@echo '  ISOLABEL                   $(value ISOLABEL)'
@@ -146,7 +153,7 @@ endef
 # target: root.spec
 root.spec/deps ?= $(STAMPS_DIR)/bootstrap $(wildcard plan/*)
 define root.spec/body
-	fab-plan-resolve --output=$O/root.spec $(PLAN) $O/bootstrap
+	fab-plan-resolve $(PLAN) $O/bootstrap --output=$O/root.spec $(foreach var,$(_CONF_VARS),-D $(var)=$($(var)))
 endef
 
 # target: root.build

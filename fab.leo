@@ -2,7 +2,7 @@
 <?xml-stylesheet ekr_test?>
 <leo_file>
 <leo_header file_format="2" tnodes="0" max_tnode_index="1" clone_windows="0"/>
-<globals body_outline_ratio="0.340248962656">
+<globals body_outline_ratio="0.159751037344">
 	<global_window_position top="0" left="605" height="964" width="665"/>
 	<global_log_window_position top="0" left="0" height="0" width="0"/>
 </globals>
@@ -109,21 +109,20 @@
 <v t="zaril.20120207044153" a="E"><vh>support deck inputs</vh></v>
 <v t="zaril.20120207045734"><vh>support environment variables</vh></v>
 <v t="zaril.20120206152141"><vh>research readahead</vh></v>
-<v t="zaril.20120204224450" a="E"><vh>port casper stuff to conf.d</vh>
+<v t="zaril.20120204224450"><vh>port casper stuff to conf.d</vh>
 <v t="zaril.20120204023832"><vh>email: unnecessary or badly placed casper-bottom scripts</vh></v>
-<v t="zaril.20120208012919" a="TV"><vh>research casper-bottom scripts</vh></v>
+<v t="zaril.20120208012919"><vh>research casper-bottom scripts</vh></v>
 <v t="zaril.20120206145455"><vh>determine what is essential to skeleton</vh>
 <v t="zaril.20120207133732"><vh>port scripts</vh></v>
 <v t="zaril.20120206161341" a="E"><vh>configure hostname</vh></v>
 <v t="zaril.20120206161341.1" a="E"><vh>configure user/root password</vh></v>
 </v>
 </v>
+<v t="zaril.20120115022525" a="ETV"><vh>conditional development/production builds</vh></v>
 </v>
 </v>
 </v>
 <v t="loni.20110928132411" a="E"><vh>bugs/wishlist</vh>
-<v t="zaril.20120207052028"><vh>conditional builds</vh></v>
-<v t="zaril.20120115022525"><vh>conditional development/production builds</vh></v>
 <v t="zaril.20120130153104"><vh>should Makefile show dirty changes in root.tmp?</vh></v>
 <v t="zaril.20120115021505"><vh>product.mk: product recipe</vh></v>
 <v t="zaril.20120115021505.1"><vh>product.mk: usb product build</vh></v>
@@ -1880,10 +1879,37 @@ solution: use c-style comments
 
 
    </t>
-<t tx="zaril.20120115022525">When we reach production, we can change the plan so that the development bits of
+<t tx="zaril.20120115022525">* EMAIL EXCERPT/OVERVIEW
+
+When we reach production, we can change the plan so that the development bits of
 a product are included conditionally during preprocessing, depending on a
 product.mk variable. Even then I think the default should still be optimized for
 development builds because they are more common than production/release builds.
+
+* SUMMARY
+    allow configuration variables to influence the build process
+        product Makefile (e.g., post/pre hooks)
+        plan conditionals (during c-preprocessing)
+        patch configuration scripts
+
+VAR1 = y
+CONF_VARS = VAR1 VAR2 VAR2
+
+
+test:
+    debug on by default
+
+    make root.spec DEBUG=0
+
+roadmap
+    debug with just the plan
+    pass to conf scripts
+        test script shows debug status
+
+INSIGHT: we can influence the cdroot using /pre or /post hooks
+
+RELEASE should be built-in
+
 </t>
 <t tx="zaril.20120115022525.1">* SUMMARY
 two components
@@ -2426,7 +2452,6 @@ formats
 
 
 </t>
-<t tx="zaril.20120207052028"></t>
 <t tx="zaril.20120207133732">Q: should we solve the inheritance problem right now?
 A:
     no make the scripts as simple as possible
