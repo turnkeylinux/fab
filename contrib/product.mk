@@ -188,7 +188,6 @@ root.patched/deps ?= $(STAMPS_DIR)/root.build $(REMOVELIST) $(wildcard $(CONF_SC
 define root.patched/body
 	$(call remove-deck, $O/root.patched)
 	deck $O/root.build $O/root.patched
-	$(if $(REMOVELIST),fab-apply-removelist $(REMOVELIST) $O/root.patched)
 	if [ -d $(ROOT_OVERLAY) ]; then \
 		fab-apply-overlay $(ROOT_OVERLAY) $O/root.patched; \
 		if [ -e $(ROOT_OVERLAY)/etc/casper.conf ]; then \
@@ -198,6 +197,7 @@ define root.patched/body
 	fab-chroot $O/root.patched "cp /usr/share/base-files/dot.bashrc /etc/skel/.bashrc"
 	fab-chroot $O/root.patched "rm -rf /boot/*.bak"
 	$(call run-conf-scripts, $(CONF_SCRIPTS))
+	$(if $(REMOVELIST),fab-apply-removelist $(REMOVELIST) $O/root.patched)
 endef
 
 root.tmp/deps ?= $(STAMPS_DIR)/root.patched
