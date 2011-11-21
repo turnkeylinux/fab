@@ -72,7 +72,10 @@ def plan_lint(plan_path, pool_path):
     packages = parse_plan(plan)
     packages_info = get_packages_info(packages, pool_path)
 
-    column_len = max([ len(package) for package in packages ])
+    if not packages:
+        column_len = 0
+    else:
+        column_len = max([ len(package) for package in packages ])
 
     comments = {}
     def get_comment_key(m):
