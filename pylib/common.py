@@ -1,11 +1,25 @@
-
 import os
 import sys
 import tempfile
+import getopt
 
 class Error(Exception):
     pass
 
+# patch gnu_getopt to support "-" as a argument (like getopt does)
+def gnu_getopt(args, options, long_options=[]):
+    def list_replace(l, a, b):
+        for i in range(len(l)):
+            if l[i] == a:
+                l[i] = b
+
+    list_replace(args, "-", "__stdin__")
+
+    opts, args = getopt.gnu_getopt(args, options, long_options)
+
+    list_replace(args, "__stdin__", "-")
+    return opts, args
+    
 def mkdir(path):
     path = str(path)
     if not os.path.exists(path):
@@ -19,6 +33,7 @@ def get_tmpdir():
 
     mkdir(tmpdir)
     return tempfile.mkdtemp(prefix="fab-", dir=tmpdir)
+
 
 ## cli common
 def fatal(s):

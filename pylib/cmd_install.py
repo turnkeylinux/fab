@@ -24,7 +24,7 @@ import help
 import cpp
 from plan import Plan
 from installer import Installer
-from common import fatal
+from common import fatal, gnu_getopt
 
 @help.usage(__doc__)
 def usage():
@@ -33,8 +33,8 @@ def usage():
 def main():
     cpp_opts, args = cpp.getopt(sys.argv[1:])
     try:
-        opts, args = getopt.gnu_getopt(args, 'np:',
-                                   ['pool=', 'no-deps'])
+        opts, args = gnu_getopt(args, 'np:',
+                                ['pool=', 'no-deps'])
     except getopt.GetoptError, e:
         usage(e)
 

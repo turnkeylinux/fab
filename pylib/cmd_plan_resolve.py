@@ -23,7 +23,7 @@ import help
 import cpp
 from plan import Plan
 from chroot import Chroot
-from common import fatal
+from common import fatal, gnu_getopt
 
 @help.usage(__doc__)
 def usage():
@@ -38,9 +38,9 @@ def list_packages(root):
 def main():
     cpp_opts, args = cpp.getopt(sys.argv[1:])
     try:
-        opts, args = getopt.gnu_getopt(args, "o:p:h",
-                                       ["output=",
-                                        "pool="])
+        opts, args = gnu_getopt(args, "o:p:h",
+                                ["output=",
+                                 "pool="])
     except getopt.GetoptError, e:
         usage(e)
 
