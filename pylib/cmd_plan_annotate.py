@@ -19,8 +19,8 @@ import debinfo
 
 from md5 import md5
 
-from pool import Pool
-from common import fatal
+from pyproject.pool.pool import Pool
+from common import fatal, get_tmpdir
 
 @help.usage(__doc__)
 def usage():
@@ -51,7 +51,9 @@ def get_packages_info(packages, pool_path):
     info = {}
 
     pool = Pool(pool_path)
-    packagedir = pool.get(packages)
+
+    packagedir = get_tmpdir()
+    pool.get(packagedir, packages, strict=True)
 
     for package in os.listdir(packagedir):
         path = os.path.join(packagedir, package)

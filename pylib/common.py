@@ -34,7 +34,6 @@ def get_tmpdir():
     mkdir(tmpdir)
     return tempfile.mkdtemp(prefix="fab-", dir=tmpdir)
 
-
 ## cli common
 def fatal(s):
     print >> sys.stderr, "error: " + str(s)

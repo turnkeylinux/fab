@@ -7,7 +7,9 @@ import cpp
 import debinfo
 import debversion
 import executil
-from pool import Pool
+from pyproject.pool.pool import Pool
+
+from common import get_tmpdir, mkdir
 
 class Error(Exception):
     pass
@@ -41,7 +43,11 @@ class PackageGetter(dict):
             if not dep.restrict or dep.restrict.relation != "=":
                 return dep.name
             return "%s=%s" % (dep.name, dep.restrict.version)
-        dir = pool.get(map(f, deps), strict=False)
+
+        dir = get_tmpdir()
+        mkdir(dir)
+        
+        pool.get(dir, map(f, deps))
         
         deps = dict([ (d.name, d) for d in deps ])
         for fname in os.listdir(dir):

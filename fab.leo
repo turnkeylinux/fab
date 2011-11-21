@@ -2,8 +2,8 @@
 <?xml-stylesheet ekr_test?>
 <leo_file>
 <leo_header file_format="2" tnodes="0" max_tnode_index="1" clone_windows="0"/>
-<globals body_outline_ratio="0.551867219917">
-	<global_window_position top="10" left="605" height="964" width="665"/>
+<globals body_outline_ratio="0.131742738589">
+	<global_window_position top="0" left="605" height="964" width="665"/>
 	<global_log_window_position top="0" left="0" height="0" width="0"/>
 </globals>
 <preferences/>
@@ -19,7 +19,7 @@
 <v t="zaril.20120209024252.1"><vh>background</vh></v>
 <v t="zaril.20120209024252.2"><vh>overview</vh></v>
 <v t="zaril.20120209024252.3"><vh>conf.d/ chroot scripts</vh></v>
-<v t="zaril.20120209024252.4" a="TV"><vh>product configuration variables</vh></v>
+<v t="zaril.20120209024252.4"><vh>product configuration variables</vh></v>
 </v>
 </v>
 <v t="loni.20111001190214.2" a="E"><vh>development log</vh>
@@ -126,13 +126,13 @@
 </v>
 </v>
 <v t="zaril.20120115022525"><vh>allow configuration variables to influence the build process</vh></v>
+<v t="zaril.20120208061751" a="ETV"><vh>call pool via API, not CLI</vh></v>
 </v>
 </v>
 <v t="loni.20110928132411" a="E"><vh>bugs/wishlist</vh>
 <v t="zaril.20120208061232"><vh>fab-query</vh></v>
 <v t="zaril.20120208061040"><vh>dependency promotion</vh></v>
 <v t="zaril.20120208060957"><vh>fab spec dependency annotation</vh></v>
-<v t="zaril.20120208061751"><vh>optimization: call pool via API, not CLI</vh></v>
 <v t="zaril.20120208061834"><vh>intelligent handling of dependency restrictions</vh></v>
 <v t="zaril.20120130153104"><vh>should Makefile show dirty changes in root.tmp?</vh></v>
 <v t="zaril.20120115021505"><vh>product.mk: product recipe</vh></v>
@@ -2544,8 +2544,7 @@ package** # promote suggests + recommended
 
 IDEA: we could mix and match output with grep-dctrl
 </t>
-<t tx="zaril.20120208061751">blocking: pyproject infrastructure
-</t>
+<t tx="zaril.20120208061751"></t>
 <t tx="zaril.20120208061834">The current logic is to pray that the newest package versions in the pool satisft the dependency restrictions and fail if it doesn't, even if an older version exists in the pool which does satisfy the restriction. This is a naive short term solution.</t>
 <t tx="zaril.20120209024252"></t>
 <t tx="zaril.20120209024252.1">I've extended fab and product.mk to support product configuration at build-time.

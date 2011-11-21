@@ -6,7 +6,7 @@ from os.path import *
 import debinfo
 import executil
 from chroot import Chroot
-from pool import Pool
+from pyproject.pool.pool import Pool
 
 class Error(Exception):
     pass
@@ -147,7 +147,7 @@ class Installer:
                           "_dists_local_debs_binary-i386_Packages")
 
         print "getting packages..."
-        self.pool.get(packages, packagedir)
+        self.pool.get(packagedir, packages, strict=True)
 
         print "generating package index..."
         self._apt_genindex(packagedir, indexfile)
