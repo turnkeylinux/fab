@@ -16,7 +16,9 @@ from os.path import *
 
 import help
 import executil
-from common import fatal, warn, mkdir, get_tmpdir
+from _temp import TempDir
+
+from common import fatal, warn, mkdir
 
 @help.usage(__doc__)
 def usage():
@@ -57,17 +59,15 @@ def _move(entry, source_root_path, dest_root_path):
 def apply_removelist(removelist_fh, root_path):
     remove, restore = parse_removelist(removelist_fh.read())
 
-    tmpdir = get_tmpdir()
+    tmpdir = TempDir()
     
     # move entries out of root_path
     for entry in remove:
-        _move(entry, root_path, tmpdir)
+        _move(entry, root_path, tmpdir.path)
 
     # move entries back into root_path
     for entry in restore:
-        _move(entry, tmpdir, root_path)
-
-    shutil.rmtree(tmpdir)
+        _move(entry, tmpdir.path, root_path)
 
 def main():
     args = sys.argv[1:]

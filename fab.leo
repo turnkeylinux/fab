@@ -2,7 +2,7 @@
 <?xml-stylesheet ekr_test?>
 <leo_file>
 <leo_header file_format="2" tnodes="0" max_tnode_index="1" clone_windows="0"/>
-<globals body_outline_ratio="0.131742738589">
+<globals body_outline_ratio="0.505186721992">
 	<global_window_position top="0" left="605" height="964" width="665"/>
 	<global_log_window_position top="0" left="0" height="0" width="0"/>
 </globals>
@@ -126,7 +126,8 @@
 </v>
 </v>
 <v t="zaril.20120115022525"><vh>allow configuration variables to influence the build process</vh></v>
-<v t="zaril.20120208061751" a="ETV"><vh>call pool via API, not CLI</vh></v>
+<v t="zaril.20120208061751" a="E"><vh>call pool via API, not CLI</vh></v>
+<v t="zaril.20120214041118" a="ETV"><vh>refactor get_tmpdir</vh></v>
 </v>
 </v>
 <v t="loni.20110928132411" a="E"><vh>bugs/wishlist</vh>
@@ -2693,5 +2694,13 @@ Note that one things configuration variables *don't* effect are overlays, at
 least not by default. It is possible however to add this functionality by
 defining pre/post hooks which are effected by the value of the configuration
 variables.</t>
+<t tx="zaril.20120214041118">LOGIC
+    a self deleting object
+
+
+IDEAS
+    we can get rid of shutil
+    we don't need to mkdir the path we got
+</t>
 </tnodes>
 </leo_file>

@@ -20,7 +20,8 @@ import debinfo
 from md5 import md5
 
 from pyproject.pool.pool import Pool
-from common import fatal, get_tmpdir
+from common import fatal
+from _temp import TempDir
 
 @help.usage(__doc__)
 def usage():
@@ -52,16 +53,15 @@ def get_packages_info(packages, pool_path):
 
     pool = Pool(pool_path)
 
-    packagedir = get_tmpdir()
-    pool.get(packagedir, packages, strict=True)
+    tmpdir = TempDir()
+    pool.get(tmpdir.path, packages, strict=True)
 
-    for package in os.listdir(packagedir):
-        path = os.path.join(packagedir, package)
+    for package in os.listdir(tmpdir.path):
+        path = os.path.join(tmpdir.path, package)
         if path.endswith('.deb'):
             control = debinfo.get_control_fields(path)
             info[control['Package']] = control['Description']
 
-    shutil.rmtree(packagedir)
     return info
 
 def plan_lint(plan_path, pool_path):
