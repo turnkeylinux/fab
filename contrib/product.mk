@@ -190,9 +190,6 @@ define root.patched/body
 	deck $O/root.build $O/root.patched
 	if [ -d $(ROOT_OVERLAY) ]; then \
 		fab-apply-overlay $(ROOT_OVERLAY) $O/root.patched; \
-		if [ -e $(ROOT_OVERLAY)/etc/casper.conf ]; then \
-			fab-chroot $O/root.patched "update-initramfs -u"; \
-		fi \
 	fi
 	fab-chroot $O/root.patched "cp /usr/share/base-files/dot.bashrc /etc/skel/.bashrc"
 	fab-chroot $O/root.patched "rm -rf /boot/*.bak"
