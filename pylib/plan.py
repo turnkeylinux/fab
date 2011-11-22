@@ -9,7 +9,7 @@ import debversion
 import executil
 from pyproject.pool.pool import Pool
 
-from temp import TempDir
+from _temp import TempDir
 
 class Error(Exception):
     pass
