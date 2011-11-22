@@ -64,6 +64,7 @@ redeck:
 	$(call mount-deck, $O/bootstrap)
 	$(call mount-deck, $O/root.build)
 	$(call mount-deck, $O/root.patched)
+	$(call mount-deck, $O/root.tmp)
 
 debug:
 	$(foreach v, $V, $(warning $v = $($v)))
