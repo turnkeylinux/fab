@@ -58,6 +58,9 @@ def main():
     if not os.path.isdir(chroot_path):
         fatal("chroot does not exist: " + chroot_path)
 
+    if pool_path is None:
+        pool_path = os.environ.get('FAB_POOL_PATH')
+
     plan = Plan()
     for arg in args[1:]:
         if arg == "-" or exists(arg):

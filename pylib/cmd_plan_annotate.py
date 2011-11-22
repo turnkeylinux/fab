@@ -127,6 +127,9 @@ def main():
             pool_path = val
 
     plan_path = args[0]
+    if pool_path is None:
+        pool_path = os.environ.get('FAB_POOL_PATH')
+
     newplan = plan_lint(plan_path, pool_path)
 
     if inplace:

@@ -63,6 +63,8 @@ def main():
             pool_path = val
 
     plan_path = args[0]
+    if pool_path is None:
+        pool_path = os.environ.get('FAB_POOL_PATH')
 
     try:
         bootstrap_path = args[1]
