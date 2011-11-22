@@ -61,7 +61,7 @@ def main():
     if pool_path is None:
         pool_path = os.environ.get('FAB_POOL_PATH')
 
-    plan = Plan()
+    plan = Plan(pool_path=pool_path)
     for arg in args[1:]:
         if arg == "-" or exists(arg):
             plan |= Plan.init_from_file(arg, cpp_opts, pool_path)
