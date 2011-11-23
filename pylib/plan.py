@@ -108,15 +108,25 @@ class Dependency:
         """initialize Dependency from a control file formatted dependency
         e.g.,
             libgpmg1 (>= 1.19.6-1)
+        exception:
+            package*  # promote recommends
+            package** # promote recommends + suggests
         """
         string = string.strip()
 
-        m = re.match(r'([a-z0-9][a-z0-9\+\-\.]+)(?:\s+\((.*?)\))?$', string)
+        m = re.match(r'([a-z0-9][a-z0-9\+\-\.]+)([\*]{0,2})(?:\s+\((.*?)\))?$', string)
         if not m:
             raise Error("illegally formatted dependency (%s)" % string)
 
         self.name = m.group(1)
-        parens = m.group(2)
+        promote = m.group(2)
+        parens = m.group(3)
+
+        self.fields = ['Pre-Depends', 'Depends']
+        if promote:
+            self.fields.append('Recommends')
+        if len(promote) == 2:
+            self.fields.append('Suggests')
 
         self.restrict = None
         if parens:
@@ -184,7 +194,7 @@ class Plan(set):
         set.__init__(self, iterable)
         self.pool = Pool(pool_path)
 
-    def _get_new_deps(self, pkg_control, old_deps):
+    def _get_new_deps(self, pkg_control, old_deps, depend_fields):
         def parse_depends(val):
             if val is None or val.strip() == "":
                 return []
@@ -194,7 +204,7 @@ class Plan(set):
         new_deps = set()
         
         raw_depends = []
-        for field_name in ('Pre-Depends', 'Depends'):
+        for field_name in depend_fields:
             raw_depends += parse_depends(pkg_control.get(field_name))
 
         for raw_depend in raw_depends:
@@ -258,7 +268,7 @@ class Plan(set):
                 spec.add(dep.name, version)
                 resolved.add(dep)
                 
-                new_deps |= self._get_new_deps(pkg_control, resolved | unresolved | new_deps)
+                new_deps |= self._get_new_deps(pkg_control, resolved | unresolved | new_deps, dep.fields)
                 provided |= self._get_provided(pkg_control)
 
             unresolved = new_deps - resolved

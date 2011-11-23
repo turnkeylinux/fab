@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet ekr_test?>
 <leo_file>
-<leo_header file_format="2" tnodes="0" max_tnode_index="1" clone_windows="0"/>
-<globals body_outline_ratio="0.505186721992">
-	<global_window_position top="0" left="605" height="964" width="665"/>
+<leo_header file_format="2" tnodes="0" max_tnode_index="0" clone_windows="0"/>
+<globals body_outline_ratio="0.5">
+	<global_window_position top="0" left="0" height="709" width="1143"/>
 	<global_log_window_position top="0" left="0" height="0" width="0"/>
 </globals>
 <preferences/>
@@ -127,12 +127,12 @@
 </v>
 <v t="zaril.20120115022525"><vh>allow configuration variables to influence the build process</vh></v>
 <v t="zaril.20120208061751" a="E"><vh>call pool via API, not CLI</vh></v>
-<v t="zaril.20120214041118" a="ETV"><vh>refactor get_tmpdir</vh></v>
+<v t="zaril.20120214041118" a="E"><vh>refactor get_tmpdir</vh></v>
+<v t="zaril.20120208061040" a="TV"><vh>dependency promotion</vh></v>
 </v>
 </v>
 <v t="loni.20110928132411" a="E"><vh>bugs/wishlist</vh>
 <v t="zaril.20120208061232"><vh>fab-query</vh></v>
-<v t="zaril.20120208061040"><vh>dependency promotion</vh></v>
 <v t="zaril.20120208060957"><vh>fab spec dependency annotation</vh></v>
 <v t="zaril.20120208061834"><vh>intelligent handling of dependency restrictions</vh></v>
 <v t="zaril.20120130153104"><vh>should Makefile show dirty changes in root.tmp?</vh></v>
