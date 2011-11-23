@@ -133,6 +133,7 @@
 </v>
 </v>
 <v t="loni.20110928132411" a="E"><vh>bugs/wishlist</vh>
+<v t="zaril.20120226015244" a="TV"><vh>fix fab-annotate</vh></v>
 <v t="zaril.20120208061232"><vh>fab-query</vh></v>
 <v t="zaril.20120208061834"><vh>intelligent handling of dependency restrictions</vh></v>
 <v t="zaril.20120130153104"><vh>should Makefile show dirty changes in root.tmp?</vh></v>
@@ -2701,6 +2702,13 @@ variables.</t>
 IDEAS
     we can get rid of shutil
     we don't need to mkdir the path we got
+</t>
+<t tx="zaril.20120226015244">LOGIC
+    delete auto-generated comments when annotating and re-annotate
+        goal: nice and neat annotation
+    
+    don't annotate a package if it already annotate with a c style comment on same line
+        /* comment */ or // comment
 </t>
 </tnodes>
 </leo_file>
