@@ -35,6 +35,17 @@ def list_packages(root):
 
     return output.splitlines()
 
+def annotate_spec(spec, packageorigins):
+    annotated_spec = []
+
+    column_len = max([ len(s) + 1 for s in spec ])
+    for s in spec:
+        name = s.split("=")[0]
+        origins = " ".join(list([ origin for origin in packageorigins[name] ]))
+        annotated_spec.append("%s # %s" % (s.ljust(column_len), origins))
+
+    return "\n".join(annotated_spec)
+
 def main():
     cpp_opts, args = cpp.getopt(sys.argv[1:])
     try:
@@ -75,16 +86,24 @@ def main():
         bootstrap_path = None
 
     plan = Plan.init_from_file(plan_path, cpp_opts, pool_path)
+    for package in plan:
+        plan.packageorigins.add(package, 'plan')
+
     if bootstrap_path:
-        plan |= set(list_packages(bootstrap_path))
-        
+        bootstrap_packages = set(list_packages(bootstrap_path))
+        plan |= bootstrap_packages
+
+        for package in bootstrap_packages:
+            plan.packageorigins.add(package, 'bootstrap')
+
     spec = plan.resolve()
+    spec = annotate_spec(spec, plan.packageorigins)
 
     if output_path is None:
         print spec
     else:
         open(output_path, "w").write(str(spec) + "\n")
-        
+
 if __name__=="__main__":
     main()
 

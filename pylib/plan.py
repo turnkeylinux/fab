@@ -14,6 +14,16 @@ from _temp import TempDir
 class Error(Exception):
     pass
 
+class PackageOrigins(dict):
+    """class for holding package origins for dependency annotation """
+
+    def add(self, name, origin):
+        name = name.split("=")[0].strip("*")
+        if not self.has_key(name):
+            self[name] = []
+
+        self[name].append(origin)
+
 class Spec(dict):
     """class for holding a spec"""
     
@@ -193,6 +203,7 @@ class Plan(set):
     def __init__(self, iterable=(), pool_path=None):
         set.__init__(self, iterable)
         self.pool = Pool(pool_path)
+        self.packageorigins = PackageOrigins()
 
     def _get_new_deps(self, pkg_control, old_deps, depend_fields):
         def parse_depends(val):
@@ -223,6 +234,9 @@ class Plan(set):
                 if self.pool.exists(alternative.name):
                     new_deps.add(alternative)
                     break
+
+        for dep in new_deps:
+            self.packageorigins.add(dep.name, pkg_control.get('Package'))
 
         return new_deps
     
@@ -259,7 +273,7 @@ class Plan(set):
                 package_path = packages[dep]
                 if not package_path:
                     continue
-                
+
                 pkg_control = debinfo.get_control_fields(package_path)
 
                 version = pkg_control['Version']
@@ -267,7 +281,7 @@ class Plan(set):
                     raise Error("dependency '%s' incompatible with newest pool version (%s)" % (dep, version))
                 spec.add(dep.name, version)
                 resolved.add(dep)
-                
+
                 new_deps |= self._get_new_deps(pkg_control, resolved | unresolved | new_deps, dep.fields)
                 provided |= self._get_provided(pkg_control)
 
@@ -276,5 +290,5 @@ class Plan(set):
 
         if missing:
             raise Error("broken dependencies: " + ", ".join(map(str, missing)))
-            
+
         return spec
