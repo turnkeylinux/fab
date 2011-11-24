@@ -36,6 +36,7 @@ def parse_plan(plan):
     for expr in plan.split('\n'):
         expr = re.sub(r'#.*', '', expr)
         expr = expr.strip()
+        expr = expr.rstrip("*")
         if not expr:
             continue
         
@@ -93,7 +94,7 @@ def plan_lint(plan_path, pool_path):
             continue
 
         expr = line.strip()
-        description = packages_info[expr.lstrip("!")]
+        description = packages_info[expr.lstrip("!").rstrip("*")]
         plan_linted += "%s # %s\n" % (expr.ljust(column_len + 3),
                                       description)
 
