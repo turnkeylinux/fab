@@ -247,7 +247,20 @@ class Plan(set):
             return set()
 
         return set(re.split("\s*,\s*", raw_provided.strip()))
-    
+
+    def dctrls(self):
+        """return plan dependencies control file info"""
+        toquery = set([ Dependency(pkg) for pkg in self ])
+        packages = PackageGetter(toquery, self.pool)
+
+        dctrls = {}
+        for dep in toquery:
+            package_path = packages[dep]
+            dctrls[dep] = debinfo.get_control_fields(package_path)
+            dctrls[dep]['Filename'] = basename(package_path)
+
+        return dctrls
+
     def resolve(self):
         """resolve plan dependencies recursively -> return spec"""
         spec = Spec()
