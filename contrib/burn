@@ -1,6 +1,0 @@
-wodim -verbose -data -eject \
-	driveropts=burnfree \
-	speed=4 \
-	dev=/dev/cdrom \
-	product.iso
-
