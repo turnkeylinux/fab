@@ -6,7 +6,7 @@ Environmental variables::
     export FAB_MAKEFILE_INCLUDE_PATH=/turnkey/private/fab/contrib
     export FAB_PLAN_INCLUDE_PATH=/turnkey/fab/common-plans
     export FAB_PATH=/turnkey/fab
-    export FAB_POOL_PATH=/turnkey/fab/pools/rocky
+    export FAB_POOL_PATH=/turnkey/fab/pools/rocky2
     export O=build
 
 
