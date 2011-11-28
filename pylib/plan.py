@@ -256,6 +256,8 @@ class Plan(set):
         dctrls = {}
         for dep in toquery:
             package_path = packages[dep]
+            if package_path is None:
+                raise Error('could not find package', dep.name)
             dctrls[dep] = debinfo.get_control_fields(package_path)
             dctrls[dep]['Filename'] = basename(package_path)
 
