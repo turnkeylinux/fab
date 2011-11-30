@@ -53,7 +53,7 @@ endef
 all: $O/product.iso
 
 define mount-deck
-	@deck $1 >& /dev/null && echo deck $1 || true
+	@(deck $1 > /dev/null 2>&1) && echo deck $1 || true
 endef
 
 redeck:
