@@ -28,6 +28,11 @@ PLAN ?= plan/main
 ROOT_OVERLAY ?= overlay
 CDROOT_OVERLAY ?= cdroot.overlay
 REMOVELIST ?= removelist
+# undefine REMOVELIST if the file doesn't exist
+ifeq ($(wildcard $(REMOVELIST)),)
+REMOVELIST =
+endif
+
 CONF_SCRIPTS ?= conf.d
 
 INITRAMFS_PACKAGES ?= busybox-initramfs casper
@@ -165,11 +170,6 @@ define root.build/body
 endef
 
 # target: root.patched
-# undefine REMOVELIST if the file doesn't exist
-ifeq ($(wildcard $(REMOVELIST)),)
-REMOVELIST =
-endif
-
 define run-conf-scripts
 	@if [ -n "$(wildcard $1/*)" ]; then \
 		echo "\$$(call $0,$1)"; \
