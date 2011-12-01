@@ -133,11 +133,7 @@ class Installer:
         fake_update_initramfs.revert()
         defer_log = join(self.chroot.path, defer_log)
         if exists(defer_log):
-            deferred = [ command.strip()
-                         for command in file(defer_log, 'r').readlines() ]
-            for command in set(deferred):
-                self.chroot.system(command)
-
+            self.chroot.system("update-initramfs -u")
             os.remove(defer_log)
             
     def install(self, packages):
