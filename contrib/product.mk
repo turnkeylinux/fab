@@ -125,7 +125,6 @@ define help/body
 	@echo '  product.iso   # product ISO created from the cdroot'
 	@echo
 	@echo '  updated-initramfs # rebuild product with updated initramfs'
-	@echo '  updated-root-tmp  # rebuild product with updated root tmp'
 endef
 
 help:
@@ -198,6 +197,7 @@ define root.patched/body
 	$(if $(REMOVELIST),fab-apply-removelist $(REMOVELIST) $O/root.patched)
 endef
 
+# target root.tmp
 root.tmp/deps ?= $(STAMPS_DIR)/root.patched
 define root.tmp/body
 	$(call remove-deck, $O/root.tmp)
@@ -211,11 +211,6 @@ define cdroot/body
 	cp -a $(CDROOT) $O/cdroot
 	mkdir $O/cdroot/casper
 	if [ -d $(CDROOT_OVERLAY) ]; then fab-apply-overlay $(CDROOT_OVERLAY) $O/cdroot; fi
-
-	cp $O/root.patched/usr/lib/syslinux/isolinux.bin $O/cdroot/isolinux
-
-	cp $O/root.patched/boot/$(shell basename $(shell readlink $O/root.patched/vmlinuz)) $O/cdroot/casper/vmlinuz
-	cp $O/root.patched/boot/$(shell basename $(shell readlink $O/root.patched/initrd.img)) $O/cdroot/casper/initrd.gz
 
 	mksquashfs $O/root.patched $O/cdroot/casper/10root.squashfs
 endef
@@ -247,6 +242,19 @@ endef
 
 # target: product.iso
 define product.iso/body
+	$(run-genisoimage)
+endef
+
+cdroot-dynamic: $(STAMPS_DIR)/root.tmp
+	$(cdroot-dynamic/pre)
+	$(cdroot-dynamic/body)
+	$(cdroot-dynamic/post)
+
+define cdroot-dynamic/body
+	cp $O/root.tmp/usr/lib/syslinux/isolinux.bin $O/cdroot/isolinux
+	cp $O/root.tmp/boot/$(shell basename $(shell readlink $O/root.tmp/vmlinuz)) $O/cdroot/casper/vmlinuz
+	cp $O/root.tmp/boot/$(shell basename $(shell readlink $O/root.tmp/initrd.img)) $O/cdroot/casper/initrd.gz
+
 	rm -f $O/cdroot/casper/20tmp.squashfs
 	@if deck --isdirty $O/root.tmp; then \
 		get_last_level="deck --get-level=last $O/root.tmp"; \
@@ -256,25 +264,15 @@ define product.iso/body
 		last_level=$$($$get_last_level); \
 		mksquashfs $$last_level $$output; \
 	fi;
-	$(run-genisoimage)
 endef
-product.iso/deps ?= $(STAMPS_DIR)/cdroot $(STAMPS_DIR)/root.tmp
+
+product.iso/deps ?= $(STAMPS_DIR)/cdroot cdroot-dynamic
 $O/product.iso: $(product.iso/deps) $(product.iso/deps/extra)
 	$(product.iso/pre)
 	$(product.iso/body)
 	$(product.iso/post)
 
 product.iso: $O/product.iso
-
-# target: updated-root-tmp
-define updated-root-tmp/body
-	$(product.iso/body)
-endef
-
-updated-root-tmp:
-	$(updated-root-tmp/pre)
-	$(updated-root-tmp/body)
-	$(updated-root-tmp/post)
 
 # target: updated-initramfs
 define updated-initramfs/body
@@ -292,4 +290,4 @@ updated-initramfs: $(update-initramfs/deps) $(updated-initramfs/deps/extra)
 	$(updated-initramfs/body)
 	$(updated-initramfs/post)
 
-.PHONY: all debug redeck help clean updated-initramfs updated-root-tmp $(STAMPED_TARGETS)
+.PHONY: all debug redeck help clean cdroot-dynamic updated-initramfs $(STAMPED_TARGETS) 
