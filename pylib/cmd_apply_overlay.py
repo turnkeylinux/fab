@@ -23,10 +23,11 @@ def usage():
     print >> sys.stderr, "Syntax: %s [-options] <overlay> <path>" % sys.argv[0]
 
 def apply_overlay(overlay, dstpath, preserve=False):
-    opts = "-TdR"
+    cmd = "cp -TdR"
     if preserve:
-        opts += "p"
-    executil.system("cp %s %s/ %s/" % (opts, overlay, dstpath))
+        cmd += " -p"
+
+    executil.system(cmd, overlay, dstpath)
 
 def main():
     try:
