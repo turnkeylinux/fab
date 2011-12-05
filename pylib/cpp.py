@@ -1,12 +1,10 @@
 import os
 import sys
 
-import subprocess
-PIPE = subprocess.PIPE
+import stdtrap
+import executil
 
 from executil import ExecError
-class ExecError(ExecError):
-    pass
 
 CPP_ARGS = ("-I", "-D", "-U")
 
@@ -64,9 +62,13 @@ def cpp(input, cpp_opts=[]):
     if args:
         command += args
 
-    p = subprocess.Popen(command, stdout=PIPE, stderr=PIPE)
-    err = p.wait()
-    if err:
-        raise ExecError(" ".join(command), err, p.stderr.read())
+    trap = stdtrap.StdTrap()
+    try:
+        executil.system(*command)
+    except ExecError, e:
+        trap.close()
+        trapped_stderr = trap.stderr.read()
+        raise ExecError(" ".join(command), e.exitcode, trapped_stderr)
 
-    return p.stdout.read()
+    trap.close()
+    return trap.stdout.read()
