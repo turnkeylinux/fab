@@ -12,39 +12,86 @@ endif
 POOL ?= $(FAB_PATH)/pools/$(RELEASE)
 BOOTSTRAP_LIBEXEC ?= /turnkey/private/fab/contrib/bootstrap
 
-all: $(RELEASE)
+# build output path
+O ?= build
+
+STAMPS_DIR = $O/stamps
+
+all: $O/bootstrap
+
+#clean
+define clean/body 
+	-rm -rf $O/*.spec $O/bootstrap $O/repo $(STAMPS_DIR)
+endef
 
 clean:
-	-rm -rf $(RELEASE) $(RELEASE).spec
-	-rm -rf base.spec required.spec $(RELEASE).repo
+	$(clean/pre)
+	$(clean/body)
+	$(clean/post)
 
-required.spec: plan/required
-	fab-plan-resolve --output=$@ --pool=$(POOL) plan/required
+#required.spec
+required.spec/deps ?= plan/required
+define required.spec/body
+	fab-plan-resolve --output=$O/required.spec --pool=$(POOL) plan/required
+endef
 
-base.spec: plan/base required.spec
-	fab-plan-resolve --output=$@.tmp --pool=$(POOL) plan/base
-	$(BOOTSTRAP_LIBEXEC)/exclude_spec.py $@.tmp required.spec > $@
-	rm -f $@.tmp
+#base.spec
+base.spec/deps ?= plan/base $(STAMPS_DIR)/required.spec
+define base.spec/body
+	fab-plan-resolve --output=$O/base.full.spec --pool=$(POOL) plan/base
+	$(BOOTSTRAP_LIBEXEC)/exclude_spec.py $O/base.full.spec $O/required.spec > $O/base.spec
+endef
 
-$(RELEASE).spec: required.spec base.spec
-	echo "# REQUIRED" > $@
-	cat required.spec >> $@
+#bootstrap.spec
+bootstrap.spec/deps ?= $(STAMPS_DIR)/required.spec $(STAMPS_DIR)/base.spec
+define bootstrap.spec/body
+	echo "# REQUIRED" > $O/bootstrap.spec
+	cat $O/required.spec >> $O/bootstrap.spec
 
-	echo "# BASE" >> $@
-	cat base.spec >> $@
+	echo "# BASE" >> $O/bootstrap.spec
+	cat $O/base.spec >> $O/bootstrap.spec
+endef
 
-$(RELEASE).repo: $(RELEASE).spec
-	mkdir -p $@/pool/main
-	POOL_DIR=$(POOL) pool-get -s -t -i $(RELEASE).spec $@/pool/main
+#repo
+repo/deps ?= $(STAMPS_DIR)/bootstrap.spec
+define repo/body
+	mkdir -p $O/repo/pool/main
+	POOL_DIR=$(POOL) pool-get -s -t -i $O/bootstrap.spec $O/repo/pool/main
 
-	$(BOOTSTRAP_LIBEXEC)/repo_index.sh $(RELEASE) main $@
-	$(BOOTSTRAP_LIBEXEC)/repo_release.sh $(RELEASE) main `pwd`/$@
+	$(BOOTSTRAP_LIBEXEC)/repo_index.sh $(RELEASE) main $O/repo
+	$(BOOTSTRAP_LIBEXEC)/repo_release.sh $(RELEASE) main `pwd`/$O/repo
+endef
 
-$(RELEASE): $(RELEASE).repo $(RELEASE).spec
-	$(BOOTSTRAP_LIBEXEC)/bootstrap_spec.py $@ $@.spec `pwd`/$@.repo
+#bootstrap
+bootstrap/deps ?= $(STAMPS_DIR)/repo $(STAMPS_DIR)/bootstrap.spec
+define bootstrap/body
+	$(BOOTSTRAP_LIBEXEC)/bootstrap_spec.py $(RELEASE) $O/bootstrap `pwd`/$O/repo $O/bootstrap.spec
 
-	rm -rf $@/var/cache/apt/archives/*.deb
-	echo "do_initrd = Yes" > $@/etc/kernel-img.conf
+	rm -rf $O/bootstrap/var/cache/apt/archives/*.deb
+	echo "do_initrd = Yes" > $O/bootstrap/etc/kernel-img.conf
+endef
 
-.PHONY: clean
+$O/bootstrap: $(bootstrap/deps) $(bootstrap/deps/extra)
+	$(bootstrap/pre)
+	$(bootstrap/body)
+	$(bootstrap/post)
+
+bootstrap: $O/bootstrap
+
+# construct target rules
+define _stamped_target
+$1: $(STAMPS_DIR)/$1
+
+$(STAMPS_DIR)/$1: $$($1/deps) $$($1/deps/extra)
+	@mkdir -p $(STAMPS_DIR)
+	$$($1/pre)
+	$$($1/body)
+	$$($1/post)
+	touch $$@
+endef
+
+STAMPED_TARGETS := required.spec base.spec bootstrap.spec repo
+$(foreach target,$(STAMPED_TARGETS),$(eval $(call _stamped_target,$(target))))
+
+.PHONY: clean $(STAMP_TARGETS)
 
