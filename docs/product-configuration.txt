@@ -1,0 +1,179 @@
+Background
+==========
+
+I've extended fab and product.mk to support product configuration at
+build-time.  This additional functionality is designed to address a few
+problems we've been having:
+
+1) packages shouldn't perform product-specific configurations
+
+   For example, casper including scripts that configure users and such at
+   boot time.
+   
+   This violates separation of concerns and prevents packages from
+   fulfilling their full utility as generic, reusable building blocks. It
+   also increases the accidental complexity of the system by introducing
+   unnecessary interdependencies.
+   
+   Also, there is often significant overhead in changing a package to
+   configure them to suit a specific product. This is especially true for
+   stock packages, but generally creating multiple variants of a package
+   just to support different configurations is inconvenient and time
+   consuming.
+
+2) boot time is not the correct time to perform product configuration
+
+   It doesn't scale, it lengthens the boot process and it limits the
+   re-usability of casper.
+
+3) support adjustments required for different releases with having to
+   duplicate/fork a plan component
+
+   This is the primary reason the new fab design supports preprocessing
+   of plans in the first place, in order to prevent the kind of
+   inefficient and ugly duplication of product specifications (e.g.,
+   building blocks in "old" fab terminology) just to support minor
+   adjustments.
+
+4) build development/production variants of a product without having to
+   modify the product (e.g., remove debug/development packages from the
+   plan).
+
+   This allows the simultaneous development of both the "development"
+   version of a product and the "production" version.
+
+Overview
+========
+
+Previously the only way to affect product build was to use the "Makefile
+inheritance" to add pre/post hooks to targets, or even override the
+values of the target "body" and built-in variables.
+
+Configuring a product this way is possible but relatively complex and
+inconvenient.
+
+I have developed a couple of new powerful mechanisms to support more
+efficient product configuration:
+
+1) conf.d/ chroot scripts
+2) product configuration variables
+
+conf.d/ chroot scripts
+======================
+
+Any executable script in conf.d (default location, this can be changed)
+is copied into a temporary directory in root.patched (after the overlay,
+but before the removelist is applied) and executed while chrooted into
+root.patched. After execution the temporary directory is deleted.
+
+Any type of script for which there is an interpreter in root.patched is
+supported (e.g., shell, perl, python). Static binaries are also
+supported but dynamic binaries are dangerous as differences in the
+library versions in the chroot may prevent the binary from running
+correctly, or more likely running at all.
+
+The order of execution of scripts in conf.d depends on the script
+filename, so if have to control the order, you can append an integer
+(e.g., conf.d/10myscript).
+
+The script is executed with arguments extracted from conf.d/args/<name>.
+By default, no arguments are passed. This supports re-usability of
+complex configuration scripts, but for simple configuration scripts it
+shouldn't be needed at all. Note that <name> in conf.d/args doesn't
+include priority prefixes, so you can change priority without having to
+rename conf.d/args/<name>.
+
+Speaking of reusing complex scripts, just like rc*.d scripts, conf.d/
+scripts *can* be symbolic links to shared scripts (e.g.,
+/turnkey/fab/common-conf.d/<name>). Whether they *should* be is an
+entirely different question and the answer is usually no. Git supports
+symbolic links outside of a repository but a hardwired path will still
+be embedded in the product's repository, and you know how I feel about
+hardwired paths.
+
+Pros of sharing configuration scripts:
+* could be used to prevent duplication of logic in complex scripts
+  (I.e., write once fix many times syndrome)
+
+Cons:
+* reduces readability: settings need to be separated to args/ or set in
+  the environment, so its harder to glance at a script and see the whole
+  picture.
+
+* adds significant overhead: parsing of arguments, sanity checking,
+  error messages, etc.
+
+I think its usually preferable to put complex logic into a package and
+make the configuration script as simple as possible by calling the
+complex functionality it needs. If a configuration script has good
+enough primitives to leverage it can be made simple enough to resemble a
+configuration file itself. See skeleton conf.d scripts for an example.
+
+In other words, I think its preferable to avoid sharing configuration
+scripts altogether, though I have supported and tested this capability
+in case we need it.
+
+In case a single conf.d directory isn't enough, its possible to add
+additional directories by calling the run-conf-scripts macro in a
+pre/post hook, like this::
+
+	define root.patched/post
+		$(call run-conf-scripts, conf2.d)
+	endef
+
+If instead of a directory of scripts you want to execute just a single
+script in a pre/post hook, thats also possible. Just call fab-chroot
+directly::
+
+	fab-chroot $O/root.patched --script path/to/script [args]
+
+product configuration variables
+===============================
+
+By setting the following in your product Makefile::
+
+	VAR1 = VALUE1
+	VAR2 = VALUE2
+	...
+	CONF_VARS = VAR1 VAR2 [ ... ]
+
+You are describing a list of configuration variables that will effect:
+
+1) preprocessor definitions in fab-plan-resolve
+2) the environment of fab-chroot commands and scripts: the variables
+   listed in CONF_VARS are exported into their environment.
+
+Note: RELEASE is a mandatory built-in configuration variable. Its added by
+product.mk automatically, even if you don't define CONF_VARS at all. This is to
+ensure that common-plan components can depend on its existence to effect plan
+adjustments required for different releases (e.g., discover1 -> discover2).
+
+For example::
+
+	$ cd skeleton
+	$ cat Makefile
+	RELEASE = rocky
+
+	CONF_VARS = DEBUG
+	DEBUG ?= y # empty string is false
+
+	ifndef FAB_MAKEFILE_INCLUDE_PATH
+	$(error FAB_MAKEFILE_INCLUDE_PATH not defined)
+	else
+	include $(FAB_MAKEFILE_INCLUDE_PATH)/product.mk
+	endif
+
+	$ cat plan/main
+	#ifdef DEBUG
+	#include <debug>
+	#endif
+
+	#include <boot>
+	#include <console>
+	#include <net>
+
+Note that one things configuration variables *don't* effect are
+overlays, at least not by default. It is possible however to add this
+functionality by defining pre/post hooks which are effected by the value
+of the configuration variables.
+
