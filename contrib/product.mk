@@ -15,7 +15,18 @@ export FAB_CHROOT_ENV = $(shell echo $(_CONF_VARS) | sed 's/ \+/:/g')
 # FAB_PATH dependent infrastructural components
 POOL ?= $(FAB_PATH)/pools/$(RELEASE)
 BOOTSTRAP ?= $(FAB_PATH)/bootstraps/$(RELEASE)
-CDROOT ?= $(FAB_PATH)/cdroots/generic
+CDROOTS_PATH ?= $(FAB_PATH)/cdroots
+CDROOT ?= generic
+
+# if the CDROOT is a relative path, prefix CDROOTS_PATH
+# we set _CDROOT with eval to improve the readability of $(value _CDROOT) 
+# in help target
+ifeq ($(shell echo $(CDROOT) | grep ^/), )
+$(eval _CDROOT = $$(CDROOTS_PATH)/$(CDROOT))
+else
+$(eval _CDROOT = $(CDROOT))
+endif
+
 FAB_PLAN_INCLUDE_PATH ?= $(FAB_PATH)/common-plans
 FAB_TMPDIR ?= $(FAB_PATH)/tmp
 
@@ -91,7 +102,8 @@ define help/body
 	@echo
 	@echo '  POOL                       $(value POOL)/'
 	@echo '  BOOTSTRAP                  $(value BOOTSTRAP)/'
-	@echo '  CDROOT                     $(value CDROOT)/'
+	@echo '  CDROOTS_PATH               $(value CDROOTS_PATH)/'
+	@echo '  CDROOT                     $(value _CDROOT)/'
 	@echo '  FAB_PLAN_INCLUDE_PATH      $(value FAB_PLAN_INCLUDE_PATH)/'
 	@echo '  FAB_TMPDIR                 $(value FAB_TMPDIR)/'
 	@echo
@@ -205,10 +217,10 @@ define root.tmp/body
 endef
 
 # target: cdroot
-cdroot/deps ?= $(STAMPS_DIR)/root.patched $(CDROOT)
+cdroot/deps ?= $(STAMPS_DIR)/root.patched $(_CDROOT)
 define cdroot/body
 	if [ -e $O/cdroot ]; then rm -rf $O/cdroot; fi
-	cp -a $(CDROOT) $O/cdroot
+	cp -a $(_CDROOT) $O/cdroot
 	mkdir $O/cdroot/casper
 	if [ -d $(CDROOT_OVERLAY) ]; then fab-apply-overlay $(CDROOT_OVERLAY) $O/cdroot; fi
 
