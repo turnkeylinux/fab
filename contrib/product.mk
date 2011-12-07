@@ -15,7 +15,7 @@ export FAB_CHROOT_ENV = $(shell echo $(_CONF_VARS) | sed 's/ \+/:/g')
 # FAB_PATH dependent infrastructural components
 POOL ?= $(FAB_PATH)/pools/$(RELEASE)
 BOOTSTRAP ?= $(FAB_PATH)/bootstraps/$(RELEASE)
-CDROOT ?= $(FAB_PATH)/cdroots/bootsplash
+CDROOT ?= $(FAB_PATH)/cdroots/generic
 FAB_PLAN_INCLUDE_PATH ?= $(FAB_PATH)/common-plans
 FAB_TMPDIR ?= $(FAB_PATH)/tmp
 
