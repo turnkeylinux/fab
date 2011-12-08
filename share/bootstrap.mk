@@ -14,6 +14,7 @@ endif
 
 # default locations
 POOL ?= $(FAB_PATH)/pools/$(RELEASE)
+export FAB_POOL_PATH = $(POOL)
 
 # build output path
 O ?= build
@@ -76,13 +77,13 @@ debug:
 #required.spec
 required.spec/deps ?= plan/required
 define required.spec/body
-	fab-plan-resolve --output=$O/required.spec --pool=$(POOL) plan/required
+	fab-plan-resolve --output=$O/required.spec plan/required
 endef
 
 #base.spec
 base.spec/deps ?= plan/base $(STAMPS_DIR)/required.spec
 define base.spec/body
-	fab-plan-resolve --output=$O/base.full.spec --pool=$(POOL) plan/base
+	fab-plan-resolve --output=$O/base.full.spec plan/base
 	$(BSP)/exclude_spec.py $O/base.full.spec $O/required.spec > $O/base.spec
 endef
 
