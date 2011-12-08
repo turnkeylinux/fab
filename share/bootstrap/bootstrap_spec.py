@@ -8,7 +8,7 @@ from executil import system
 
 def usage(s=None):
     if s: print >> sys.stderr, s
-    print >> sys.stderr, "Syntax: %s suite target path/to/repo required_spec base_spec" % basename(sys.argv[0])
+    print >> sys.stderr, "Syntax: %s <suite> <target> path/to/repo <required_spec> <base_spec>" % basename(sys.argv[0])
     sys.exit(1)
 
 def get_packages(spec_file):
