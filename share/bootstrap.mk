@@ -1,4 +1,8 @@
 #!/usr/bin/make -f
+_self = $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
+FAB_SHARE_PATH ?= $(shell dirname $(_self))
+BOOTSTRAP_SHARE_PATH ?= $(FAB_SHARE_PATH)/bootstrap
+BSP = $(BOOTSTRAP_SHARE_PATH)
 
 ifndef FAB_PATH
 $(error FAB_PATH not defined - needed for default paths)
@@ -10,7 +14,6 @@ endif
 
 # default locations
 POOL ?= $(FAB_PATH)/pools/$(RELEASE)
-LIBEXEC ?= /turnkey/private/fab/share/bootstrap
 
 # build output path
 O ?= build
@@ -39,7 +42,7 @@ endef
 base.spec/deps ?= plan/base $(STAMPS_DIR)/required.spec
 define base.spec/body
 	fab-plan-resolve --output=$O/base.full.spec --pool=$(POOL) plan/base
-	$(LIBEXEC)/exclude_spec.py $O/base.full.spec $O/required.spec > $O/base.spec
+	$(BSP)/exclude_spec.py $O/base.full.spec $O/required.spec > $O/base.spec
 endef
 
 #bootstrap.spec
@@ -58,16 +61,16 @@ define repo/body
 	mkdir -p $O/repo/pool/main
 	POOL_DIR=$(POOL) pool-get -s -t -i $O/bootstrap.spec $O/repo/pool/main
 
-	$(LIBEXEC)/repo_index.sh $(RELEASE) main $O/repo
-	$(LIBEXEC)/repo_release.sh $(RELEASE) main `pwd`/$O/repo
+	$(BSP)/repo_index.sh $(RELEASE) main $O/repo
+	$(BSP)/repo_release.sh $(RELEASE) main `pwd`/$O/repo
 endef
 
 #bootstrap
 bootstrap/deps ?= $(STAMPS_DIR)/repo $(STAMPS_DIR)/bootstrap.spec
 define bootstrap/body
-	$(LIBEXEC)/bootstrap_spec.py $(RELEASE) $O/bootstrap `pwd`/$O/repo $O/bootstrap.spec
+	$(BSP)/bootstrap_spec.py $(RELEASE) $O/bootstrap `pwd`/$O/repo $O/bootstrap.spec
 
-	fab-chroot $O/bootstrap --script $(LIBEXEC)/reset-apt.sh
+	fab-chroot $O/bootstrap --script $(BSP)/reset-apt.sh
 	fab-chroot $O/bootstrap 'echo "do_initrd = Yes" > /etc/kernel-img.conf'
 endef
 
