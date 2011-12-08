@@ -104,7 +104,7 @@ endef
 #bootstrap
 bootstrap/deps ?= $(STAMPS_DIR)/repo
 define bootstrap/body
-	$(BSP)/bootstrap_spec.py $(DEBOOTSTRAP_SUITE) $O/bootstrap `pwd`/$O/repo $O/required.spec $O/base.spec
+	$(BSP)/debootstrap.py $(DEBOOTSTRAP_SUITE) $O/bootstrap `pwd`/$O/repo $O/required.spec $O/base.spec
 
 	fab-chroot $O/bootstrap --script $(BSP)/reset-apt.sh
 	fab-chroot $O/bootstrap 'echo "do_initrd = Yes" > /etc/kernel-img.conf'
