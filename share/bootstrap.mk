@@ -16,6 +16,8 @@ endif
 POOL ?= $(FAB_PATH)/pools/$(RELEASE)
 export FAB_POOL_PATH = $(POOL)
 
+DEBOOTSTRAP_SUITE ?= generic
+
 # build output path
 O ?= build
 
@@ -46,6 +48,7 @@ define help/body
 	@echo
 	@echo '# Build context variables    [VALUE]'
 	@echo '  POOL                       $(value POOL)/'
+	@echo '  DEBOOTSTRAP_SUITE          $(value DEBOOTSTRAP_SUITE)'
 	@echo
 	@echo '# Product output variables   [VALUE]'
 	@echo '  O                          $(value O)/'
@@ -94,14 +97,14 @@ define repo/body
 	cat $O/required.spec $O/base.spec | \
 		POOL_DIR=$(POOL) pool-get $O/repo/pool/main --strict --tree --input - 
 
-	$(BSP)/repo_index.sh $(RELEASE) main $O/repo
-	$(BSP)/repo_release.sh $(RELEASE) main `pwd`/$O/repo
+	$(BSP)/repo_index.sh $(DEBOOTSTRAP_SUITE) main $O/repo
+	$(BSP)/repo_release.sh $(DEBOOTSTRAP_SUITE) main `pwd`/$O/repo
 endef
 
 #bootstrap
 bootstrap/deps ?= $(STAMPS_DIR)/repo
 define bootstrap/body
-	$(BSP)/bootstrap_spec.py $(RELEASE) $O/bootstrap `pwd`/$O/repo $O/required.spec $O/base.spec
+	$(BSP)/bootstrap_spec.py $(DEBOOTSTRAP_SUITE) $O/bootstrap `pwd`/$O/repo $O/required.spec $O/base.spec
 
 	fab-chroot $O/bootstrap --script $(BSP)/reset-apt.sh
 	fab-chroot $O/bootstrap 'echo "do_initrd = Yes" > /etc/kernel-img.conf'
