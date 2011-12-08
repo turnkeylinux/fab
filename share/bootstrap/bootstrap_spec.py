@@ -38,7 +38,7 @@ def main():
     spec = sys.argv[4]
 
     if not os.path.isabs(repo):
-        usage("repository must be absoluate path: " + repo)
+        usage("repository must be absolute path: " + repo)
 
     lines = file(spec, "r").readlines()
     required, base = parse_bootstrap_spec(lines)
