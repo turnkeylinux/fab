@@ -40,8 +40,8 @@ def main():
     if not os.path.isabs(repo):
         usage("repository must be absoluate path: " + repo)
 
-    raw = file(spec, "r").readlines()
-    required, base = parse_bootstrap_spec(raw)
+    lines = file(spec, "r").readlines()
+    required, base = parse_bootstrap_spec(lines)
  
     os.environ["REQUIRED_PACKAGES"] = " ".join(required)
     os.environ["BASE_PACKAGES"] = " ".join(base)
