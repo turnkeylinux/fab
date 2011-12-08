@@ -32,6 +32,48 @@ clean:
 	$(clean/body)
 	$(clean/post)
 
+define help/body
+	@echo '=== Configurable variables'
+	@echo 'Resolution order:'
+	@echo '1) command line (highest precedence)'
+	@echo '2) product Makefile'
+	@echo '3) environment variable'
+	@echo '4) built-in default (lowest precedence)'
+	@echo
+	@echo '# Mandatory configuration variables:'
+	@echo '  FAB_PATH and RELEASE       used to calculate default paths for input variables'
+	@echo
+	@echo '# Build context variables    [VALUE]'
+	@echo '  POOL                       $(value POOL)/'
+	@echo
+	@echo '# Product output variables   [VALUE]'
+	@echo '  O                          $(value O)/'
+	@echo
+	@echo '=== Usage'
+	@echo '# remake target and the targets that depend on it'
+	@echo '$$ rm $(value STAMPS_DIR)/<target>; make <target>'
+	@echo
+	@echo '# build a target (default: product.iso)'
+	@echo '$$ make [target] [O=path/to/build/dir]'
+	@echo
+	@echo '  clean         # clean all build targets'
+	@echo '  required.spec # the spec of debootstrap REQUIRED_PACKAGES'
+	@echo '  base.spec     # the spec of debootstrap BASE_PACKAGES'
+	@echo '  bootstrap.spec'
+
+	@echo '  repo          # build temporary local repository for debootstrap'
+	@echo '  bootstrap     # build bootstrap with debootstrap from repo'
+endef
+
+help:
+	$(help/pre)
+	$(help/body)
+	$(help/post)
+
+debug:
+	$(foreach v, $V, $(warning $v = $($v)))
+	@true
+
 #required.spec
 required.spec/deps ?= plan/required
 define required.spec/body
