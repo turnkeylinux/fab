@@ -4,22 +4,12 @@ import os
 import re
 import sys
 
-import commands
-
-class Error(Exception):
-    pass
+from executil import system
 
 def usage(s=None):
     if s: print >> sys.stderr, s
     print >> sys.stderr, "Syntax: %s release target repo spec" % os.path.basename(sys.argv[0])
     sys.exit(1)
-
-def system(command, *args):
-    command = command + " " + " ".join([commands.mkarg(arg) for arg in args])
-    err = os.system(command)
-    if err:
-        raise Error("command failed: " + command,
-                    os.WEXITSTATUS(err))
 
 def parse_bootstrap_spec(raw):
     required  = []
