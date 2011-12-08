@@ -59,7 +59,6 @@ define help/body
 	@echo '  clean         # clean all build targets'
 	@echo '  required.spec # the spec of debootstrap REQUIRED_PACKAGES'
 	@echo '  base.spec     # the spec of debootstrap BASE_PACKAGES'
-	@echo '  bootstrap.spec'
 
 	@echo '  repo          # build temporary local repository for debootstrap'
 	@echo '  bootstrap     # build bootstrap with debootstrap from repo'
@@ -87,30 +86,20 @@ define base.spec/body
 	$(BSP)/exclude_spec.py $O/base.full.spec $O/required.spec > $O/base.spec
 endef
 
-#bootstrap.spec
-bootstrap.spec/deps ?= $(STAMPS_DIR)/required.spec $(STAMPS_DIR)/base.spec
-define bootstrap.spec/body
-	echo "# REQUIRED" > $O/bootstrap.spec
-	cat $O/required.spec >> $O/bootstrap.spec
-
-	echo "# BASE" >> $O/bootstrap.spec
-	cat $O/base.spec >> $O/bootstrap.spec
-endef
-
 #repo
-repo/deps ?= $(STAMPS_DIR)/bootstrap.spec
+repo/deps ?= $(STAMPS_DIR)/required.spec $(STAMPS_DIR)/base.spec 
 define repo/body
 	mkdir -p $O/repo/pool/main
-	POOL_DIR=$(POOL) pool-get -s -t -i $O/bootstrap.spec $O/repo/pool/main
+	cat $O/required.spec $O/base.spec | POOL_DIR=$(POOL) pool-get -s -t -i - $O/repo/pool/main
 
 	$(BSP)/repo_index.sh $(RELEASE) main $O/repo
 	$(BSP)/repo_release.sh $(RELEASE) main `pwd`/$O/repo
 endef
 
 #bootstrap
-bootstrap/deps ?= $(STAMPS_DIR)/repo $(STAMPS_DIR)/bootstrap.spec
+bootstrap/deps ?= $(STAMPS_DIR)/repo
 define bootstrap/body
-	$(BSP)/bootstrap_spec.py $(RELEASE) $O/bootstrap `pwd`/$O/repo $O/bootstrap.spec
+	$(BSP)/bootstrap_spec.py $(RELEASE) $O/bootstrap `pwd`/$O/repo $O/required.spec $O/base.spec
 
 	fab-chroot $O/bootstrap --script $(BSP)/reset-apt.sh
 	fab-chroot $O/bootstrap 'echo "do_initrd = Yes" > /etc/kernel-img.conf'
@@ -135,7 +124,7 @@ $(STAMPS_DIR)/$1: $$($1/deps) $$($1/deps/extra)
 	touch $$@
 endef
 
-STAMPED_TARGETS := required.spec base.spec bootstrap.spec repo
+STAMPED_TARGETS := required.spec base.spec repo
 $(foreach target,$(STAMPED_TARGETS),$(eval $(call _stamped_target,$(target))))
 
 .PHONY: clean $(STAMP_TARGETS)
