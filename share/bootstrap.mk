@@ -83,8 +83,8 @@ endef
 #base.spec
 base.spec/deps ?= plan/base $(STAMPS_DIR)/required.spec
 define base.spec/body
-	fab-plan-resolve --output=$O/base.full.spec plan/base
-	$(BSP)/exclude_spec.py $O/base.full.spec $O/required.spec > $O/base.spec
+	fab-plan-resolve plan/base | \
+		$(BSP)/exclude_spec.py - $O/required.spec > $O/base.spec
 endef
 
 #repo
