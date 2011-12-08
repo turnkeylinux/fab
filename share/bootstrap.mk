@@ -10,7 +10,7 @@ endif
 
 # default locations
 POOL ?= $(FAB_PATH)/pools/$(RELEASE)
-LIBEXEC ?= /turnkey/private/fab/contrib/bootstrap
+LIBEXEC ?= /turnkey/private/fab/share/bootstrap
 
 # build output path
 O ?= build
