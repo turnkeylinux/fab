@@ -90,7 +90,8 @@ endef
 repo/deps ?= $(STAMPS_DIR)/required.spec $(STAMPS_DIR)/base.spec 
 define repo/body
 	mkdir -p $O/repo/pool/main
-	cat $O/required.spec $O/base.spec | POOL_DIR=$(POOL) pool-get -s -t -i - $O/repo/pool/main
+	cat $O/required.spec $O/base.spec | \
+		POOL_DIR=$(POOL) pool-get $O/repo/pool/main --strict --tree --input - 
 
 	$(BSP)/repo_index.sh $(RELEASE) main $O/repo
 	$(BSP)/repo_release.sh $(RELEASE) main `pwd`/$O/repo
