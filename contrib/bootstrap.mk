@@ -67,8 +67,8 @@ bootstrap/deps ?= $(STAMPS_DIR)/repo $(STAMPS_DIR)/bootstrap.spec
 define bootstrap/body
 	$(BOOTSTRAP_LIBEXEC)/bootstrap_spec.py $(RELEASE) $O/bootstrap `pwd`/$O/repo $O/bootstrap.spec
 
-	rm -rf $O/bootstrap/var/cache/apt/archives/*.deb
-	echo "do_initrd = Yes" > $O/bootstrap/etc/kernel-img.conf
+	fab-chroot $O/bootstrap --script $(BOOTSTRAP_LIBEXEC)/reset-apt.sh
+	fab-chroot $O/bootstrap 'echo "do_initrd = Yes" > /etc/kernel-img.conf'
 endef
 
 $O/bootstrap: $(bootstrap/deps) $(bootstrap/deps/extra)
