@@ -15,14 +15,11 @@ def get_packages(spec_file):
              for line in file(spec_file).readlines() ]
 
 def main():
-    if len(sys.argv) != 6:
+    args = sys.argv[1:]
+    if len(args) != 5:
         usage()
 
-    release = sys.argv[1]
-    target = sys.argv[2]
-    repo = sys.argv[3]
-    required_spec = sys.argv[4]
-    base_spec = sys.argv[5]
+    release, target, repo, required_spec, base_spec = args
 
     os.environ["REQUIRED_PACKAGES"] = " ".join(get_packages(required_spec))
     os.environ["BASE_PACKAGES"] = " ".join(get_packages(base_spec))
