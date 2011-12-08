@@ -10,7 +10,7 @@ endif
 
 # default locations
 POOL ?= $(FAB_PATH)/pools/$(RELEASE)
-BOOTSTRAP_LIBEXEC ?= /turnkey/private/fab/contrib/bootstrap
+LIBEXEC ?= /turnkey/private/fab/contrib/bootstrap
 
 # build output path
 O ?= build
@@ -39,7 +39,7 @@ endef
 base.spec/deps ?= plan/base $(STAMPS_DIR)/required.spec
 define base.spec/body
 	fab-plan-resolve --output=$O/base.full.spec --pool=$(POOL) plan/base
-	$(BOOTSTRAP_LIBEXEC)/exclude_spec.py $O/base.full.spec $O/required.spec > $O/base.spec
+	$(LIBEXEC)/exclude_spec.py $O/base.full.spec $O/required.spec > $O/base.spec
 endef
 
 #bootstrap.spec
@@ -58,16 +58,16 @@ define repo/body
 	mkdir -p $O/repo/pool/main
 	POOL_DIR=$(POOL) pool-get -s -t -i $O/bootstrap.spec $O/repo/pool/main
 
-	$(BOOTSTRAP_LIBEXEC)/repo_index.sh $(RELEASE) main $O/repo
-	$(BOOTSTRAP_LIBEXEC)/repo_release.sh $(RELEASE) main `pwd`/$O/repo
+	$(LIBEXEC)/repo_index.sh $(RELEASE) main $O/repo
+	$(LIBEXEC)/repo_release.sh $(RELEASE) main `pwd`/$O/repo
 endef
 
 #bootstrap
 bootstrap/deps ?= $(STAMPS_DIR)/repo $(STAMPS_DIR)/bootstrap.spec
 define bootstrap/body
-	$(BOOTSTRAP_LIBEXEC)/bootstrap_spec.py $(RELEASE) $O/bootstrap `pwd`/$O/repo $O/bootstrap.spec
+	$(LIBEXEC)/bootstrap_spec.py $(RELEASE) $O/bootstrap `pwd`/$O/repo $O/bootstrap.spec
 
-	fab-chroot $O/bootstrap --script $(BOOTSTRAP_LIBEXEC)/reset-apt.sh
+	fab-chroot $O/bootstrap --script $(LIBEXEC)/reset-apt.sh
 	fab-chroot $O/bootstrap 'echo "do_initrd = Yes" > /etc/kernel-img.conf'
 endef
 
