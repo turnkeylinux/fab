@@ -1,4 +1,5 @@
 #!/bin/sh
+# Copyright (c) 2011-2012 TurnKey Linux - all rights reserved
 
 apt-get clean
 

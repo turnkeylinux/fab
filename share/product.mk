@@ -1,4 +1,5 @@
 #!/usr/bin/make -f
+# Copyright (c) 2011-2012 TurnKey Linux - all rights reserved
 
 ifndef FAB_PATH
 $(error FAB_PATH not defined - needed for default paths)

@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# Copyright (c) 2011-2012 TurnKey Linux - all rights reserved
 
 import os
 import sys

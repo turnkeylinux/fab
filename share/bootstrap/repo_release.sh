@@ -1,4 +1,5 @@
 #!/bin/bash
+# Copyright (c) 2011-2012 TurnKey Linux - all rights reserved
 
 if [ $# -eq "3" ]; then
     RELEASE=$1

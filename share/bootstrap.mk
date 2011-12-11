@@ -1,4 +1,6 @@
 #!/usr/bin/make -f
+# Copyright (c) 2011-2012 TurnKey Linux - all rights reserved
+
 _self = $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
 FAB_SHARE_PATH ?= $(shell dirname $(_self))
 BOOTSTRAP_SHARE_PATH ?= $(FAB_SHARE_PATH)/bootstrap
