@@ -204,7 +204,6 @@ define root.patched/body
 	if [ -d $(ROOT_OVERLAY) ]; then \
 		fab-apply-overlay $(ROOT_OVERLAY) $O/root.patched; \
 	fi
-	fab-chroot $O/root.patched "cp /usr/share/base-files/dot.bashrc /etc/skel/.bashrc"
 	fab-chroot $O/root.patched "rm -rf /boot/*.bak"
 	$(call run-conf-scripts, $(CONF_SCRIPTS))
 	$(if $(REMOVELIST),fab-apply-removelist $(REMOVELIST) $O/root.patched)
