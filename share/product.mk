@@ -28,6 +28,9 @@ else
 $(eval _CDROOT = $(CDROOT))
 endif
 
+RELEASE_OVERLAY ?= $(FAB_PATH)/common-overlays/$(RELEASE)
+RELEASE_CONF_SCRIPTS ?= $(FAB_PATH)/common-conf.d/$(RELEASE)
+
 FAB_PLAN_INCLUDE_PATH ?= $(FAB_PATH)/common-plans
 FAB_TMPDIR ?= $(FAB_PATH)/tmp
 
@@ -75,6 +78,8 @@ endef
 
 redeck:
 	$(call mount-deck, $$(dirname $(PLAN)))
+	$(call mount-deck, $(RELEASE_OVERLAY))
+	$(call mount-deck, $(RELEASE_CONF_SCRIPTS))
 	$(call mount-deck, $(ROOT_OVERLAY))
 	$(call mount-deck, $(CDROOT_OVERLAY))
 	$(call mount-deck, $(CONF_SCRIPTS))
@@ -107,6 +112,10 @@ define help/body
 	@echo '  CDROOT                     $(value _CDROOT)/'
 	@echo '  FAB_PLAN_INCLUDE_PATH      $(value FAB_PLAN_INCLUDE_PATH)/'
 	@echo '  FAB_TMPDIR                 $(value FAB_TMPDIR)/'
+	@echo
+	@echo '# Release input variables    [VALUE]'
+	@echo '  RELEASE_OVERLAY            $(value RELEASE_OVERLAY)/'
+	@echo '  RELEASE_CONF_SCRIPTS       $(value RELEASE_CONF_SCRIPTS)/'
 	@echo
 	@echo '# Product input variables    [VALUE]'
 	@echo '  PLAN                       $(value PLAN)'
@@ -201,6 +210,10 @@ root.patched/deps ?= $(STAMPS_DIR)/root.build $(REMOVELIST) $(wildcard $(CONF_SC
 define root.patched/body
 	$(call remove-deck, $O/root.patched)
 	deck $O/root.build $O/root.patched
+	if [ -d $(RELEASE_OVERLAY) ]; then \
+		fab-apply-overlay $(RELEASE_OVERLAY) $O/root.patched; \
+	fi
+	$(call run-conf-scripts, $(RELEASE_CONF_SCRIPTS))
 	if [ -d $(ROOT_OVERLAY) ]; then \
 		fab-apply-overlay $(ROOT_OVERLAY) $O/root.patched; \
 	fi
