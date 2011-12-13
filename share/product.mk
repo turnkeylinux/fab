@@ -28,8 +28,15 @@ else
 $(eval _CDROOT = $(CDROOT))
 endif
 
-RELEASE_OVERLAY ?= $(FAB_PATH)/common-overlays/$(RELEASE)
-RELEASE_CONF_SCRIPTS ?= $(FAB_PATH)/common-conf.d/$(RELEASE)
+COMMON_OVERLAYS_PATH ?= $(FAB_PATH)/common-overlays
+COMMON_CONF_PATH ?= $(FAB_PATH)/common-conf
+
+define prefix-relative-paths
+	$(foreach val,$1,$(shell echo $(val) | sed '/^[^\/]/ s|^|$2/|' ))
+endef
+
+_COMMON_OVERLAYS = $(call prefix-relative-paths,$(COMMON_OVERLAYS),$(COMMON_OVERLAYS_PATH))
+_COMMON_CONF = $(call prefix-relative-paths,$(COMMON_CONF),$(COMMON_CONF_PATH))
 
 FAB_PLAN_INCLUDE_PATH ?= $(FAB_PATH)/common-plans
 
@@ -76,8 +83,6 @@ endef
 
 redeck:
 	$(call mount-deck, $$(dirname $(PLAN)))
-	$(call mount-deck, $(RELEASE_OVERLAY))
-	$(call mount-deck, $(RELEASE_CONF_SCRIPTS))
 	$(call mount-deck, $(ROOT_OVERLAY))
 	$(call mount-deck, $(CDROOT_OVERLAY))
 	$(call mount-deck, $(CONF_SCRIPTS))
@@ -98,26 +103,33 @@ define help/body
 	@echo '3) environment variable'
 	@echo '4) built-in default (lowest precedence)'
 	@echo
-	@echo '# Mandatory configuration variables:'
-	@echo '  FAB_PATH and RELEASE       used to calculate default paths for input variables'
+	@echo '# Mandatory variables        [VALUE]'
+	@echo '  FAB_PATH                   $(value FAB_PATH)'
+	@echo '  RELEASE                    $(value RELEASE)'
 	@echo
 	@echo '# Build context variables    [VALUE]'
 	@echo '  CONF_VARS                  $(value CONF_VARS)'
 	@echo
-	@echo '  POOL                       $(value POOL)/'
-	@echo '  BOOTSTRAP                  $(value BOOTSTRAP)/'
-	@echo '  CDROOTS_PATH               $(value CDROOTS_PATH)/'
 	@echo '  FAB_PLAN_INCLUDE_PATH      $(value FAB_PLAN_INCLUDE_PATH)/'
+	@echo '  CDROOTS_PATH               $(value CDROOTS_PATH)/'
+	@echo '  COMMON_CONF_PATH           $(value COMMON_CONF_PATH)/'
+	@echo '  COMMON_OVERLAYS_PATH       $(value COMMON_OVERLAYS_PATH)/'
 	@echo
 	
-	@echo '# Product input variables    [VALUE]'
+	@echo '# Local components           [VALUE]'
 	@echo '  PLAN                       $(value PLAN)'
-	@echo '  ROOT_OVERLAY               $(value ROOT_OVERLAY)/'
 	@echo '  REMOVELIST                 $(value REMOVELIST)'
+	@echo '  ROOT_OVERLAY               $(value ROOT_OVERLAY)/'
 	@echo '  CONF_SCRIPTS               $(value CONF_SCRIPTS)/'
-	@echo
-	@echo '  CDROOT                     $(value CDROOT)'
 	@echo '  CDROOT_OVERLAY             $(value CDROOT_OVERLAY)/'
+	@echo
+
+	@echo '# Global components          [VALUE]'
+	@echo '  POOL                       $(value POOL)/'
+	@echo '  BOOTSTRAP                  $(value BOOTSTRAP)/'
+	@echo '  CDROOT                     $(value CDROOT)'
+	@echo '  COMMON_CONF                $(value COMMON_CONF)'
+	@echo '  COMMON_OVERLAYS            $(value COMMON_OVERLAYS)'
 	@echo
 
 	@echo '# Product output variables   [VALUE]'
@@ -187,10 +199,10 @@ endef
 
 # target: root.patched
 define run-conf-scripts
-	@if [ -n "$(wildcard $1/*)" ]; then \
+	if [ -n "$(wildcard $1/*)" ]; then \
 		echo "\$$(call $0,$1)"; \
-	fi
-	@for script in $1/*; do \
+	fi; \
+	for script in $1/*; do \
 		[ -f "$$script" ] && [ -x "$$script" ] || continue; \
 		args_path=$(strip $1)/args/$$(echo $$(basename $$script) | sed 's/^[^a-zA-Z]*//'); \
 		args="$$([ -f $$args_path ] && (cat $$args_path | sed 's/#.*//'))"; \
@@ -201,19 +213,30 @@ define run-conf-scripts
 	done
 endef
 
+define foo
+	echo foo = $1
+endef
+
 root.patched/deps ?= $(STAMPS_DIR)/root.build $(REMOVELIST) $(wildcard $(CONF_SCRIPTS)/*)
 define root.patched/body
 	$(call remove-deck, $O/root.patched)
 	deck $O/root.build $O/root.patched
-	if [ -d $(RELEASE_OVERLAY) ]; then \
-		fab-apply-overlay $(RELEASE_OVERLAY) $O/root.patched; \
-	fi
-	$(call run-conf-scripts, $(RELEASE_CONF_SCRIPTS))
+	$(foreach overlay,$(_COMMON_OVERLAYS),
+	  fab-apply-overlay $(overlay) $O/root.patched)
+	$(foreach conf,$(_COMMON_CONF),
+	  @if [ -d $(conf) ]; then \
+			$(call run-conf-scripts, $(conf)); \
+	  else \
+	  		echo fab-chroot $O/root.patched --script $(conf); \
+	  		fab-chroot $O/root.patched --script $(conf); \
+	  fi
+	  )
+	  
 	if [ -d $(ROOT_OVERLAY) ]; then \
 		fab-apply-overlay $(ROOT_OVERLAY) $O/root.patched; \
 	fi
 	fab-chroot $O/root.patched "rm -rf /boot/*.bak"
-	$(call run-conf-scripts, $(CONF_SCRIPTS))
+	@$(call run-conf-scripts, $(CONF_SCRIPTS))
 	$(if $(REMOVELIST),fab-apply-removelist $(REMOVELIST) $O/root.patched)
 endef
 
