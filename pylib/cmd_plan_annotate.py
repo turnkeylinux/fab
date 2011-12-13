@@ -21,7 +21,7 @@ from md5 import md5
 
 from pyproject.pool.pool import Pool
 from common import fatal
-from _temp import TempDir
+from temp import TempDir
 
 @help.usage(__doc__)
 def usage():

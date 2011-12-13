@@ -16,7 +16,7 @@ from os.path import *
 
 import help
 import executil
-from _temp import TempDir
+from temp import TempDir
 
 from common import fatal, warn, mkdir
 
