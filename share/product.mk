@@ -32,11 +32,9 @@ RELEASE_OVERLAY ?= $(FAB_PATH)/common-overlays/$(RELEASE)
 RELEASE_CONF_SCRIPTS ?= $(FAB_PATH)/common-conf.d/$(RELEASE)
 
 FAB_PLAN_INCLUDE_PATH ?= $(FAB_PATH)/common-plans
-FAB_TMPDIR ?= $(FAB_PATH)/tmp
 
 export FAB_POOL_PATH = $(POOL)
 export FAB_PLAN_INCLUDE_PATH
-export FAB_TMPDIR
 
 # default locations of product build inputs
 PLAN ?= plan/main
@@ -111,7 +109,6 @@ define help/body
 	@echo '  CDROOTS_PATH               $(value CDROOTS_PATH)/'
 	@echo '  CDROOT                     $(value _CDROOT)/'
 	@echo '  FAB_PLAN_INCLUDE_PATH      $(value FAB_PLAN_INCLUDE_PATH)/'
-	@echo '  FAB_TMPDIR                 $(value FAB_TMPDIR)/'
 	@echo
 	@echo '# Release input variables    [VALUE]'
 	@echo '  RELEASE_OVERLAY            $(value RELEASE_OVERLAY)/'
