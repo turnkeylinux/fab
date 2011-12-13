@@ -68,10 +68,12 @@ class RevertibleFile(file):
         self.revert()
 
 class Installer:
-    def __init__(self, chroot_path, pool_path):
-        self.chroot = Chroot(chroot_path,
-                             environ={'DEBIAN_FRONTEND': 'noninteractive',
-                                      'DEBIAN_PRIORITY': 'critical'})
+    def __init__(self, chroot_path, pool_path, environ={}):
+        env = {'DEBIAN_FRONTEND': 'noninterative',
+               'DEBIAN_PRIORITY': 'critical'}
+        env.update(environ)
+
+        self.chroot = Chroot(chroot_path, environ=env)
         self.pool = Pool(pool_path)
 
     @staticmethod

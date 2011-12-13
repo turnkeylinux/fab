@@ -26,7 +26,7 @@ import shutil
 
 import help
 from chroot import Chroot as _Chroot
-from common import fatal
+from common import fatal, get_environ
 
 from executil import ExecError
 
@@ -60,16 +60,6 @@ def chroot_script(chroot, script_path, *args):
     shutil.rmtree(tmpdir)
 
     return err
-
-def get_environ(env_conf):
-    environ = {}
-    if env_conf:
-        for var in env_conf.split(":"):
-            val = os.environ.get(var)
-            if val is not None:
-                environ[var] = val
-            
-    return environ
 
 def main():
     try:
