@@ -107,19 +107,17 @@ define help/body
 	@echo '  POOL                       $(value POOL)/'
 	@echo '  BOOTSTRAP                  $(value BOOTSTRAP)/'
 	@echo '  CDROOTS_PATH               $(value CDROOTS_PATH)/'
-	@echo '  CDROOT                     $(value _CDROOT)/'
 	@echo '  FAB_PLAN_INCLUDE_PATH      $(value FAB_PLAN_INCLUDE_PATH)/'
 	@echo
-	@echo '# Release input variables    [VALUE]'
-	@echo '  RELEASE_OVERLAY            $(value RELEASE_OVERLAY)/'
-	@echo '  RELEASE_CONF_SCRIPTS       $(value RELEASE_CONF_SCRIPTS)/'
-	@echo
+	
 	@echo '# Product input variables    [VALUE]'
 	@echo '  PLAN                       $(value PLAN)'
 	@echo '  ROOT_OVERLAY               $(value ROOT_OVERLAY)/'
-	@echo '  CDROOT_OVERLAY             $(value CDROOT_OVERLAY)/'
 	@echo '  REMOVELIST                 $(value REMOVELIST)'
 	@echo '  CONF_SCRIPTS               $(value CONF_SCRIPTS)/'
+	@echo
+	@echo '  CDROOT                     $(value CDROOT)'
+	@echo '  CDROOT_OVERLAY             $(value CDROOT_OVERLAY)/'
 	@echo
 
 	@echo '# Product output variables   [VALUE]'
