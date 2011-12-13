@@ -304,6 +304,22 @@ class Plan(set):
             missing = (missing | packages.missing) - provided
 
         if missing:
-            raise Error("broken dependencies: " + ", ".join(map(str, missing)))
+            def get_origins(dep):
+                # trace the package origins
+                origins = []
+                while dep:
+                    try:
+                        dep = self.packageorigins[dep][0]
+                        origins.append(dep)
+                    except KeyError:
+                        dep = None
+
+                return origins
+
+            brokendeps = []
+            for dep in missing:
+                brokendeps.append("%s (%s)" % (dep, " -> ".join(get_origins(dep))))
+
+            raise Error("broken dependencies: " + "\n".join(brokendeps))
 
         return spec
