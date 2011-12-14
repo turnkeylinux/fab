@@ -216,7 +216,7 @@ endef
 root.build/deps ?= $(STAMPS_DIR)/bootstrap $(STAMPS_DIR)/root.spec
 define root.build/body
 	if ! deck --isdeck $O/root.build; then deck $O/bootstrap $O/root.build; fi
-	fab-install --no-deps $O/root.build $O/root.spec
+	fab-install --no-deps $O/root.build $O/root.spec $(PKGS/EXTRA)
 endef
 
 # target: root.patched
