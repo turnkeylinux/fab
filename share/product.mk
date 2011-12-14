@@ -11,7 +11,12 @@ endif
 
 CONF_VARS_BUILTIN ?= RELEASE KERNEL DEBUG CHROOT_ONLY
 
-_CONF_VARS = $(CONF_VARS_BUILTIN) $(foreach var,$(CONF_VARS),$(if $($(var)), $(var)))
+define filter-undefined-vars
+	$(foreach var,$1,$(if $($(var)), $(var)))
+endef
+
+_CONF_VARS = $(call filter-undefined-vars,$(CONF_VARS_BUILTIN) $(CONF_VARS))
+
 export $(_CONF_VARS)
 export FAB_CHROOT_ENV = $(shell echo $(_CONF_VARS) | sed 's/ \+/:/g')
 
