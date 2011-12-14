@@ -9,7 +9,9 @@ ifndef RELEASE
 $(warning RELEASE not defined - default paths for POOL and BOOTSTRAP may break)
 endif
 
-_CONF_VARS = RELEASE KERNEL $(foreach var,$(CONF_VARS),$(if $($(var)), $(var)))
+CONF_VARS_BUILTIN ?= RELEASE KERNEL
+
+_CONF_VARS = $(CONF_VARS_BUILTIN) $(foreach var,$(CONF_VARS),$(if $($(var)), $(var)))
 export $(_CONF_VARS)
 export FAB_CHROOT_ENV = $(shell echo $(_CONF_VARS) | sed 's/ \+/:/g')
 
