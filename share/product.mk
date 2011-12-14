@@ -9,7 +9,7 @@ ifndef RELEASE
 $(warning RELEASE not defined - default paths for POOL and BOOTSTRAP may break)
 endif
 
-CONF_VARS_BUILTIN ?= RELEASE KERNEL DEBUG
+CONF_VARS_BUILTIN ?= RELEASE KERNEL DEBUG CHROOT_ONLY
 
 _CONF_VARS = $(CONF_VARS_BUILTIN) $(foreach var,$(CONF_VARS),$(if $($(var)), $(var)))
 export $(_CONF_VARS)
