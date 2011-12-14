@@ -260,21 +260,6 @@ define cdroot/body
 	mksquashfs $O/root.patched $O/cdroot/casper/10root.squashfs
 endef
 
-# construct target rules
-define _stamped_target
-$1: $(STAMPS_DIR)/$1
-
-$(STAMPS_DIR)/$1: $$($1/deps) $$($1/deps/extra)
-	@mkdir -p $(STAMPS_DIR)
-	$$($1/pre)
-	$$($1/body)
-	$$($1/post)
-	touch $$@
-endef
-
-STAMPED_TARGETS := bootstrap root.spec root.build root.patched root.tmp cdroot
-$(foreach target,$(STAMPED_TARGETS),$(eval $(call _stamped_target,$(target))))
-
 define run-genisoimage
 	genisoimage -o $O/product.iso -r -J -l \
 		-V ${ISOLABEL} \
@@ -334,5 +319,20 @@ updated-initramfs: $(update-initramfs/deps) $(updated-initramfs/deps/extra)
 	$(updated-initramfs/pre)
 	$(updated-initramfs/body)
 	$(updated-initramfs/post)
+
+# construct target rules
+define _stamped_target
+$1: $(STAMPS_DIR)/$1
+
+$(STAMPS_DIR)/$1: $$($1/deps) $$($1/deps/extra)
+	@mkdir -p $(STAMPS_DIR)
+	$$($1/pre)
+	$$($1/body)
+	$$($1/post)
+	touch $$@
+endef
+
+STAMPED_TARGETS := bootstrap root.spec root.build root.patched root.tmp cdroot
+$(foreach target,$(STAMPED_TARGETS),$(eval $(call _stamped_target,$(target))))
 
 .PHONY: all debug redeck help clean cdroot-dynamic updated-initramfs $(STAMPED_TARGETS) 
