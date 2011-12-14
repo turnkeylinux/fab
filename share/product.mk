@@ -77,7 +77,11 @@ define remove-deck
 	fi
 endef
 
+ifdef CHROOT_ONLY
+all: root.tmp
+else
 all: $O/product.iso
+endif
 
 define mount-deck
 	@(deck $1 > /dev/null 2>&1) && echo deck $1 || true
@@ -152,6 +156,17 @@ define help/body
 	@echo '  root.build    # created by applying the root.spec to the bootstrap'
 	@echo '  root.patched  # deck root.build and apply the root overlay and removelist'
 	@echo '  root.tmp      # temporary changes here are squashed into a separate layer'
+endef
+
+ifndef CHROOT_ONLY
+help/body += ;\
+	echo '  cdroot        \# created by squashing root.patched into cdroot template + overlay'; \
+	echo '  product.iso   \# product ISO created from the cdroot'; \
+	echo; \
+	echo '  updated-initramfs \# rebuild product with updated initramfs' 
+endif
+
+define foo
 	@echo '  cdroot        # created by squashing root.patched into cdroot template + overlay'
 	@echo '  product.iso   # product ISO created from the cdroot'
 	@echo
@@ -249,6 +264,8 @@ define root.tmp/body
 	deck $O/root.patched $O/root.tmp
 endef
 
+ifndef CHROOT_ONLY
+
 # target: cdroot
 cdroot/deps ?= $(STAMPS_DIR)/root.patched $(_CDROOT)
 define cdroot/body
@@ -319,6 +336,8 @@ updated-initramfs: $(update-initramfs/deps) $(updated-initramfs/deps/extra)
 	$(updated-initramfs/pre)
 	$(updated-initramfs/body)
 	$(updated-initramfs/post)
+
+endif
 
 # construct target rules
 define _stamped_target
