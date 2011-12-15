@@ -21,8 +21,11 @@ import re
 import sys
 import getopt
 
+from stdtrap import StdTrap
+
 import help
 import cpp
+
 from plan import Plan
 from chroot import Chroot
 from common import fatal, gnu_getopt
@@ -103,7 +106,16 @@ def main():
             plan.add(arg)
             plan.packageorigins.add(arg, '_')
 
-    spec = plan.resolve()
+    trap = StdTrap(stdout=(output_path is None), stderr=False)
+    try:
+        spec = plan.resolve()
+    finally:
+        trap.close()
+
+    if output_path is None:
+        trapped_output = trap.stdout.read()
+        print >> sys.stderr, trapped_output,
+
     spec = annotate_spec(spec, plan.packageorigins)
 
     if output_path is None:
