@@ -287,7 +287,7 @@ define cdroot/body
 	mkdir $O/cdroot/casper
 	if [ -d $(CDROOT_OVERLAY) ]; then fab-apply-overlay $(CDROOT_OVERLAY) $O/cdroot; fi
 
-	mksquashfs $O/root.patched $O/cdroot/casper/10root.squashfs
+	mksquashfs $O/root.patched $O/cdroot/casper/10root.squashfs -no-sparse
 endef
 
 define run-genisoimage
