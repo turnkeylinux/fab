@@ -69,7 +69,7 @@ class RevertibleFile(file):
 
 class Installer:
     def __init__(self, chroot_path, pool_path, environ={}):
-        env = {'DEBIAN_FRONTEND': 'noninterative',
+        env = {'DEBIAN_FRONTEND': 'noninteractive',
                'DEBIAN_PRIORITY': 'critical'}
         env.update(environ)
 
