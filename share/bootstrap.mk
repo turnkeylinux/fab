@@ -99,8 +99,8 @@ define repo/body
 	cat $O/required.spec $O/base.spec | \
 		POOL_DIR=$(POOL) pool-get $O/repo/pool/main --strict --tree --input - 
 
-	$(BSP)/repo_index.sh $(DEBOOTSTRAP_SUITE) main $O/repo
-	$(BSP)/repo_release.sh $(DEBOOTSTRAP_SUITE) main `pwd`/$O/repo
+	repo-index $O/repo $(DEBOOTSTRAP_SUITE) main
+	repo-release `pwd`/$O/repo $(DEBOOTSTRAP_SUITE)
 endef
 
 #bootstrap
