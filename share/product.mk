@@ -19,6 +19,7 @@ _CONF_VARS = $(call filter-undefined-vars,$(CONF_VARS_BUILTIN) $(CONF_VARS))
 
 export $(_CONF_VARS)
 export FAB_CHROOT_ENV = $(shell echo $(_CONF_VARS) | sed 's/ \+/:/g')
+export FAB_INSTALL_ENV = $(FAB_CHROOT_ENV)
 
 # FAB_PATH dependent infrastructural components
 POOL ?= $(FAB_PATH)/pools/$(RELEASE)
