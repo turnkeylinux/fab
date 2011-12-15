@@ -101,7 +101,7 @@ def main():
 
         else:
             plan.add(arg)
-            plan.packageorigins.add(arg, 'plan')
+            plan.packageorigins.add(arg, '_')
 
     spec = plan.resolve()
     spec = annotate_spec(spec, plan.packageorigins)
