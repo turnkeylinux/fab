@@ -148,7 +148,7 @@ define help/body
 	@echo '  O                          $(value O)/'
 	@echo '  ISOLABEL                   $(value ISOLABEL)'
 	@echo
-	@echo '# Built-in configuration variables:'
+	@echo '# Built-in configuration options:'
 	@echo '  DEBUG                      Turn on product debugging'
 	@echo '  KERNEL                     Override default kernel package'
 	@echo '  PKGS/EXTRA                 Extra packages to install'
