@@ -26,9 +26,19 @@ import shutil
 
 import help
 from chroot import Chroot as _Chroot
-from common import fatal, get_environ
+from common import fatal
 
 from executil import ExecError
+
+def get_environ(env_conf):
+    environ = {}
+    if env_conf:
+        for var in env_conf.split(":"):
+            val = os.environ.get(var)
+            if val is not None:
+                environ[var] = val
+            
+    return environ
 
 class Chroot(_Chroot):
     def system(self, *command):
