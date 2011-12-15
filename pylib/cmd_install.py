@@ -28,7 +28,7 @@ from plan import Plan
 from installer import Installer
 from common import fatal, gnu_getopt
 
-from cli_chroot import get_environ
+from cmd_chroot import get_environ
 
 @help.usage(__doc__)
 def usage():
