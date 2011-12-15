@@ -2,7 +2,7 @@
 """Resolve plan into spec using latest packages from pool
 
 Arguments:
-  <plan> := ( - | path/to/plan )
+  <plan> := ( - | path/to/plan | package )
 
 Options:
   -o --output       Path to spec-output (default is stdout)
@@ -16,6 +16,7 @@ Options:
 """
 
 import os
+from os.path import *
 import re
 import sys
 import getopt
@@ -28,7 +29,7 @@ from common import fatal, gnu_getopt
 
 @help.usage(__doc__)
 def usage():
-    print >> sys.stderr, "Syntax: %s [-options] <plan>" % sys.argv[0]
+    print >> sys.stderr, "Syntax: %s [-options] <plan> ..." % sys.argv[0]
 
 def list_packages(root):
     chroot = Chroot(root)
@@ -60,9 +61,6 @@ def main():
     if not args:
         usage()
     
-    if not len(args) in (1, 2):
-        usage("bad number of arguments")
-
     output_path = None
     pool_path = None
     bootstrap_path = None
@@ -77,24 +75,33 @@ def main():
             pool_path = val
 
         if opt == "--bootstrap":
-            bootstrap_path = val
-            if not os.path.isdir(bootstrap_path):
-                fatal("bootstrap does not exist: " + root)
+            if not os.path.isdir(val):
+                fatal("directory does not exist (%s)" % val)
 
-    plan_path = args[0]
+            bootstrap_path = val
+
     if pool_path is None:
         pool_path = os.environ.get('FAB_POOL_PATH')
 
-    plan = Plan.init_from_file(plan_path, cpp_opts, pool_path)
-    for package in plan:
-        plan.packageorigins.add(package, 'plan')
-
+    plan = Plan(pool_path=pool_path)
     if bootstrap_path:
         bootstrap_packages = set(list_packages(bootstrap_path))
         plan |= bootstrap_packages
 
         for package in bootstrap_packages:
             plan.packageorigins.add(package, 'bootstrap')
+
+    for arg in args:
+        if arg == "-" or exists(arg):
+            subplan = Plan.init_from_file(arg, cpp_opts, pool_path)
+            plan |= subplan
+
+            for package in subplan:
+                plan.packageorigins.add(package, 'plan')
+
+        else:
+            plan.add(arg)
+            plan.packageorigins.add(arg, 'plan')
 
     spec = plan.resolve()
     spec = annotate_spec(spec, plan.packageorigins)
