@@ -97,7 +97,7 @@ def main():
             plan |= subplan
 
             for package in subplan:
-                plan.packageorigins.add(package, 'plan')
+                plan.packageorigins.add(package, arg)
 
         else:
             plan.add(arg)
