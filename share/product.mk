@@ -151,7 +151,7 @@ define help/body
 	@echo '# Built-in configuration options:'
 	@echo '  DEBUG                      Turn on product debugging'
 	@echo '  KERNEL                     Override default kernel package'
-	@echo '  PKGS/EXTRA                 Extra packages to install'
+	@echo '  PKGS/EXTRA                 Extra packages to include in the plan'
 	@echo '  CHROOT_ONLY                Build a chroot-only product'
 
 	@echo 
@@ -217,14 +217,14 @@ endef
 # target: root.spec
 root.spec/deps ?= $(STAMPS_DIR)/bootstrap $(wildcard plan/*)
 define root.spec/body
-	fab-plan-resolve $(PLAN) --bootstrap=$O/bootstrap --output=$O/root.spec $(foreach var,$(_CONF_VARS),-D $(var)=$($(var)))
+	fab-plan-resolve $(PLAN) $(PKGS/EXTRA) --bootstrap=$O/bootstrap --output=$O/root.spec $(foreach var,$(_CONF_VARS),-D $(var)=$($(var)))
 endef
 
 # target: root.build
 root.build/deps ?= $(STAMPS_DIR)/bootstrap $(STAMPS_DIR)/root.spec
 define root.build/body
 	if ! deck --isdeck $O/root.build; then deck $O/bootstrap $O/root.build; fi
-	fab-install --no-deps $O/root.build $O/root.spec $(PKGS/EXTRA)
+	fab-install --no-deps $O/root.build $O/root.spec
 endef
 
 # target: root.patched
