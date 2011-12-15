@@ -151,7 +151,7 @@ define help/body
 	@echo '# Built-in configuration options:'
 	@echo '  DEBUG                      Turn on product debugging'
 	@echo '  KERNEL                     Override default kernel package'
-	@echo '  PKGS/EXTRA                 Extra packages to include in the plan'
+	@echo '  PLAN/EXTRA                 Extra packages to include in the plan'
 	@echo '  CHROOT_ONLY                Build a chroot-only product'
 
 	@echo 
@@ -217,7 +217,7 @@ endef
 # target: root.spec
 root.spec/deps ?= $(STAMPS_DIR)/bootstrap $(wildcard plan/*)
 define root.spec/body
-	fab-plan-resolve $(PLAN) $(PKGS/EXTRA) --bootstrap=$O/bootstrap --output=$O/root.spec $(foreach var,$(_CONF_VARS),-D $(var)=$($(var)))
+	fab-plan-resolve $(PLAN) $(PLAN/EXTRA) --bootstrap=$O/bootstrap --output=$O/root.spec $(foreach var,$(_CONF_VARS),-D $(var)=$($(var)))
 endef
 
 # target: root.build
