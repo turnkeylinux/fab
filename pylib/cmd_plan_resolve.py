@@ -2,13 +2,14 @@
 """Resolve plan into spec using latest packages from pool
 
 Arguments:
-  <plan>            Path to read plan from (- for stdin)
-  [bootstrap]       Extract list of installed packages from the bootstrap and
-                    append to the plan
+  <plan> := ( - | path/to/plan )
 
 Options:
-  -p --pool=PATH    set pool path (default: $FAB_POOL_PATH)
   -o --output       Path to spec-output (default is stdout)
+  -p --pool=PATH    Set pool path (default: $FAB_POOL_PATH)
+
+  --bootstrap=PATH  Extract list of installed packages from the bootstrap and
+                    append to the plan
 
   (Also accepts fab-cpp options to effect plan preprocessing)
 
@@ -27,7 +28,7 @@ from common import fatal, gnu_getopt
 
 @help.usage(__doc__)
 def usage():
-    print >> sys.stderr, "Syntax: %s [-options] <plan> [ /path/to/bootstrap ]" % sys.argv[0]
+    print >> sys.stderr, "Syntax: %s [-options] <plan>" % sys.argv[0]
 
 def list_packages(root):
     chroot = Chroot(root)
@@ -51,7 +52,8 @@ def main():
     try:
         opts, args = gnu_getopt(args, "o:p:h",
                                 ["output=",
-                                 "pool="])
+                                 "pool=",
+                                 "bootstrap=",])
     except getopt.GetoptError, e:
         usage(e)
 
@@ -63,6 +65,7 @@ def main():
 
     output_path = None
     pool_path = None
+    bootstrap_path = None
     for opt, val in opts:
         if opt == '-h':
             usage()
@@ -73,17 +76,14 @@ def main():
         if opt in ('-p', '--pool'):
             pool_path = val
 
+        if opt == "--bootstrap":
+            bootstrap_path = val
+            if not os.path.isdir(bootstrap_path):
+                fatal("bootstrap does not exist: " + root)
+
     plan_path = args[0]
     if pool_path is None:
         pool_path = os.environ.get('FAB_POOL_PATH')
-
-    try:
-        bootstrap_path = args[1]
-        if not os.path.isdir(bootstrap_path):
-            fatal("bootstrap does not exist: " + root)
-
-    except IndexError:
-        bootstrap_path = None
 
     plan = Plan.init_from_file(plan_path, cpp_opts, pool_path)
     for package in plan:
