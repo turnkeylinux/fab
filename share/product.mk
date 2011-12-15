@@ -148,6 +148,13 @@ define help/body
 	@echo '  O                          $(value O)/'
 	@echo '  ISOLABEL                   $(value ISOLABEL)'
 	@echo
+	@echo '# Built-in configuration variables:'
+	@echo '  DEBUG                      Turn on product debugging'
+	@echo '  KERNEL                     Override default kernel package'
+	@echo '  PKGS/EXTRA                 Extra packages to install'
+	@echo '  CHROOT_ONLY                Build a chroot-only product'
+
+	@echo 
 	@echo '=== Usage'
 	@echo '# remake target and the targets that depend on it'
 	@echo '$$ rm $(value STAMPS_DIR)/<target>; make <target>'
