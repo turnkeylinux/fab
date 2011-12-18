@@ -222,8 +222,11 @@ endef
 
 # target: root.build
 root.build/deps ?= $(STAMPS_DIR)/bootstrap $(STAMPS_DIR)/root.spec
-define root.build/body
+define root.build/init
 	if ! deck --isdeck $O/root.build; then deck $O/bootstrap $O/root.build; fi
+endef
+
+define root.build/body
 	fab-install --no-deps $O/root.build $O/root.spec
 endef
 
@@ -248,9 +251,12 @@ define foo
 endef
 
 root.patched/deps ?= $(STAMPS_DIR)/root.build $(REMOVELIST) $(wildcard $(CONF_SCRIPTS)/*)
-define root.patched/body
+define root.patched/init
 	$(call remove-deck, $O/root.patched)
 	deck $O/root.build $O/root.patched
+endef
+
+define root.patched/body
 	$(foreach overlay,$(_COMMON_OVERLAYS),
 	  fab-apply-overlay $(overlay) $O/root.patched)
 	$(foreach conf,$(_COMMON_CONF),
@@ -358,6 +364,7 @@ $1: $(STAMPS_DIR)/$1
 
 $(STAMPS_DIR)/$1: $$($1/deps) $$($1/deps/extra)
 	@mkdir -p $(STAMPS_DIR)
+	$$($1/init)
 	$$($1/pre)
 	$$($1/body)
 	$$($1/post)
