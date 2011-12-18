@@ -7,17 +7,41 @@ if [ $# -eq "2" ]; then
     chroot=$2
 fi
 
+daemon() {
+    if [ -e $chroot/etc/init.d/$1 ]; then
+        fab-chroot $chroot "/etc/init.d/$1 $2"
+    fi
+}
+
+database_stop() {
+    if [ -e $chroot/etc/init.d/mysql ]; then
+        fab-chroot $chroot "/etc/init.d/mysql stop || /etc/init.d/mysql stop"
+        fab-chroot $chroot "killall mysqld_safe || true"
+    fi
+
+    daemon postgresql-8.3 stop
+}
+
+database_start() {
+    daemon mysql start
+    daemon postgresql-8.3 start
+}
+
+webserver() {
+    daemon webmin $1
+    daemon mongrel_cluster $1
+    daemon apache2 $1
+    daemon lighttpd $1
+}
+
 case "$1" in
     start)
-        fab-chroot $chroot "/etc/init.d/webmin start"
-        fab-chroot $chroot "/etc/init.d/apache2 start"
-        fab-chroot $chroot "/etc/init.d/mysql start"
+        webserver start
+        database_start
         ;;
     stop)
-        fab-chroot $chroot "/etc/init.d/webmin stop"
-        fab-chroot $chroot "/etc/init.d/apache2 stop"
-        fab-chroot $chroot "/etc/init.d/mysql stop"
-        fab-chroot $chroot "killall mysqld_safe || true"
+        webserver stop
+        database_stop
         ;;
     *)
         echo "usage: $0 start|stop [chroot]"
