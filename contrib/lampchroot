@@ -1,0 +1,28 @@
+#!/bin/sh
+#helper script when testing in a chroot
+
+chroot=build/root.tmp
+
+if [ $# -eq "2" ]; then
+    chroot=$2
+fi
+
+case "$1" in
+    start)
+        fab-chroot $chroot "/etc/init.d/webmin start"
+        fab-chroot $chroot "/etc/init.d/apache2 start"
+        fab-chroot $chroot "/etc/init.d/mysql start"
+        ;;
+    stop)
+        fab-chroot $chroot "/etc/init.d/webmin stop"
+        fab-chroot $chroot "/etc/init.d/apache2 stop"
+        fab-chroot $chroot "/etc/init.d/mysql stop"
+        fab-chroot $chroot "killall mysqld_safe || true"
+        ;;
+    *)
+        echo "usage: $0 start|stop [chroot]"
+        echo "       chroot default: build/root.tmp"
+        exit 1
+        ;;
+esac
+
