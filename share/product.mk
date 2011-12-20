@@ -258,7 +258,16 @@ endef
 
 define root.patched/body
 	$(foreach overlay,$(_COMMON_OVERLAYS),
-	  fab-apply-overlay $(overlay) $O/root.patched)
+	  @if echo $(overlay) | grep -q '\.d$$'; then \
+	  	for d in $(overlay)/*; do \
+		  echo fab-apply-overlay $$d $O/root.patched; \
+		  fab-apply-overlay $$d $O/root.patched; \
+		done; \
+	  else \
+		  echo fab-apply-overlay $(overlay) $O/root.patched; \
+		  fab-apply-overlay $(overlay) $O/root.patched; \
+	  fi
+	  )
 	$(foreach conf,$(_COMMON_CONF),
 	  @if [ -d $(conf) ]; then \
 			$(call run-conf-scripts, $(conf)); \
