@@ -38,6 +38,7 @@ endif
 
 COMMON_OVERLAYS_PATH ?= $(FAB_PATH)/common-overlays
 COMMON_CONF_PATH ?= $(FAB_PATH)/common-conf
+COMMON_REMOVELISTS_PATH ?= $(FAB_PATH)/common-removelists
 
 define prefix-relative-paths
 	$(foreach val,$1,$(shell echo $(val) | sed '/^[^\/]/ s|^|$2/|' ))
@@ -45,6 +46,7 @@ endef
 
 _COMMON_OVERLAYS = $(call prefix-relative-paths,$(COMMON_OVERLAYS),$(COMMON_OVERLAYS_PATH))
 _COMMON_CONF = $(call prefix-relative-paths,$(COMMON_CONF),$(COMMON_CONF_PATH))
+_COMMON_REMOVELISTS = $(call prefix-relative-paths,$(COMMON_REMOVELISTS),$(COMMON_REMOVELISTS_PATH))
 
 FAB_PLAN_INCLUDE_PATH ?= $(FAB_PATH)/common-plans
 
@@ -126,6 +128,7 @@ define help/body
 	@echo '  CDROOTS_PATH               $(value CDROOTS_PATH)/'
 	@echo '  COMMON_CONF_PATH           $(value COMMON_CONF_PATH)/'
 	@echo '  COMMON_OVERLAYS_PATH       $(value COMMON_OVERLAYS_PATH)/'
+	@echo '  COMMON_REMOVELISTS_PATH    $(value COMMON_REMOVELISTS_PATH)/'
 	@echo
 	
 	@echo '# Local components           [VALUE]'
@@ -142,6 +145,7 @@ define help/body
 	@echo '  CDROOT                     $(value CDROOT)'
 	@echo '  COMMON_CONF                $(value COMMON_CONF)'
 	@echo '  COMMON_OVERLAYS            $(value COMMON_OVERLAYS)'
+	@echo '  COMMON_REMOVELISTS         $(value COMMON_REMOVELISTS)'
 	@echo
 
 	@echo '# Product output variables   [VALUE]'
@@ -282,6 +286,10 @@ define root.patched/body
 	fi
 	fab-chroot $O/root.patched "rm -rf /boot/*.bak"
 	@$(call run-conf-scripts, $(CONF_SCRIPTS))
+
+	$(foreach removelist,$(_COMMON_REMOVELISTS),
+	  fab-apply-removelist $(removelist) $O/root.patched; \
+	  )
 	$(if $(REMOVELIST),fab-apply-removelist $(REMOVELIST) $O/root.patched)
 endef
 
