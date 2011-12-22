@@ -111,6 +111,13 @@ class Installer:
         print >> sources_list, "deb file:/// local debs"
         sources_list.close()
 
+        fake_invoke_rcd = RevertibleFile(join(self.chroot.path, "usr/sbin/invoke-rc.d"))
+        fake_invoke_rcd.write("#!/bin/sh\n" +
+                              "echo\n" +
+                              "echo \"Warning: Fake invoke-rc.d called\"\n")
+        fake_invoke_rcd.close()
+        os.chmod(fake_invoke_rcd.path, 0755)
+
         fake_start_stop = RevertibleFile(join(self.chroot.path, "sbin/start-stop-daemon"))
         fake_start_stop.write("#!/bin/sh\n" +
                               "echo\n" +
