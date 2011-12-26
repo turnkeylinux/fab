@@ -183,13 +183,6 @@ help/body += ;\
 	echo '  updated-initramfs \# rebuild product with updated initramfs' 
 endif
 
-define foo
-	@echo '  cdroot        # created by squashing root.patched into cdroot template + overlay'
-	@echo '  product.iso   # product ISO created from the cdroot'
-	@echo
-	@echo '  updated-initramfs # rebuild product with updated initramfs'
-endef
-
 help:
 	$(help/pre)
 	$(help/body)
@@ -248,10 +241,6 @@ define run-conf-scripts
 		echo fab-chroot $O/root.patched --script $$script $$args; \
 		fab-chroot $O/root.patched --script $$script $$args; \
 	done
-endef
-
-define foo
-	echo foo = $1
 endef
 
 root.patched/deps ?= $(STAMPS_DIR)/root.build $(REMOVELIST) $(wildcard $(CONF_SCRIPTS)/*)
