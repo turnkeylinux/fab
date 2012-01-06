@@ -67,6 +67,13 @@ class RevertibleFile(file):
     def __del__(self):
         self.revert()
 
+class RevertibleScript(RevertibleFile):
+    def __init__(self, path, lines):
+        RevertibleFile.__init__(self, path)
+        self.write("\n".join(lines))
+        self.close()
+        os.chmod(self.path, 0755)
+
 class Installer:
     def __init__(self, chroot_path, pool_path, environ={}):
         env = {'DEBIAN_FRONTEND': 'noninteractive',
@@ -111,28 +118,22 @@ class Installer:
         print >> sources_list, "deb file:/// local debs"
         sources_list.close()
 
-        fake_invoke_rcd = RevertibleFile(join(self.chroot.path, "usr/sbin/invoke-rc.d"))
-        fake_invoke_rcd.write("#!/bin/sh\n" +
-                              "echo\n" +
-                              "echo \"Warning: Fake invoke-rc.d called\"\n")
-        fake_invoke_rcd.close()
-        os.chmod(fake_invoke_rcd.path, 0755)
+        lines = [ "#!/bin/sh", 
+                  "echo", 
+                  "echo \"Warning: Fake invoke-rc.d called\"" ]
+        fake_invoke_rcd = RevertibleScript(join(self.chroot.path, "usr/sbin/invoke-rc.d"), lines)
 
-        fake_start_stop = RevertibleFile(join(self.chroot.path, "sbin/start-stop-daemon"))
-        fake_start_stop.write("#!/bin/sh\n" +
-                              "echo\n" +
-                              "echo \"Warning: Fake start-stop-daemon called\"\n")
-        fake_start_stop.close()
-        os.chmod(fake_start_stop.path, 0755)
+        lines = [ "#!/bin/sh", 
+                  "echo", 
+                  "echo \"Warning: Fake start-stop-daemon called\"" ]
+        fake_start_stop = RevertibleScript(join(self.chroot.path, "sbin/start-stop-daemon"), lines)
 
         defer_log = "var/lib/update-initramfs.deferred"
-        fake_update_initramfs = RevertibleFile(join(self.chroot.path, "usr/sbin/update-initramfs"))
-        fake_update_initramfs.write("#!/bin/sh\n" +
-                                    "echo\n" +
-                                    "echo \"Warning: Deferring update-initramfs $@\"\n" +
-                                    "echo \"update-initramfs $@\" >> /%s\n" % defer_log)
-        fake_update_initramfs.close()
-        os.chmod(fake_update_initramfs.path, 0755)
+        lines = [ "#!/bin/sh", 
+                  "echo", 
+                  "echo \"Warning: Deferring update-initramfs $@\"", 
+                  "echo \"update-initramfs $@\" >> /%s" % defer_log ]
+        fake_update_initramfs = RevertibleScript(join(self.chroot.path, "usr/sbin/update-initramfs"), lines)
 
         for packages in (high, regular):
             if packages:
