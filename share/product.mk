@@ -258,6 +258,7 @@ define root.patched/init
 endef
 
 define root.patched/body
+	# apply the common overlays
 	$(foreach overlay,$(_COMMON_OVERLAYS),
 	  @if echo $(overlay) | grep -q '\.d$$'; then \
 	  	for d in $(overlay)/*; do \
@@ -269,6 +270,8 @@ define root.patched/body
 		  fab-apply-overlay $(overlay) $O/root.patched; \
 	  fi
 	  )
+	
+	# run the common configuration scripts
 	$(foreach conf,$(_COMMON_CONF),
 	  @if [ -d $(conf) ]; then \
 			$(call run-conf-scripts, $(conf)); \
@@ -278,16 +281,24 @@ define root.patched/body
 	  fi
 	  )
 	  
-	if [ -d $(ROOT_OVERLAY) ]; then \
-		fab-apply-overlay $(ROOT_OVERLAY) $O/root.patched; \
-	fi
-	fab-chroot $O/root.patched "rm -rf /boot/*.bak"
-	@$(call run-conf-scripts, $(CONF_SCRIPTS))
-
+	# apply the common removelists
 	$(foreach removelist,$(_COMMON_REMOVELISTS),
 	  fab-apply-removelist $(removelist) $O/root.patched; \
 	  )
+
+	# apply the product-local root overlay
+	if [ -d $(ROOT_OVERLAY) ]; then \
+		fab-apply-overlay $(ROOT_OVERLAY) $O/root.patched; \
+	fi
+
+	# run the product-local configuration scripts
+	@$(call run-conf-scripts, $(CONF_SCRIPTS))
+
+	# apply the product-local removelist
 	$(if $(REMOVELIST),fab-apply-removelist $(REMOVELIST) $O/root.patched)
+
+	fab-chroot $O/root.patched "update-initramfs -u"
+	fab-chroot $O/root.patched "rm -rf /boot/*.bak"
 endef
 
 define root.patched/cleanup
