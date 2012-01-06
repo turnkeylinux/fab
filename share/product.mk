@@ -224,12 +224,11 @@ define root.build/init
 endef
 
 define root.build/body
-	if [ -n "$(root.build/ignore-errors)" ]; then \
-		ignore=$$(echo "$(root.build/ignore-errors)" | sed 's/ \+/:/g'); \
-		fab-install --ignore-errors=$$ignore --no-deps $O/root.build $O/root.spec; \
-	else \
-		fab-install --no-deps $O/root.build $O/root.spec; \
-	fi
+	@if [ -n "$(root.build/ignore-errors)" ]; then \
+		opt_ignore_errors="--ignore-errors=$$(echo "$(root.build/ignore-errors)" | sed 's/ \+/:/g')"; \
+	fi; \
+	echo fab-install $$opt_ignore_errors --no-deps $O/root.build $O/root.spec; \
+	fab-install $$opt_ignore_errors --no-deps $O/root.build $O/root.spec;
 endef
 
 # target: root.patched
