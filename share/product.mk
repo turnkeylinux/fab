@@ -298,6 +298,7 @@ define root.patched/body
 	# apply the product-local removelist
 	$(if $(REMOVELIST),fab-apply-removelist $(REMOVELIST) $O/root.patched)
 
+	# update initramfs (handle reconfigured initramfs scripts)
 	fab-chroot $O/root.patched "update-initramfs -u"
 	fab-chroot $O/root.patched "rm -rf /boot/*.bak"
 endef
