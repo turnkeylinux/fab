@@ -231,6 +231,10 @@ define root.build/body
 	fab-install $$opt_ignore_errors --no-deps $O/root.build $O/root.spec;
 endef
 
+define root.build/cleanup
+	fuser -k $O/root.build || true
+endef
+
 # target: root.patched
 define run-conf-scripts
 	if [ -n "$(wildcard $1/*)" ]; then \
@@ -284,6 +288,10 @@ define root.patched/body
 	  fab-apply-removelist $(removelist) $O/root.patched; \
 	  )
 	$(if $(REMOVELIST),fab-apply-removelist $(REMOVELIST) $O/root.patched)
+endef
+
+define root.patched/cleanup
+	fuser -k $O/root.patched || true
 endef
 
 # target root.tmp
@@ -378,6 +386,7 @@ $(STAMPS_DIR)/$1: $$($1/deps) $$($1/deps/extra)
 	$$($1/pre)
 	$$($1/body)
 	$$($1/post)
+	$$($1/cleanup)
 	touch $$@
 endef
 
