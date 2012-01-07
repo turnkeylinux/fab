@@ -97,23 +97,43 @@ Inheriting from contrib/product.mk
 Overview
 --------
 
-Inheriting from product.mk is basically very similar to how you inherit
-from pyproject's Makefiles (see Appendix for an API reference).
+fab's product.mk is designed to be configurable and extendable with
+*define* based hooks and variables which should be set BEFORE including
+product.mk, because various elements are evaluated at include time
+(e.g., target prerequisites, variable exports)::
 
-The difference is that fab/contrib/product.mk is designed to be slightly
-more flexible and has a better documented API (I.e., make help). You can
-inherit from product.mk in a Makefile, but you can also run product.mk
-as a standalone program which inherits variable definitions from its
-environment.
+    <target>/pre  # rules before default body (default: empty)
+    <target>/post # rules after default body (default: empty)
 
-One side effect is that if you inherit from product.mk in a product
-Makefile, you can override built-in variables before the include (I.e.,
-they are conditional assignments), contrary to pyproject's Makefiles in
-which overriding built-in variables must be done after the include
-(because they are not conditional assignments).
+    <target>/deps # override default dependencies for a rule
+    <target>/deps/extra # extra dependencies for rule (default: empty)
 
-So basically you can safely put everything before including product.mk
-except for <target>/body overrides (which should be rarely needed).
+    override built-in variables (e.g., ISOLABEL, CONF_SCRIPTS)
+
+    include path/to/product.mk
+
+Special exception - if you want to override built in built-in target
+rules for a target (I.e., when a /pre or /post hook isn't enough),
+you'll need to define them AFTER including the shared Makefile::
+
+    <target>/body # body of rules (default: defined, but can be overridden)
+
+product.mk was originally based on pyproject-common's inheritable
+Makefiles pyproject.mk and debian-rules.mk. The main difference is that
+pyproject.mk is more flexible and has a better documented API (I.e.,
+make help). 
+
+For example, you can not only inherit from product.mk in a Makefile, but
+you can also run product.mk as a standalone program which inherits
+variable definitions from its environment.
+
+When you inherit from product.mk in a product Makefile, you can override
+built-in variables (but not built-in targets) before you include
+product.mk. This is because in product.mk built-in variables are
+assigned on the condition that they are not already set previously.
+
+In a nutshell: define everything before including product.mk except for
+<target>/body overrides (which should be rarely needed - if ever).
 
 extension API
 -------------
