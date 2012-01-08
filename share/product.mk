@@ -36,9 +36,9 @@ else
 $(eval _CDROOT = $(CDROOT))
 endif
 
-COMMON_OVERLAYS_PATH ?= $(FAB_PATH)/common-overlays
-COMMON_CONF_PATH ?= $(FAB_PATH)/common-conf
-COMMON_REMOVELISTS_PATH ?= $(FAB_PATH)/common-removelists
+COMMON_OVERLAYS_PATH ?= $(FAB_PATH)/common/overlays
+COMMON_CONF_PATH ?= $(FAB_PATH)/common/conf
+COMMON_REMOVELISTS_PATH ?= $(FAB_PATH)/common/removelists
 
 define prefix-relative-paths
 	$(foreach val,$1,$(shell echo $(val) | sed '/^[^\/]/ s|^|$2/|' ))
@@ -48,7 +48,7 @@ _COMMON_OVERLAYS = $(call prefix-relative-paths,$(COMMON_OVERLAYS),$(COMMON_OVER
 _COMMON_CONF = $(call prefix-relative-paths,$(COMMON_CONF),$(COMMON_CONF_PATH))
 _COMMON_REMOVELISTS = $(call prefix-relative-paths,$(COMMON_REMOVELISTS),$(COMMON_REMOVELISTS_PATH))
 
-FAB_PLAN_INCLUDE_PATH ?= $(FAB_PATH)/common-plans
+FAB_PLAN_INCLUDE_PATH ?= $(FAB_PATH)/common/plans
 
 export FAB_POOL_PATH = $(POOL)
 export FAB_PLAN_INCLUDE_PATH
