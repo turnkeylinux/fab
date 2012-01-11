@@ -88,8 +88,7 @@ endef
 #base.spec
 base.spec/deps ?= plan/base $(STAMPS_DIR)/required.spec
 define base.spec/body
-	fab-plan-resolve plan/base | \
-		$(BSP)/exclude_spec.py - $O/required.spec > $O/base.spec
+	fab-plan-resolve --output=$O/base.spec plan/base
 endef
 
 #repo
@@ -106,7 +105,8 @@ endef
 #bootstrap
 bootstrap/deps ?= $(STAMPS_DIR)/repo
 define bootstrap/body
-	$(BSP)/debootstrap.py $(DEBOOTSTRAP_SUITE) $O/bootstrap `pwd`/$O/repo $O/required.spec $O/base.spec
+	$(BSP)/exclude_spec.py $O/base.spec $O/required.spec > $O/base-excl-req.spec
+	$(BSP)/debootstrap.py $(DEBOOTSTRAP_SUITE) $O/bootstrap `pwd`/$O/repo $O/required.spec $O/base-excl-req.spec
 
 	fab-chroot $O/bootstrap --script $(BSP)/reset-apt.sh
 	fab-chroot $O/bootstrap 'echo "do_initrd = Yes" > /etc/kernel-img.conf'
