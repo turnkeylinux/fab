@@ -41,6 +41,9 @@ def list_packages(root):
     return output.splitlines()
 
 def annotate_spec(spec, packageorigins):
+    if not spec:
+        return ""
+
     annotated_spec = []
 
     column_len = max([ len(s) + 1 for s in spec ])
