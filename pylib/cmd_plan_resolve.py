@@ -30,15 +30,29 @@ from plan import Plan
 from chroot import Chroot
 from common import fatal, gnu_getopt
 
+import debinfo
+
 @help.usage(__doc__)
 def usage():
     print >> sys.stderr, "Syntax: %s [-options] <plan> ..." % sys.argv[0]
 
-def list_packages(root):
-    chroot = Chroot(root)
-    output = chroot.getoutput("dpkg-query --show -f='${Package}\\n'")
+def iter_packages(root):
+    def parse_status(path):
+        control = ""
+        for line in file(path).readlines():
+            if not line.strip():
+                yield control
+                control = ""
+            else:
+                control += line
 
-    return output.splitlines()
+        if control.strip():
+            yield control
+
+    for control in parse_status(join(root, "var/lib/dpkg/status")):
+        d = debinfo.parse_control(control)
+        if d['Status'] == 'install ok installed':
+            yield d['Package']
 
 def annotate_spec(spec, packageorigins):
     if not spec:
@@ -91,7 +105,7 @@ def main():
 
     plan = Plan(pool_path=pool_path)
     if bootstrap_path:
-        bootstrap_packages = set(list_packages(bootstrap_path))
+        bootstrap_packages = set(iter_packages(bootstrap_path))
         plan |= bootstrap_packages
 
         for package in bootstrap_packages:
