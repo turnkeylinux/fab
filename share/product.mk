@@ -86,14 +86,6 @@ define remove-deck
 	fi
 endef
 
-define umount-deck
-	@if deck --isdeck $1 && deck --ismounted $1; then \
-		fuser -k $1; \
-		echo deck -u $1; \
-		deck -u $1; \
-	fi
-endef
-
 ifdef CHROOT_ONLY
 all: root.tmp
 else
@@ -113,16 +105,6 @@ redeck:
 	$(call mount-deck, $O/root.build)
 	$(call mount-deck, $O/root.patched)
 	$(call mount-deck, $O/root.tmp)
-
-undeck:
-	$(call umount-deck, $O/root.tmp)
-	$(call umount-deck, $O/root.patched)
-	$(call umount-deck, $O/root.build)
-	$(call umount-deck, $O/bootstrap)
-	$(call umount-deck, $(CONF_SCRIPTS))
-	$(call umount-deck, $(CDROOT_OVERLAY))
-	$(call umount-deck, $(ROOT_OVERLAY))
-	$(call umount-deck, $$(dirname $(PLAN)))
 
 debug:
 	$(foreach v, $V, $(warning $v = $($v)))
@@ -184,7 +166,6 @@ define help/body
 	@echo
 	@echo '# build a target (default: product.iso)'
 	@echo '$$ make [target] [O=path/to/build/dir]'
-	@echo '  undeck        # undeck mounted input/output decks (e.g., before reboot)'
 	@echo '  redeck        # deck unmounted input/output decks (e.g., after reboot)'
 	@echo
 	@echo '  clean         # clean all build targets'
