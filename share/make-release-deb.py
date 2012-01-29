@@ -27,7 +27,7 @@ CONTROL_TPL = """\
 Package: $NAME
 Version: $VERSION
 Architecture: all
-Maintainer: Liraz Siri <liraz@turnkeylinux.org>
+Maintainer: $MAINTAINER
 Installed-Size: 4
 Section: misc
 Priority: optional
@@ -53,16 +53,29 @@ def parse_changelog(path):
         raise Error("can't parse first line of changelog:\n" + firstline)
 
     name, version = m.groups()
-    return name, version
+
+    for line in file(path).readlines():
+        if not line.startswith(" -- "):
+            continue
+
+        break
+
+    m = re.match(r' -- (.* <.*?>)', line)
+    if not m:
+        raise Error("can't parse maintainer:\n" + line)
+    maintainer = m.group(1)
+
+    return name, version, maintainer
 
 def make_release_deb(path_changelog, path_output):
-    name, version = parse_changelog(path_changelog)
+    name, version, maintainer = parse_changelog(path_changelog)
 
     tmpdir = TempDir()
     os.mkdir(join(tmpdir.path, "DEBIAN"))
     control = file(join(tmpdir.path, "DEBIAN/control"), "w")
     print >> control, Template(CONTROL_TPL).substitute(NAME=name, 
-                                                       VERSION=version),
+                                                       VERSION=version,
+                                                       MAINTAINER=maintainer),
     control.close()
 
     tmpdir_doc = join(tmpdir.path, "usr/share/doc/" + name)
