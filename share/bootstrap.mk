@@ -108,7 +108,7 @@ define bootstrap/body
 	$(BSP)/exclude_spec.py $O/base.spec $O/required.spec > $O/base-excl-req.spec
 	$(BSP)/debootstrap.py $(DEBOOTSTRAP_SUITE) $O/bootstrap `pwd`/$O/repo $O/required.spec $O/base-excl-req.spec
 
-	fab-chroot $O/bootstrap --script $(BSP)/reset-apt.sh
+	fab-chroot $O/bootstrap --script $(BSP)/cleanup.sh
 	fab-chroot $O/bootstrap 'echo "do_initrd = Yes" > /etc/kernel-img.conf'
 endef
 
