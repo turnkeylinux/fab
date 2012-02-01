@@ -215,7 +215,7 @@ endef
 # target: root.spec
 root.spec/deps ?= $(STAMPS_DIR)/bootstrap $(wildcard plan/*)
 define root.spec/body
-	fab-plan-resolve $(PLAN) $(EXTRA_PLAN) --bootstrap=$O/bootstrap --output=$O/root.spec $(foreach var,$(_CONF_VARS),-D $(var)=$($(var)))
+	fab-plan-resolve $(PLAN) $(EXTRA_PLAN) --bootstrap=$(BOOTSTRAP) --output=$O/root.spec $(foreach var,$(_CONF_VARS),-D $(var)=$($(var)))
 endef
 
 # target: root.build
