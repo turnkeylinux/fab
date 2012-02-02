@@ -28,10 +28,20 @@ database_start() {
 }
 
 webserver() {
+    web_local $1
     daemon webmin $1
     daemon mongrel_cluster $1
     daemon apache2 $1
     daemon lighttpd $1
+}
+
+web_local() {
+    a2ports=$chroot/etc/apache2/ports.conf
+    [ "$1" = "start" ] && \
+        [ -e $a2ports ] && sed -i "s/Listen /Listen 127.0.0.1:/" $a2ports
+
+    [ "$1" = "stop" ] && \
+        [ -e $a2ports ] && sed -i "s/Listen 127.0.0.1:/Listen /" $a2ports
 }
 
 case "$1" in
