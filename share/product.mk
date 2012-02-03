@@ -15,7 +15,8 @@ define filter-undefined-vars
 	$(foreach var,$1,$(if $($(var)), $(var)))
 endef
 
-_CONF_VARS = $(call filter-undefined-vars,$(CONF_VARS_BUILTIN) $(CONF_VARS))
+_CONF_VARS_BUILTIN = $(call filter-undefined-vars,$(CONF_VARS_BUILTIN))
+_CONF_VARS = $(_CONF_VARS_BUILTIN) $(call filter-undefined-vars,$(CONF_VARS))
 
 export $(_CONF_VARS)
 export FAB_CHROOT_ENV = $(shell echo $(_CONF_VARS) | sed 's/ \+/:/g')
@@ -215,7 +216,7 @@ endef
 # target: root.spec
 root.spec/deps ?= $(STAMPS_DIR)/bootstrap $(wildcard plan/*)
 define root.spec/body
-	fab-plan-resolve $(PLAN) $(EXTRA_PLAN) --bootstrap=$(BOOTSTRAP) --output=$O/root.spec $(foreach var,$(_CONF_VARS),-D $(var)=$($(var)))
+	fab-plan-resolve $(PLAN) $(EXTRA_PLAN) --bootstrap=$(BOOTSTRAP) --output=$O/root.spec $(foreach var,$(_CONF_VARS_BUILTIN),-D '$(var)=$($(var))')
 endef
 
 # target: root.build
