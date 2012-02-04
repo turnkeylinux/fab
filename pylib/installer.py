@@ -153,11 +153,22 @@ class Installer:
                         log.reverse()
                         return log
 
+                    def get_errors(log, error_str):
+                        errors = []
+                        for line in reversed(log):
+                            if line == error_str:
+                                break
+
+                            errors.append(basename(line).split("_")[0])
+                        return errors
+
                     log = get_last_log(join(self.chroot.path, "var/log/apt/term.log"))
-                    if "Errors were encountered while processing:" not in log:
+
+                    error_str = "Errors were encountered while processing:"
+                    if error_str not in log:
                         raise
 
-                    errors = log[-1].strip().split()
+                    errors = get_errors(log, error_str)
 
                     ignored_errors = set(errors) & set(ignore_errors)
                     errors = set(errors) - set(ignore_errors)
