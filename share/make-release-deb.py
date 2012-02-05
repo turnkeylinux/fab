@@ -10,12 +10,16 @@ Arguments:
         If this is a file, we create the debian archive at this path.
         If this is a directory, in it we create package_version_arch.deb
 
+Options:
+
+    --dep=[DEPEND]          Add depend to control
 """
 import os
 from os.path import *
 
 import sys
 import shutil
+import getopt
 
 import re
 from string import Template
@@ -31,6 +35,7 @@ Maintainer: $MAINTAINER
 Installed-Size: 4
 Section: misc
 Priority: optional
+Depends: $DEPENDS
 Description: $NAME release
 """
 
@@ -67,15 +72,17 @@ def parse_changelog(path):
 
     return name, version, maintainer
 
-def make_release_deb(path_changelog, path_output):
+def make_release_deb(path_changelog, path_output, depends=[]):
     name, version, maintainer = parse_changelog(path_changelog)
 
     tmpdir = TempDir()
     os.mkdir(join(tmpdir.path, "DEBIAN"))
     control = file(join(tmpdir.path, "DEBIAN/control"), "w")
-    print >> control, Template(CONTROL_TPL).substitute(NAME=name, 
-                                                       VERSION=version,
-                                                       MAINTAINER=maintainer),
+    content = Template(CONTROL_TPL).substitute(NAME=name,
+                                               VERSION=version,
+                                               MAINTAINER=maintainer,
+                                               DEPENDS=", ".join(depends))
+    print >> control, re.sub("Depends: \n", "", content),
     control.close()
 
     tmpdir_doc = join(tmpdir.path, "usr/share/doc/" + name)
@@ -85,12 +92,24 @@ def make_release_deb(path_changelog, path_output):
     system("dpkg-deb -b", tmpdir.path, path_output)
 
 def main():
-    args = sys.argv[1:]
+    try:
+        opts, args = getopt.gnu_getopt(sys.argv[1:], 'h', ['dep='])
+    except getopt.GetoptError, e:
+        usage(e)
+
     if len(args) != 2:
         usage()
 
+    depends=[]
+    for opt, val in opts:
+        if opt == '-h':
+            usage()
+
+        if opt == '--dep':
+            depends.append(val)
+
     path_changelog, path_output = args
-    make_release_deb(path_changelog, path_output)
+    make_release_deb(path_changelog, path_output, depends)
 
 if __name__ == "__main__":
     main()
