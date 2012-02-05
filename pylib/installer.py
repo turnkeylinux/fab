@@ -182,7 +182,18 @@ class Installer:
         fake_update_initramfs.revert()
         defer_log = join(self.chroot.path, defer_log)
         if exists(defer_log):
-            self.chroot.system("update-initramfs -u")
+            kversion = ""
+            boot_path = join(self.chroot.path, "boot")
+            for f in os.listdir(boot_path):
+                if f.startswith("vmlinuz-"):
+                    kversion = f.replace("vmlinuz-", "")
+                    break
+
+            if not exists(join(boot_path, "initrd.img-%s" % kversion)):
+                self.chroot.system("update-initramfs -c -k %s" % kversion)
+            else:
+                self.chroot.system("update-initramfs -u")
+
             os.remove(defer_log)
             
     def install(self, packages, ignore_errors=[]):
