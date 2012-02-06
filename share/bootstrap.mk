@@ -12,10 +12,13 @@ endif
 
 ifndef RELEASE
 $(warning RELEASE not defined - default paths such as POOL may break)
+else
+DISTRO ?= $(shell dirname $(RELEASE))
+CODENAME ?= $(shell basename $(RELEASE))
 endif
 
 # default locations
-POOL ?= $(FAB_PATH)/pools/$(RELEASE)
+POOL ?= $(FAB_PATH)/pools/$(CODENAME)
 export FAB_POOL_PATH = $(POOL)
 
 DEBOOTSTRAP_SUITE ?= generic
