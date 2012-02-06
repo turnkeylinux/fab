@@ -6,10 +6,16 @@ $(error FAB_PATH not defined - needed for default paths)
 endif
 
 ifndef RELEASE
-$(warning RELEASE not defined - default paths for POOL and BOOTSTRAP may break)
+$(warning RELEASE not defined - required for POOL, BOOTSTRAP, PLANS and CONF.D)
+else
+DISTRO ?= $(shell dirname $(RELEASE))
+CODENAME ?= $(shell basename $(RELEASE))
+# the c preprocessor cannot compare strings
+UBUNTU = $(shell [ $(DISTRO) = 'ubuntu' ] && echo 'y')
+DEBIAN = $(shell [ $(DISTRO) = 'debian' ] && echo 'y')
 endif
 
-CONF_VARS_BUILTIN ?= RELEASE KERNEL DEBUG CHROOT_ONLY
+CONF_VARS_BUILTIN ?= RELEASE DISTRO CODENAME DEBIAN UBUNTU KERNEL DEBUG CHROOT_ONLY
 
 define filter-undefined-vars
 	$(foreach var,$1,$(if $($(var)), $(var)))
@@ -23,8 +29,8 @@ export FAB_CHROOT_ENV = $(shell echo $(_CONF_VARS) | sed 's/ \+/:/g')
 export FAB_INSTALL_ENV = $(FAB_CHROOT_ENV)
 
 # FAB_PATH dependent infrastructural components
-POOL ?= $(FAB_PATH)/pools/$(RELEASE)
-BOOTSTRAP ?= $(FAB_PATH)/bootstraps/$(RELEASE)
+POOL ?= $(FAB_PATH)/pools/$(CODENAME)
+BOOTSTRAP ?= $(FAB_PATH)/bootstraps/$(CODENAME)
 CDROOTS_PATH ?= $(FAB_PATH)/cdroots
 CDROOT ?= generic
 
