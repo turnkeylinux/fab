@@ -5,6 +5,10 @@ ifndef FAB_PATH
 $(error FAB_PATH not defined - needed for default paths)
 endif
 
+ifndef FAB_SHARE_PATH
+$(warning FAB_SHARE_PATH not defined - needed for mksquashfs)
+endif
+
 ifndef RELEASE
 $(warning RELEASE not defined - required for POOL, BOOTSTRAP, PLANS and CONF.D)
 else
@@ -33,6 +37,9 @@ POOL ?= $(FAB_PATH)/pools/$(CODENAME)
 BOOTSTRAP ?= $(FAB_PATH)/bootstraps/$(CODENAME)
 CDROOTS_PATH ?= $(FAB_PATH)/cdroots
 CDROOT ?= generic
+
+FAB_SHARE_PATH ?= /usr/share/fab
+MKSQUASHFS ?= $(FAB_SHARE_PATH)/utils/mksquashfs.$(CODENAME)
 
 # if the CDROOT is a relative path, prefix CDROOTS_PATH
 # we set _CDROOT with eval to improve the readability of $(value _CDROOT) 
@@ -151,6 +158,7 @@ define help/body
 	@echo '  POOL                       $(value POOL)/'
 	@echo '  BOOTSTRAP                  $(value BOOTSTRAP)/'
 	@echo '  CDROOT                     $(value CDROOT)'
+	@echo '  MKSQUASHFS                 $(value MKSQUASHFS)'
 	@echo '  COMMON_CONF                $(value COMMON_CONF)'
 	@echo '  COMMON_OVERLAYS            $(value COMMON_OVERLAYS)'
 	@echo '  COMMON_REMOVELISTS         $(value COMMON_REMOVELISTS)'
@@ -331,7 +339,7 @@ define cdroot/body
 	mkdir $O/cdroot/casper
 	if [ -d $(CDROOT_OVERLAY) ]; then fab-apply-overlay $(CDROOT_OVERLAY) $O/cdroot; fi
 
-	mksquashfs $O/root.patched $O/cdroot/casper/10root.squashfs -no-sparse
+	$(MKSQUASHFS) $O/root.patched $O/cdroot/casper/10root.squashfs -no-sparse
 endef
 
 define run-genisoimage
