@@ -28,6 +28,7 @@ import help
 from chroot import Chroot as _Chroot
 from common import fatal
 
+from installer import RevertibleInitctl
 from executil import ExecError
 
 def get_environ(env_conf):
@@ -98,6 +99,7 @@ def main():
         fatal("no such chroot (%s)" % newroot)
 
     chroot = Chroot(newroot, environ=get_environ(env_conf))
+    fake_initctl = RevertibleInitctl(chroot)
     
     if script_path:
         err = chroot_script(chroot, script_path, *args)

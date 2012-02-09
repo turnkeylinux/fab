@@ -74,6 +74,31 @@ class RevertibleScript(RevertibleFile):
         self.close()
         os.chmod(self.path, 0755)
 
+class RevertibleInitctl(RevertibleScript):
+    @staticmethod
+    def _get_dummy_path():
+        # ugly hack to support running fab from source directory
+        source_path = join(dirname(dirname(__file__)), 'share/initctl.dummy')
+        if exists(source_path):
+            return source_path
+        return "/usr/share/fab/share/initctl.dummy"
+
+    def _divert(self, action):
+        """actions: add, remove"""
+        cmd = "dpkg-divert --local --rename --%s /sbin/initctl >/dev/null" % action
+        self.chroot.system(cmd)
+
+    def __init__(self, chroot):
+        self.chroot = chroot
+        self._divert('add')
+        path = join(self.chroot.path, "sbin/initctl")
+        content = file(self._get_dummy_path()).read()
+        RevertibleScript.__init__(self, path, content.splitlines())
+
+    def revert(self):
+        RevertibleScript.revert(self)
+        self._divert('remove')
+
 class Installer:
     def __init__(self, chroot_path, pool_path, environ={}):
         env = {'DEBIAN_FRONTEND': 'noninteractive',
@@ -134,6 +159,8 @@ class Installer:
                   "echo \"Warning: Deferring update-initramfs $@\"", 
                   "echo \"update-initramfs $@\" >> /%s" % defer_log ]
         fake_update_initramfs = RevertibleScript(join(self.chroot.path, "usr/sbin/update-initramfs"), lines)
+
+        fake_initctl = RevertibleInitctl(self.chroot)
 
         for packages in (high, regular):
             if packages:
