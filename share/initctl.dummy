@@ -34,6 +34,19 @@ mysqld_status () {
     fi
 }
 
+
+status_mysql()
+{
+    if mysqld_status check_alive nowarn; then
+        pid=`ps -A |grep mysqld$ | cut -d " " -f 1`
+        echo "mysql start/running, process $pid"
+        return 0
+    else
+        echo "mysql stop/waiting"
+        return 1
+    fi
+}
+
 start_mysql()
 {
     test -x /usr/sbin/mysqld || exit 0
@@ -103,6 +116,13 @@ stop()
     fi
 }
 
+status()
+{
+    if [ "$1" == "mysql" ]; then
+        status_mysql
+    fi
+}
+
 op=$(basename $0)
 service=$1
 
@@ -113,6 +133,10 @@ case "$op" in
 
     stop)
         stop $1
+        ;;
+
+    status)
+        status $1
         ;;
 
     *)
