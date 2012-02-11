@@ -10,6 +10,7 @@ Arguments:
 Options:
 
     --dist=DISTRO           Override changelog distribution
+    --tag=VERSION_TAG       Append tag to version (e.g., rc)
 """
 
 import os
@@ -43,17 +44,18 @@ def parse_changelog(fpath):
     name, version, dist = m.groups()
     return name, version, dist
 
-def get_turnkey_version(fpath, dist_override=None):
+def get_turnkey_version(fpath, dist_override=None, version_tag=''):
     codename, version, dist = parse_changelog(fpath)
 
     if dist_override:
         dist = dist_override
 
-    return "%s-%s-x86" % (codename, dist)
+    return "%s%s-%s-x86" % (codename, version_tag, dist)
  
 def main():
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], 'h', ['dist='])
+        opts, args = getopt.gnu_getopt(sys.argv[1:], 'h',
+                                       ['dist=', 'tag='])
     except getopt.GetoptError, e:
         usage(e)
 
@@ -62,6 +64,7 @@ def main():
 
     changelog_path = args[0]
     dist_override = None
+    version_tag = ''
     for opt, val in opts:
         if opt == '-h':
             usage()
@@ -69,8 +72,11 @@ def main():
         if opt == '--dist':
             dist_override = val
 
+        if opt == '--tag':
+            version_tag = val
+
     try:
-        print get_turnkey_version(changelog_path, dist_override)
+        print get_turnkey_version(changelog_path, dist_override, version_tag)
     except Error, e:
         fatal(e)
     
