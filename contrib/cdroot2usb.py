@@ -134,7 +134,7 @@ class Cdroot2Usbdev:
         executil.system('mv %s/isolinux/* %s' % (path, path))
         executil.system('mv %s/isolinux.cfg %s/syslinux.cfg' % (path, path))
         executil.system('rmdir %s/isolinux' % path)
-        executil.system('rm %s/isolinux.bin' % path)
+        executil.system('rm -f %s/isolinux.bin' % path)
 
     def _mount(self):
         print "* mounting %s %s" % (self.usbdev.bootpart.path,
