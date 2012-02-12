@@ -1,6 +1,6 @@
 import os
-import md5
 import shutil
+import hashlib
 from os.path import *
 
 import debinfo
@@ -16,7 +16,7 @@ def get_package_index(packagedir):
         return str(os.stat(path).st_size)
 
     def md5sum(path):
-        return str(md5.md5(open(path, 'rb').read()).hexdigest())
+        return str(hashlib.md5(open(path, 'rb').read()).hexdigest())
 
     index = []
     for package in os.listdir(packagedir):

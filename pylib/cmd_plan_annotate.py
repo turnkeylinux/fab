@@ -13,11 +13,10 @@ import re
 import sys
 import shutil
 import getopt
+import hashlib
 
 import help
 import debinfo
-
-from md5 import md5
 
 from pyproject.pool.pool import Pool
 from common import fatal
@@ -81,7 +80,7 @@ def plan_lint(plan_path, pool_path):
     comments = {}
     def get_comment_key(m):
         comment = m.group(1)
-        key = md5(comment).hexdigest()
+        key = hashlib.md5(comment).hexdigest()
         comments[key] = comment
         return "$" + key
     
