@@ -76,7 +76,7 @@ class UsbDev:
 
     @staticmethod
     def _get_blockdev_path(path):
-        p = executil.getoutput("udevinfo -q path -n %s" % path).lstrip('/')
+        p = executil.getoutput("udevadm info -q path -n %s" % path).lstrip('/')
         for path in ( join('/sys', p , 'device'), 
                       join('/sys/block', basename(p)), 
                       join('/dev', basename(p)) ):
