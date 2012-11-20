@@ -75,13 +75,10 @@ class RevertibleScript(RevertibleFile):
         os.chmod(self.path, 0755)
 
 class RevertibleInitctl(RevertibleScript):
-    @staticmethod
-    def _get_dummy_path():
-        # ugly hack to support running fab from source directory
-        source_path = join(dirname(dirname(__file__)), 'share/initctl.dummy')
-        if exists(source_path):
-            return source_path
-        return "/usr/share/fab/share/initctl.dummy"
+    @property
+    def dummy_path():
+        fab_share = os.environ.get("FAB_SHARE_PATH", "/usr/share/fab")
+        return join(fab_share, 'initctl.dummy')
 
     def _divert(self, action):
         """actions: add, remove"""
@@ -92,7 +89,7 @@ class RevertibleInitctl(RevertibleScript):
         self.chroot = chroot
         self._divert('add')
         path = join(self.chroot.path, "sbin/initctl")
-        content = file(self._get_dummy_path()).read()
+        content = file(self.dummy_path).read()
         RevertibleScript.__init__(self, path, content.splitlines())
 
     def revert(self):

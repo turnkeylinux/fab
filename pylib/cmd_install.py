@@ -15,6 +15,11 @@ Options:
                                 default: $FAB_INSTALL_ENV
 
   (Also accepts fab-cpp options to effect plan preprocessing)
+
+Environment:
+
+   FAB_SHARE_PATH               Path to directory containing initctl.dummy
+                                default: /usr/share/fab
 """
 
 import re
