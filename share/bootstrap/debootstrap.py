@@ -9,7 +9,7 @@ from executil import system
 
 def usage(s=None):
     if s: print >> sys.stderr, s
-    print >> sys.stderr, "Syntax: %s <suite> <target> path/to/repo <required_spec> <base_spec>" % basename(sys.argv[0])
+    print >> sys.stderr, "Syntax: %s <arch> <suite> <target> path/to/repo <required_spec> <base_spec>" % basename(sys.argv[0])
     sys.exit(1)
 
 def get_packages(spec_file):
@@ -18,16 +18,16 @@ def get_packages(spec_file):
 
 def main():
     args = sys.argv[1:]
-    if len(args) != 5:
+    if len(args) != 6:
         usage()
 
-    suite, target, repo, required_spec, base_spec = args
+    arch, suite, target, repo, required_spec, base_spec = args
 
     os.environ["REQUIRED_PACKAGES"] = " ".join(get_packages(required_spec))
     os.environ["BASE_PACKAGES"] = " ".join(get_packages(base_spec))
     repo = abspath(repo)
 
-    system("debootstrap --arch i386 %s %s file://%s" % (suite, target, repo))
+    system("debootstrap --arch %s %s %s file://%s" % (arch, suite, target, repo))
 
 if __name__=="__main__":
     main()

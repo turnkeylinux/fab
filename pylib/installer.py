@@ -100,13 +100,14 @@ class RevertibleInitctl(RevertibleScript):
         self._divert('remove')
 
 class Installer:
-    def __init__(self, chroot_path, pool_path, environ={}):
+    def __init__(self, chroot_path, pool_path, arch, environ={}):
         env = {'DEBIAN_FRONTEND': 'noninteractive',
                'DEBIAN_PRIORITY': 'critical'}
         env.update(environ)
 
         self.chroot = Chroot(chroot_path, environ=env)
         self.pool = Pool(pool_path)
+        self.arch = arch
 
     @staticmethod
     def _prioritize_packages(packages):
@@ -227,7 +228,7 @@ class Installer:
         """install packages into chroot """
         packagedir = join(self.chroot.path, "var/cache/apt/archives")
         indexfile  = join(self.chroot.path, "var/lib/apt/lists",
-                          "_dists_local_debs_binary-i386_Packages")
+                          "_dists_local_debs_binary-%s_Packages" % self.arch)
 
         print "getting packages..."
         self.pool.get(packagedir, packages, strict=True)

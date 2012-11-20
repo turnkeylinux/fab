@@ -9,6 +9,13 @@ ifndef FAB_SHARE_PATH
 $(warning FAB_SHARE_PATH not defined - needed for mksquashfs)
 endif
 
+ifndef FAB_ARCH
+$(error FAB_ARCH not defined)
+endif
+
+I386 = $(shell [ $(FAB_ARCH) = 'i386' ] && echo 'y')
+AMD64 = $(shell [ $(FAB_ARCH) = 'amd64' ] && echo 'y')
+
 ifndef RELEASE
 $(warning RELEASE not defined - required for POOL, BOOTSTRAP, PLANS and CONF.D)
 else
@@ -19,7 +26,7 @@ UBUNTU = $(shell [ $(DISTRO) = 'ubuntu' ] && echo 'y')
 DEBIAN = $(shell [ $(DISTRO) = 'debian' ] && echo 'y')
 endif
 
-CONF_VARS_BUILTIN ?= RELEASE DISTRO CODENAME DEBIAN UBUNTU KERNEL DEBUG CHROOT_ONLY
+CONF_VARS_BUILTIN ?= FAB_ARCH I386 AMD64 RELEASE DISTRO CODENAME DEBIAN UBUNTU KERNEL DEBUG CHROOT_ONLY
 
 define filter-undefined-vars
 	$(foreach var,$1,$(if $($(var)), $(var)))
@@ -33,13 +40,13 @@ export FAB_CHROOT_ENV = $(shell echo $(_CONF_VARS) | sed 's/ \+/:/g')
 export FAB_INSTALL_ENV = $(FAB_CHROOT_ENV)
 
 # FAB_PATH dependent infrastructural components
-POOL ?= $(FAB_PATH)/pools/$(CODENAME)
-BOOTSTRAP ?= $(FAB_PATH)/bootstraps/$(CODENAME)
+POOL ?= $(FAB_PATH)/pools/$(CODENAME)-$(FAB_ARCH)
+BOOTSTRAP ?= $(FAB_PATH)/bootstraps/$(CODENAME)-$(FAB_ARCH)
 CDROOTS_PATH ?= $(FAB_PATH)/cdroots
 CDROOT ?= generic
 
 FAB_SHARE_PATH ?= /usr/share/fab
-MKSQUASHFS ?= $(FAB_SHARE_PATH)/utils/mksquashfs.$(CODENAME)
+MKSQUASHFS ?= $(FAB_SHARE_PATH)/utils/mksquashfs.$(CODENAME)-$(FAB_ARCH)
 
 # if the CDROOT is a relative path, prefix CDROOTS_PATH
 # we set _CDROOT with eval to improve the readability of $(value _CDROOT) 
@@ -134,6 +141,7 @@ define help/body
 	@echo
 	@echo '# Mandatory variables        [VALUE]'
 	@echo '  FAB_PATH                   $(value FAB_PATH)'
+	@echo '  FAB_ARCH                   $(value FAB_ARCH)'
 	@echo '  RELEASE                    $(value RELEASE)'
 	@echo
 	@echo '# Build context variables    [VALUE]'

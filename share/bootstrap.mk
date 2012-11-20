@@ -10,6 +10,10 @@ ifndef FAB_PATH
 $(error FAB_PATH not defined - needed for default paths)
 endif
 
+ifndef FAB_ARCH
+$(error FAB_ARCH not defined)
+endif
+
 ifndef RELEASE
 $(warning RELEASE not defined - default paths such as POOL may break)
 else
@@ -18,7 +22,7 @@ CODENAME ?= $(shell basename $(RELEASE))
 endif
 
 # default locations
-POOL ?= $(FAB_PATH)/pools/$(CODENAME)
+POOL ?= $(FAB_PATH)/pools/$(CODENAME)-$(ARCH)
 export FAB_POOL_PATH = $(POOL)
 
 DEBOOTSTRAP_SUITE ?= generic
@@ -49,7 +53,9 @@ define help/body
 	@echo '4) built-in default (lowest precedence)'
 	@echo
 	@echo '# Mandatory configuration variables:'
-	@echo '  FAB_PATH and RELEASE       used to calculate default paths for input variables'
+	@echo '  FAB_PATH                   $(value FAB_PATH)'
+	@echo '  FAB_ARCH                   $(value FAB_ARCH)'
+	@echo '  RELEASE                    $(value RELEASE)'
 	@echo
 	@echo '# Build context variables    [VALUE]'
 	@echo '  POOL                       $(value POOL)/'
@@ -101,7 +107,7 @@ define repo/body
 	cat $O/required.spec $O/base.spec | \
 		POOL_DIR=$(POOL) pool-get $O/repo/pool/main --strict --tree --input - 
 
-	repo-index $O/repo $(DEBOOTSTRAP_SUITE) main
+	repo-index $O/repo $(DEBOOTSTRAP_SUITE) main $(FAB_ARCH)
 	repo-release `pwd`/$O/repo $(DEBOOTSTRAP_SUITE)
 endef
 
@@ -109,7 +115,7 @@ endef
 bootstrap/deps ?= $(STAMPS_DIR)/repo
 define bootstrap/body
 	$(BSP)/exclude_spec.py $O/base.spec $O/required.spec > $O/base-excl-req.spec
-	$(BSP)/debootstrap.py $(DEBOOTSTRAP_SUITE) $O/bootstrap `pwd`/$O/repo $O/required.spec $O/base-excl-req.spec
+	$(BSP)/debootstrap.py $(FAB_ARCH) $(DEBOOTSTRAP_SUITE) $O/bootstrap `pwd`/$O/repo $O/required.spec $O/base-excl-req.spec
 
 	fab-chroot $O/bootstrap --script $(BSP)/cleanup.sh
 	fab-chroot $O/bootstrap 'echo "do_initrd = Yes" > /etc/kernel-img.conf'
