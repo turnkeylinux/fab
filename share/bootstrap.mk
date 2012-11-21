@@ -22,7 +22,7 @@ CODENAME ?= $(shell basename $(RELEASE))
 endif
 
 # default locations
-POOL ?= $(FAB_PATH)/pools/$(CODENAME)-$(ARCH)
+POOL ?= $(FAB_PATH)/pools/$(CODENAME)-$(FAB_ARCH)
 export FAB_POOL_PATH = $(POOL)
 
 DEBOOTSTRAP_SUITE ?= generic
