@@ -76,7 +76,7 @@ class RevertibleScript(RevertibleFile):
 
 class RevertibleInitctl(RevertibleScript):
     @property
-    def dummy_path():
+    def dummy_path(self):
         fab_share = os.environ.get("FAB_SHARE_PATH", "/usr/share/fab")
         return join(fab_share, 'initctl.dummy')
 
