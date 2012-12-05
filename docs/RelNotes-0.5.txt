@@ -6,15 +6,15 @@ FAB: product fabrication framework
 This version of Fab is actually the second generation framework, the 
 first being referred to as oldfab.
 
-The word "Fab" originates from the microelectronics industry. A fab, or 
-fabrication plant is a factory where devices (eg. integrated circuits) 
-are manufactured for one of more customers. A fab is semantically 
-connected to the most cutting edge technological factories in existence 
-(Silicon chip foundries) - hence the relationship to TurnKey ;)
+The word "Fab" originates from the microelectronics industry. A fab, or
+fabrication plant is a factory where devices (eg. integrated circuits)
+are manufactured for one of more customers. A fab is semantically
+connected to the most cutting edge technological factories in existence
+(Silicon chip foundries).
 
-A fab is a very tightly controlled environment (clean room), but instead 
-of keeping out physical impurities (e.g., dust and dirt), the turnkey Fab 
-is used in fabricating systems while tightly controlling "logical" 
+A fab is a very tightly controlled environment (clean room), but instead
+of keeping out physical impurities (e.g., dust and dirt), the Fab is
+used in fabricating systems while tightly controlling "logical"
 impurities (e.g., security threats, malware, etc.)
 
 These release notes only contain a high-level overview, please refer to 

@@ -10,11 +10,11 @@ The word "Fab" originates from the microelectronics industry. A fab, or
 fabrication plant is a factory where devices (eg. Integrated circuits)
 are manufactured for one of more customers. A fab is semantically
 connected to the most cutting edge technological factories in existence
-(Silicon chip foundries) - hence the relationship to TurnKey ;)
+(Silicon chip foundries)
 
 A fab is a very tightly controlled environment (clean room), but instead
-of keeping out physical impurities (e.g., dust and dirt), the turnkey Fab
-is used in fabricating systems while tightly controlling "logical"
+of keeping out physical impurities (e.g., dust and dirt), the Fab is
+used in fabricating systems while tightly controlling "logical"
 impurities (e.g., security threats, malware, etc.)
 
 These release notes only contain a high-level overview, please refer to
@@ -251,10 +251,10 @@ rename conf.d/args/<name>.
 
 Speaking of reusing complex scripts, just like rc*.d scripts, conf.d/
 scripts *can* be symbolic links to shared scripts (e.g.,
-/turnkey/fab/common-conf.d/<name>). Whether they *should* be is an
-entirely different question and the answer is usually no. Git supports
-symbolic links outside of a repository but a hardwired path will still
-be embedded in the product's repository, and you know how I feel about
+/path/to/common-conf.d/<name>). Whether they *should* be is an entirely
+different question and the answer is usually no. Git supports symbolic
+links outside of a repository but a hardwired path will still be
+embedded in the product's repository, and you know how I feel about
 hardwired paths.
 
 Pros of sharing configuration scripts:
