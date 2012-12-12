@@ -31,7 +31,6 @@ Environment:
                                 default: /usr/share/fab
 """
 
-import re
 import os
 from os.path import *
 

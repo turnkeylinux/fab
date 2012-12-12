@@ -13,8 +13,8 @@ Prints turnkey version by parsing changelog.
 
 Arguments:
 
-    distro                  Base distribution (e.g., lucid)
     path/to/changelog       Source for latest package name and version
+    architecture            Architecture of build (e.g., i386 / amd64)
 
 Options:
 
@@ -31,7 +31,7 @@ def usage(e=None):
     if e:
         print >> sys.stderr, "error: " + str(e)
 
-    print >> sys.stderr, "Syntax: %s path/to/changelog" % sys.argv[0]
+    print >> sys.stderr, "Syntax: %s path/to/changelog architecture" % sys.argv[0]
     sys.exit(1)
 
 class Error(Exception):
@@ -49,18 +49,18 @@ def parse_changelog(fpath):
     m = re.match(r'(\S+) \((.*?)\) (\w+);', firstline)
     if not m:
         raise Error("couldn't parse changelog '%s'" % fpath)
-    
+
     name, version, dist = m.groups()
     return name, version, dist
 
-def get_turnkey_version(fpath, dist_override=None, version_tag=''):
+def get_turnkey_version(fpath, architecture, dist_override=None, version_tag=''):
     codename, version, dist = parse_changelog(fpath)
 
     if dist_override:
         dist = dist_override
 
-    return "%s%s-%s-x86" % (codename, version_tag, dist)
- 
+    return "%s%s-%s-%s" % (codename, version_tag, dist, architecture)
+
 def main():
     try:
         opts, args = getopt.gnu_getopt(sys.argv[1:], 'h',
@@ -68,10 +68,11 @@ def main():
     except getopt.GetoptError, e:
         usage(e)
 
-    if len(args) != 1:
+    if len(args) != 2:
         usage("incorrect number of arguments")
 
     changelog_path = args[0]
+    architecture = args[1]
     dist_override = None
     version_tag = ''
     for opt, val in opts:
@@ -85,10 +86,10 @@ def main():
             version_tag = val
 
     try:
-        print get_turnkey_version(changelog_path, dist_override, version_tag)
+        print get_turnkey_version(changelog_path, architecture, dist_override, version_tag)
     except Error, e:
         fatal(e)
-    
+
 if __name__=="__main__":
     main()
 
