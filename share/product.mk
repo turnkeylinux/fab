@@ -224,7 +224,7 @@ define clean/body
 	$(call remove-deck, $O/root.patched)
 	$(call remove-deck, $O/root.build)
 	$(call remove-deck, $O/bootstrap)
-	-rm -rf $O/root.spec $O/cdroot $O/product.iso $(STAMPS_DIR)
+	-rm -rf $O/root.spec $O/cdroot $O/product.iso $O/log $(STAMPS_DIR)
 endef
 
 clean:
