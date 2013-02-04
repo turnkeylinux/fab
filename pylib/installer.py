@@ -244,3 +244,25 @@ class PoolInstaller(Installer):
         print "installing packages..."
         self._install(packages, ignore_errors, ['--allow-unauthenticated'])
 
+
+class LiveInstaller(Installer):
+    def __init__(self, chroot_path, apt_proxy=None, environ={}):
+        super(LiveInstaller, self).__init__(chroot_path, environ)
+
+        self.apt_proxy = apt_proxy
+
+    def install(self, packages, ignore_errors=[]):
+        """install packages into chroot via live apt"""
+
+        if self.apt_proxy:
+            print "setting apt proxy settings..."
+            fh = file(join(self.chroot.path, "etc/apt/apt.conf.d/01proxy"), "w")
+            fh.write('Acquire::http::Proxy "%s";\n' % self.apt_proxy)
+            fh.close()
+
+        print "updating package lists..."
+        self.chroot.system("apt-get update")
+
+        print "installing packages..."
+        self._install(packages, ignore_errors)
+
