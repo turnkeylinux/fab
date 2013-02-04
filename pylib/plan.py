@@ -9,14 +9,11 @@
 
 import re
 import os
-import shutil
 from os.path import *
 
 import cpp
 import debinfo
 import debversion
-import executil
-from pyproject.pool.pool import Pool
 
 from temp import TempDir
 
@@ -35,7 +32,7 @@ class PackageOrigins(dict):
 
 class Spec(dict):
     """class for holding a spec"""
-    
+
     def add(self, name, version):
         """add package name and version to spec"""
         self[name] = version
@@ -50,13 +47,13 @@ class Spec(dict):
 
     def __str__(self):
         return "\n".join(list(self))
-        
+
     exists = dict.has_key
 
 class PackageGetter(dict):
     def __new__(cls, deps, pool):
         return dict.__new__(cls)
-    
+
     def __init__(self, deps, pool):
         def f(dep):
             if not dep.restrict or dep.restrict.relation != "=":
@@ -65,12 +62,12 @@ class PackageGetter(dict):
 
         dir = TempDir()
         pool.get(dir.path, map(f, deps))
-        
+
         deps = dict([ (d.name, d) for d in deps ])
         for fname in os.listdir(dir.path):
             if not fname.endswith(".deb"):
                 continue
-            
+
             package_name = fname.split("_")[0]
             self[deps[package_name]] = join(dir.path, fname)
 
@@ -109,7 +106,7 @@ class Dependency:
         def __eq__(a, b):
             if b is None:
                 return False
-            
+
             return a.relation == b.relation and a.version == b.version
 
         def __contains__(self, version):
@@ -159,7 +156,7 @@ class Dependency:
     def __str__(self):
         if not self.restrict:
             return self.name
-        
+
         return "%s (%s)" % (self.name, str(self.restrict))
 
     def __hash__(self):
@@ -168,7 +165,7 @@ class Dependency:
     def __eq__(a, b):
         if type(b) == str:
             return a.name == b
-        
+
         return a.name == b.name
 
     def is_version_ok(self, version):
@@ -189,7 +186,7 @@ class Plan(set):
             expr = expr.strip()
             if not expr:
                 continue
-        
+
             if expr.startswith("!"):
                 package = expr[1:]
 
@@ -208,10 +205,16 @@ class Plan(set):
 
     def __new__(cls, iterable=(), pool_path=None):
         return set.__new__(cls, iterable)
-    
+
     def __init__(self, iterable=(), pool_path=None):
         set.__init__(self, iterable)
-        self.pool = Pool(pool_path)
+
+        if pool_path:
+            from pyproject.pool.pool import Pool
+            self.pool = Pool(pool_path)
+        else:
+            self.pool = None
+
         self.packageorigins = PackageOrigins()
 
     def _get_new_deps(self, pkg_control, old_deps, depend_fields):
@@ -222,7 +225,7 @@ class Plan(set):
             return re.split("\s*,\s*", val.strip())
 
         new_deps = set()
-        
+
         raw_depends = []
         for field_name in depend_fields:
             raw_depends += parse_depends(pkg_control.get(field_name))
@@ -248,7 +251,7 @@ class Plan(set):
             self.packageorigins.add(dep.name, pkg_control.get('Package'))
 
         return new_deps
-    
+
     @staticmethod
     def _get_provided(pkg_control):
         raw_provided = pkg_control.get('Provides')
@@ -275,7 +278,10 @@ class Plan(set):
     def resolve(self):
         """resolve plan dependencies recursively -> return spec"""
         spec = Spec()
-        
+
+        if not self.pool:
+            return list(self)
+
         resolved = set()
         missing = set()
         provided = set()

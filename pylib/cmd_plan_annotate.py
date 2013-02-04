@@ -20,7 +20,6 @@ Options:
 import os
 import re
 import sys
-import shutil
 import getopt
 import hashlib
 
@@ -28,7 +27,6 @@ import help
 import debinfo
 
 from pyproject.pool.pool import Pool
-from common import fatal
 from temp import TempDir
 
 @help.usage(__doc__)
@@ -39,7 +37,7 @@ def parse_plan(plan):
     # strip c-style comments
     plan = re.sub(r'(?s)/\*.*?\*/', '', plan)
     plan = re.sub(r'//.*', '', plan)
-    
+
     packages = set()
     for expr in plan.split('\n'):
         expr = re.sub(r'#.*', '', expr)
@@ -47,14 +45,14 @@ def parse_plan(plan):
         expr = expr.rstrip("*")
         if not expr:
             continue
-        
+
         if expr.startswith("!"):
             package = expr[1:]
         else:
             package = expr
-        
+
         packages.add(package)
-    
+
     return packages
 
 def get_packages_info(packages, pool_path):
@@ -92,10 +90,10 @@ def plan_lint(plan_path, pool_path):
         key = hashlib.md5(comment).hexdigest()
         comments[key] = comment
         return "$" + key
-    
+
     plan = re.sub(r'(?s)(/\*.*?\*/)', get_comment_key, plan)
     plan_linted = ""
-    
+
     for line in plan.split('\n'):
         if re.search(r'#|\$|//', line) or line.strip() == "":
             plan_linted += line + "\n"
@@ -119,7 +117,7 @@ def main():
 
     if not args:
         usage()
-    
+
     if not len(args) == 1:
         usage("bad number of arguments")
 
@@ -131,7 +129,7 @@ def main():
 
         if opt in ('-i', '--inplace'):
             inplace = True
-        
+
         if opt in ('-p', '--pool'):
             pool_path = val
 
@@ -145,8 +143,8 @@ def main():
         open(plan_path, "w").write(newplan)
     else:
         print newplan
-    
-    
+
+
 if __name__=="__main__":
     main()
 

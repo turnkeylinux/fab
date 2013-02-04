@@ -8,7 +8,7 @@
 # Free Software Foundation; either version 3 of the License, or (at your
 # option) any later version.
 
-"""Resolve plan into spec using latest packages from pool
+"""Resolve plan into spec (using latest packages from pool if defined)
 
 Arguments:
   <plan> := ( - | path/to/plan | package )
@@ -25,8 +25,6 @@ Options:
 """
 
 import os
-from os.path import *
-import re
 import sys
 import getopt
 
@@ -36,7 +34,6 @@ import help
 import cpp
 
 from plan import Plan
-from chroot import Chroot
 from common import fatal, gnu_getopt
 
 import debinfo
@@ -58,7 +55,7 @@ def iter_packages(root):
         if control.strip():
             yield control
 
-    for control in parse_status(join(root, "var/lib/dpkg/status")):
+    for control in parse_status(os.path.join(root, "var/lib/dpkg/status")):
         d = debinfo.parse_control(control)
         if d['Status'] == 'install ok installed':
             yield d['Package']
@@ -89,17 +86,17 @@ def main():
 
     if not args:
         usage()
-    
+
     output_path = None
-    pool_path = None
     bootstrap_path = None
+    pool_path = os.environ.get('FAB_POOL_PATH', None)
     for opt, val in opts:
         if opt == '-h':
             usage()
 
         if opt in ('-o', '--output'):
             output_path = val
-    
+
         if opt in ('-p', '--pool'):
             pool_path = val
 
@@ -108,9 +105,6 @@ def main():
                 fatal("directory does not exist (%s)" % val)
 
             bootstrap_path = val
-
-    if pool_path is None:
-        pool_path = os.environ.get('FAB_POOL_PATH')
 
     plan = Plan(pool_path=pool_path)
     if bootstrap_path:
@@ -121,7 +115,7 @@ def main():
             plan.packageorigins.add(package, 'bootstrap')
 
     for arg in args:
-        if arg == "-" or exists(arg):
+        if arg == "-" or os.path.exists(arg):
             subplan = Plan.init_from_file(arg, cpp_opts, pool_path)
             plan |= subplan
 
