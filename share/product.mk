@@ -33,6 +33,14 @@ UBUNTU = $(shell [ $(DISTRO) = 'ubuntu' ] && echo 'y')
 DEBIAN = $(shell [ $(DISTRO) = 'debian' ] && echo 'y')
 endif
 
+ifdef FAB_POOL_PATH
+FAB_INSTALL_OPTS = '--no-deps'
+else
+ifndef FAB_APT_PROXY
+$(warning FAB_POOL_PATH and FAB_APT_PROXY are not defined)
+endif
+endif
+
 CONF_VARS_BUILTIN ?= FAB_ARCH I386 AMD64 RELEASE DISTRO CODENAME DEBIAN UBUNTU KERNEL DEBUG CHROOT_ONLY
 
 define filter-undefined-vars
@@ -47,7 +55,6 @@ export FAB_CHROOT_ENV = $(shell echo $(_CONF_VARS) | sed 's/ \+/:/g')
 export FAB_INSTALL_ENV = $(FAB_CHROOT_ENV)
 
 # FAB_PATH dependent infrastructural components
-POOL ?= $(FAB_PATH)/pools/$(CODENAME)-$(FAB_ARCH)
 BOOTSTRAP ?= $(FAB_PATH)/bootstraps/$(CODENAME)-$(FAB_ARCH)
 CDROOTS_PATH ?= $(FAB_PATH)/cdroots
 CDROOT ?= generic
@@ -77,8 +84,6 @@ _COMMON_CONF = $(call prefix-relative-paths,$(COMMON_CONF),$(COMMON_CONF_PATH))
 _COMMON_REMOVELISTS = $(call prefix-relative-paths,$(COMMON_REMOVELISTS),$(COMMON_REMOVELISTS_PATH))
 
 FAB_PLAN_INCLUDE_PATH ?= $(FAB_PATH)/common/plans
-
-export FAB_POOL_PATH = $(POOL)
 export FAB_PLAN_INCLUDE_PATH
 
 # default locations of product build inputs
@@ -154,6 +159,7 @@ define help/body
 	@echo '# Build context variables    [VALUE]'
 	@echo '  CONF_VARS                  $(value CONF_VARS)'
 	@echo
+	@echo '  FAB_POOL_PATH              $(value FAB_POOL_PATH)/'
 	@echo '  FAB_PLAN_INCLUDE_PATH      $(value FAB_PLAN_INCLUDE_PATH)/'
 	@echo '  CDROOTS_PATH               $(value CDROOTS_PATH)/'
 	@echo '  COMMON_CONF_PATH           $(value COMMON_CONF_PATH)/'
@@ -258,8 +264,8 @@ define root.build/body
 	@if [ -n "$(root.build/ignore-errors)" ]; then \
 		opt_ignore_errors="--ignore-errors=$$(echo "$(root.build/ignore-errors)" | sed 's/ \+/:/g')"; \
 	fi; \
-	echo fab-install $$opt_ignore_errors --no-deps $O/root.build $O/root.spec; \
-	fab-install $$opt_ignore_errors --no-deps $O/root.build $O/root.spec;
+	echo fab-install $$opt_ignore_errors $$FAB_INSTALL_OPTS $O/root.build $O/root.spec; \
+	fab-install $$opt_ignore_errors $$FAB_INSTALL_OPTS $O/root.build $O/root.spec;
 endef
 
 define root.build/cleanup
@@ -334,6 +340,7 @@ define root.patched/body
 endef
 
 define root.patched/cleanup
+	# kill stray processes
 	fuser -k $O/root.patched || true
 endef
 
@@ -405,7 +412,7 @@ product.iso: $O/product.iso
 define updated-initramfs/body
 	rm -rf $O/product.iso
 	$(root.patched/body)
-	fab-install --no-deps $O/root.patched $(INITRAMFS_PACKAGES)
+	fab-install $$FAB_INSTALL_OPTS $O/root.patched $(INITRAMFS_PACKAGES)
 	cp $O/root.patched/boot/$(shell basename $(shell readlink $O/root.patched/initrd.img)) $O/cdroot/casper/initrd.gz
 	$(run-genisoimage)
 endef
