@@ -340,6 +340,13 @@ define root.patched/body
 endef
 
 define root.patched/cleanup
+	# cleanup apt
+	fab-chroot $O/root.patched "apt-get clean"
+	fab-chroot $O/root.patched "rm -f /var/cache/apt/*.bin"
+	fab-chroot $O/root.patched "rm -f /var/cache/apt/archives/*.deb"
+	fab-chroot $O/root.patched "rm -f /var/lib/apt/lists/*_Release*"
+	fab-chroot $O/root.patched "rm -f /var/lib/apt/lists/*_Packages"
+
 	# kill stray processes
 	fuser -k $O/root.patched || true
 endef
