@@ -7,6 +7,7 @@ Standards-Version: 3.6.1
 
 Package: fab
 Architecture: any
-Depends: pyproject-common, cpp, pool
+Depends: pyproject-common, cpp
+Recommends: pool
 Suggests: genisoimage, wodim, squashfs-tools
 Description: product fabrication framework
