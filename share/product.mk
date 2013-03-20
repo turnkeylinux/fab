@@ -288,7 +288,7 @@ define run-conf-scripts
 		[ -n "$$args" ] && args="-- $$args"; \
 		\
 		echo fab-chroot $O/root.patched --script $$script $$args; \
-		fab-chroot $O/root.patched --script $$script $$args; \
+		fab-chroot $O/root.patched --script $$script $$args || exit; \
 	done
 endef
 
