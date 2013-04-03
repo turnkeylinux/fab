@@ -39,11 +39,11 @@ O ?= build
 
 STAMPS_DIR = $O/stamps
 
-all: $O/bootstrap
+all: $O/bootstrap.tar.gz
 
 #clean
 define clean/body 
-	-rm -rf $O/*.spec $O/bootstrap $O/repo $(STAMPS_DIR)
+	-rm -rf $O/*.spec $O/bootstrap $O/bootstrap.tar.gz $O/repo $(STAMPS_DIR)
 endef
 
 clean:
@@ -75,15 +75,16 @@ define help/body
 	@echo '# remake target and the targets that depend on it'
 	@echo '$$ rm $(value STAMPS_DIR)/<target>; make <target>'
 	@echo
-	@echo '# build a target (default: product.iso)'
+	@echo '# build a target (default: bootstrap.tar.gz)'
 	@echo '$$ make [target] [O=path/to/build/dir]'
 	@echo
-	@echo '  clean         # clean all build targets'
-	@echo '  required.spec # the spec of debootstrap REQUIRED_PACKAGES'
-	@echo '  base.spec     # the spec of debootstrap BASE_PACKAGES'
+	@echo '  clean            # clean all build targets'
+	@echo '  required.spec    # the spec of debootstrap REQUIRED_PACKAGES'
+	@echo '  base.spec        # the spec of debootstrap BASE_PACKAGES'
 
-	@echo '  repo          # build temporary local repository for debootstrap'
-	@echo '  bootstrap     # build bootstrap with debootstrap from repo'
+	@echo '  repo             # build temporary local repository for debootstrap'
+	@echo '  bootstrap        # build bootstrap with debootstrap from repo'
+	@echo '  bootstrap.tar.gz # build tarball from bootstrap'
 endef
 
 help:
@@ -135,6 +136,19 @@ $O/bootstrap: $(bootstrap/deps) $(bootstrap/deps/extra)
 
 bootstrap: $O/bootstrap
 
+#bootstrap.tar.gz
+bootstrap.tar.gz/deps ?= $(STAMPS_DIR)/bootstrap
+define bootstrap.tar.gz/body
+	tar -C $O/bootstrap -zcf $O/bootstrap.tar.gz .
+endef
+
+$O/bootstrap.tar.gz: $(bootstrap.tar.gz/deps) $(bootstrap.tar.gz/deps/extra)
+	$(bootstrap.tar.gz/pre)
+	$(bootstrap.tar.gz/body)
+	$(bootstrap.tar.gz/post)
+
+bootstrap.tar.gz: $O/bootstrap.tar.gz
+
 # construct target rules
 define _stamped_target
 $1: $(STAMPS_DIR)/$1
@@ -147,7 +161,7 @@ $(STAMPS_DIR)/$1: $$($1/deps) $$($1/deps/extra)
 	touch $$@
 endef
 
-STAMPED_TARGETS := required.spec base.spec repo
+STAMPED_TARGETS := required.spec base.spec repo bootstrap
 $(foreach target,$(STAMPED_TARGETS),$(eval $(call _stamped_target,$(target))))
 
 .PHONY: clean $(STAMP_TARGETS)
