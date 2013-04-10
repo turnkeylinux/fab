@@ -26,6 +26,11 @@ FAB_ARCH = $(shell dpkg --print-architecture)
 I386 = $(shell [ $(FAB_ARCH) = 'i386' ] && echo 'y')
 AMD64 = $(shell [ $(FAB_ARCH) = 'amd64' ] && echo 'y')
 
+ifdef FAB_POOL
+FAB_POOL_PATH=$(FAB_PATH)/pools/$(CODENAME)
+export FAB_POOL_PATH
+endif
+
 ifdef FAB_POOL_PATH
 FAB_INSTALL_OPTS = '--no-deps'
 else
@@ -160,7 +165,8 @@ define help/body
 	@echo '  CONF_VARS                  $(value CONF_VARS)'
 	@echo
 	@echo '  FAB_ARCH                   $(value FAB_ARCH)'
-	@echo '  FAB_POOL_PATH              $(value FAB_POOL_PATH)/'
+	@echo '  FAB_POOL                   $(value FAB_POOL)'
+	@echo '  FAB_POOL_PATH              $(value FAB_POOL_PATH)'
 	@echo '  FAB_PLAN_INCLUDE_PATH      $(value FAB_PLAN_INCLUDE_PATH)/'
 	@echo '  CDROOTS_PATH               $(value CDROOTS_PATH)/'
 	@echo '  COMMON_CONF_PATH           $(value COMMON_CONF_PATH)/'
