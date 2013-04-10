@@ -12,10 +12,6 @@ ifndef FAB_PATH
 $(error FAB_PATH not defined - needed for default paths)
 endif
 
-ifndef FAB_SHARE_PATH
-$(warning FAB_SHARE_PATH not defined - needed for mksquashfs)
-endif
-
 ifndef RELEASE
 $(error RELEASE not defined)
 endif
@@ -56,12 +52,16 @@ export FAB_CHROOT_ENV = $(shell echo $(_CONF_VARS) | sed 's/ \+/:/g')
 export FAB_INSTALL_ENV = $(FAB_CHROOT_ENV)
 
 # FAB_PATH dependent infrastructural components
+FAB_SHARE_PATH ?= /usr/share/fab
 BOOTSTRAP ?= $(FAB_PATH)/bootstraps/$(CODENAME)
 CDROOTS_PATH ?= $(FAB_PATH)/cdroots
 CDROOT ?= generic
 
-FAB_SHARE_PATH ?= /usr/share/fab
-MKSQUASHFS ?= $(FAB_SHARE_PATH)/utils/mksquashfs.$(CODENAME)-$(FAB_ARCH)
+ifeq ($(shell lsb_release -s -c), $(CODENAME))
+MKSQUASHFS = /usr/bin/mksquashfs
+else
+MKSQUASHFS = $(FAB_SHARE_PATH)/utils/mksquashfs.$(CODENAME)-$(FAB_ARCH)
+endif
 
 # if the CDROOT is a relative path, prefix CDROOTS_PATH
 # we set _CDROOT with eval to improve the readability of $(value _CDROOT) 
