@@ -17,10 +17,6 @@ ifndef FAB_PATH
 $(error FAB_PATH not defined - needed for default paths)
 endif
 
-ifndef FAB_ARCH
-$(error FAB_ARCH not defined)
-endif
-
 ifndef RELEASE
 $(error RELEASE not defined)
 endif
@@ -31,6 +27,7 @@ CODENAME = $(shell basename $(RELEASE))
 POOL ?= $(FAB_PATH)/pools/$(CODENAME)
 export FAB_POOL_PATH = $(POOL)
 
+FAB_ARCH = $(shell dpkg --print-architecture)
 DEBOOTSTRAP_SUITE ?= generic
 
 # build output path
@@ -60,10 +57,10 @@ define help/body
 	@echo
 	@echo '# Mandatory configuration variables:'
 	@echo '  FAB_PATH                   $(value FAB_PATH)'
-	@echo '  FAB_ARCH                   $(value FAB_ARCH)'
 	@echo '  RELEASE                    $(value RELEASE)'
 	@echo
 	@echo '# Build context variables    [VALUE]'
+	@echo '  FAB_ARCH                   $(value FAB_ARCH)'
 	@echo '  POOL                       $(value POOL)/'
 	@echo '  DEBOOTSTRAP_SUITE          $(value DEBOOTSTRAP_SUITE)'
 	@echo

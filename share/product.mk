@@ -26,10 +26,7 @@ CODENAME ?= $(shell basename $(RELEASE))
 UBUNTU = $(shell [ $(DISTRO) = 'ubuntu' ] && echo 'y')
 DEBIAN = $(shell [ $(DISTRO) = 'debian' ] && echo 'y')
 
-ifndef FAB_ARCH
-$(error FAB_ARCH not defined)
-endif
-
+FAB_ARCH = $(shell dpkg --print-architecture)
 I386 = $(shell [ $(FAB_ARCH) = 'i386' ] && echo 'y')
 AMD64 = $(shell [ $(FAB_ARCH) = 'amd64' ] && echo 'y')
 
@@ -157,12 +154,12 @@ define help/body
 	@echo
 	@echo '# Mandatory variables        [VALUE]'
 	@echo '  FAB_PATH                   $(value FAB_PATH)'
-	@echo '  FAB_ARCH                   $(value FAB_ARCH)'
 	@echo '  RELEASE                    $(value RELEASE)'
 	@echo
 	@echo '# Build context variables    [VALUE]'
 	@echo '  CONF_VARS                  $(value CONF_VARS)'
 	@echo
+	@echo '  FAB_ARCH                   $(value FAB_ARCH)'
 	@echo '  FAB_POOL_PATH              $(value FAB_POOL_PATH)/'
 	@echo '  FAB_PLAN_INCLUDE_PATH      $(value FAB_PLAN_INCLUDE_PATH)/'
 	@echo '  CDROOTS_PATH               $(value CDROOTS_PATH)/'
