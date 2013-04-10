@@ -50,6 +50,7 @@ from installer import PoolInstaller, LiveInstaller
 from common import fatal, gnu_getopt
 
 from cmd_chroot import get_environ
+from executil import getoutput
 
 @help.usage(__doc__)
 def usage():
@@ -101,11 +102,11 @@ def main():
     if not os.path.isdir(chroot_path):
         fatal("chroot does not exist: " + chroot_path)
 
-    if pool_path and not arch:
-        fatal("architecture not specified, required when pool is defined")
-
     if pool_path and not resolve_deps:
         fatal("--no-deps cannot be specified if pool is not defined")
+
+    if not arch:
+        arch = getoutput("dpkg --print-architecture")
 
     plan = Plan(pool_path=pool_path)
     for arg in args[1:]:
