@@ -59,7 +59,7 @@ export FAB_CHROOT_ENV = $(shell echo $(_CONF_VARS) | sed 's/ \+/:/g')
 export FAB_INSTALL_ENV = $(FAB_CHROOT_ENV)
 
 # FAB_PATH dependent infrastructural components
-BOOTSTRAP ?= $(FAB_PATH)/bootstraps/$(CODENAME)-$(FAB_ARCH)
+BOOTSTRAP ?= $(FAB_PATH)/bootstraps/$(CODENAME)
 CDROOTS_PATH ?= $(FAB_PATH)/cdroots
 CDROOT ?= generic
 
