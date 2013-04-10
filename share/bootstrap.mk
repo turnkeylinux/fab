@@ -22,13 +22,12 @@ $(error FAB_ARCH not defined)
 endif
 
 ifndef RELEASE
-$(warning RELEASE not defined - default paths such as POOL may break)
-else
-DISTRO ?= $(shell dirname $(RELEASE))
-CODENAME ?= $(shell basename $(RELEASE))
+$(error RELEASE not defined)
 endif
 
-# default locations
+DISTRO = $(shell dirname $(RELEASE))
+CODENAME = $(shell basename $(RELEASE))
+
 POOL ?= $(FAB_PATH)/pools/$(CODENAME)
 export FAB_POOL_PATH = $(POOL)
 

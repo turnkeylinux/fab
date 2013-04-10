@@ -16,22 +16,22 @@ ifndef FAB_SHARE_PATH
 $(warning FAB_SHARE_PATH not defined - needed for mksquashfs)
 endif
 
+ifndef RELEASE
+$(error RELEASE not defined)
+endif
+
+DISTRO ?= $(shell dirname $(RELEASE))
+CODENAME ?= $(shell basename $(RELEASE))
+
+UBUNTU = $(shell [ $(DISTRO) = 'ubuntu' ] && echo 'y')
+DEBIAN = $(shell [ $(DISTRO) = 'debian' ] && echo 'y')
+
 ifndef FAB_ARCH
 $(error FAB_ARCH not defined)
 endif
 
 I386 = $(shell [ $(FAB_ARCH) = 'i386' ] && echo 'y')
 AMD64 = $(shell [ $(FAB_ARCH) = 'amd64' ] && echo 'y')
-
-ifndef RELEASE
-$(warning RELEASE not defined - required for POOL, BOOTSTRAP, PLANS and CONF.D)
-else
-DISTRO ?= $(shell dirname $(RELEASE))
-CODENAME ?= $(shell basename $(RELEASE))
-# the c preprocessor cannot compare strings
-UBUNTU = $(shell [ $(DISTRO) = 'ubuntu' ] && echo 'y')
-DEBIAN = $(shell [ $(DISTRO) = 'debian' ] && echo 'y')
-endif
 
 ifdef FAB_POOL_PATH
 FAB_INSTALL_OPTS = '--no-deps'
