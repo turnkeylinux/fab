@@ -26,7 +26,6 @@ import hashlib
 import help
 import debinfo
 
-from pyproject.pool.pool import Pool
 from temp import TempDir
 
 @help.usage(__doc__)
@@ -58,6 +57,7 @@ def parse_plan(plan):
 def get_packages_info(packages, pool_path):
     info = {}
 
+    from pyproject.pool.pool import Pool
     pool = Pool(pool_path)
 
     tmpdir = TempDir()
@@ -109,9 +109,7 @@ def plan_lint(plan_path, pool_path):
 
 def main():
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "p:ih",
-                                                    ["pool=",
-                                                     "inplace"])
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "p:ih", ["pool=", "inplace"])
     except getopt.GetoptError, e:
         usage(e)
 
