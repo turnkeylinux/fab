@@ -61,14 +61,7 @@ FAB_SHARE_PATH ?= /usr/share/fab
 BOOTSTRAP ?= $(FAB_PATH)/bootstraps/$(CODENAME)
 CDROOTS_PATH ?= $(FAB_PATH)/cdroots
 CDROOT ?= generic
-
-ifndef MKSQUASHFS
-ifeq ($(shell lsb_release -s -c), $(CODENAME))
-MKSQUASHFS = /usr/bin/mksquashfs
-else
-MKSQUASHFS = $(FAB_SHARE_PATH)/utils/mksquashfs.$(CODENAME)-$(FAB_ARCH)
-endif
-endif
+MKSQUASHFS ?= /usr/bin/mksquashfs
 
 # if the CDROOT is a relative path, prefix CDROOTS_PATH
 # we set _CDROOT with eval to improve the readability of $(value _CDROOT) 
