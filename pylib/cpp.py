@@ -65,7 +65,8 @@ def cpp(input, cpp_opts=[]):
 
     include_path = os.environ.get('FAB_PLAN_INCLUDE_PATH')
     if include_path:
-        args.append("-I" + include_path)
+        for path in include_path.split(':'):
+            args.append("-I" + path)
 
     command = ["cpp", input]
     if args:
