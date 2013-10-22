@@ -62,6 +62,7 @@ BOOTSTRAP ?= $(FAB_PATH)/bootstraps/$(CODENAME)
 CDROOTS_PATH ?= $(FAB_PATH)/cdroots
 CDROOT ?= generic
 MKSQUASHFS ?= /usr/bin/mksquashfs
+MKSQUASHFS_OPTS ?= -no-sparse
 
 # if the CDROOT is a relative path, prefix CDROOTS_PATH
 # we set _CDROOT with eval to improve the readability of $(value _CDROOT) 
@@ -182,6 +183,7 @@ define help/body
 	@echo '  BOOTSTRAP                  $(value BOOTSTRAP)/'
 	@echo '  CDROOT                     $(value CDROOT)'
 	@echo '  MKSQUASHFS                 $(value MKSQUASHFS)'
+	@echo '  MKSQUASHFS_OPTS            $(value MKSQUASHFS_OPTS)'
 	@echo '  COMMON_CONF                $(value COMMON_CONF)'
 	@echo '  COMMON_OVERLAYS            $(value COMMON_OVERLAYS)'
 	@echo '  COMMON_REMOVELISTS         $(value COMMON_REMOVELISTS)'
@@ -370,7 +372,7 @@ define cdroot/body
 	mkdir $O/cdroot/casper
 	if [ -d $(CDROOT_OVERLAY) ]; then fab-apply-overlay $(CDROOT_OVERLAY) $O/cdroot; fi
 
-	$(MKSQUASHFS) $O/root.patched $O/cdroot/casper/10root.squashfs -no-sparse
+	$(MKSQUASHFS) $O/root.patched $O/cdroot/casper/10root.squashfs $(MKSQUASHFS_OPTS)
 endef
 
 define run-genisoimage
