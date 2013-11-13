@@ -385,9 +385,14 @@ define run-genisoimage
 		-boot-info-table $O/cdroot/
 endef
 
+define run-isohybrid
+	isohybrid $O/product.iso
+endef
+
 # target: product.iso
 define product.iso/body
 	$(run-genisoimage)
+	$(run-isohybrid)
 endef
 
 cdroot-dynamic: $(STAMPS_DIR)/root.tmp
