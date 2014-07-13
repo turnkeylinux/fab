@@ -111,8 +111,8 @@ STAMPS_DIR = $O/stamps
 
 define remove-deck
 	@if deck --isdeck $1; then \
-		if [ "$$(basename $1)" = "root.tmp" ] && deck --isdirty $1; then \
-			echo "error: root.tmp is dirty with manual changes. To continue: deck -D $(strip $1)"; \
+		if [ "$$(basename $1)" = "root.sandbox" ] && deck --isdirty $1; then \
+			echo "error: root.sandbox is dirty with manual changes. To continue: deck -D $(strip $1)"; \
 			exit 1; \
 		fi; \
 		fuser -k $1; \
@@ -122,7 +122,7 @@ define remove-deck
 endef
 
 ifdef CHROOT_ONLY
-all: root.tmp
+all: root.sandbox
 else
 all: $O/product.iso
 endif
@@ -139,7 +139,7 @@ redeck:
 	$(call mount-deck, $O/bootstrap)
 	$(call mount-deck, $O/root.build)
 	$(call mount-deck, $O/root.patched)
-	$(call mount-deck, $O/root.tmp)
+	$(call mount-deck, $O/root.sandbox)
 
 debug:
 	$(foreach v, $V, $(warning $v = $($v)))
@@ -213,7 +213,10 @@ define help/body
 	@echo '  root.spec     # the spec from which root.build is built (I.e., resolved plan)'
 	@echo '  root.build    # created by applying the root.spec to the bootstrap'
 	@echo '  root.patched  # deck root.build and apply the root overlay and removelist'
-	@echo '  root.tmp      # temporary changes here are squashed into a separate layer'
+        @echo
+	@echo '  root.sandbox  # changes (e.g., manual prototyping) inside the copy-on-write sandbox'
+	@echo '                # saved as a separate, temporary cdroot squashfs overlay'
+	@echo
 endef
 
 ifndef CHROOT_ONLY
@@ -230,7 +233,7 @@ help:
 	$(help/post)
 
 define clean/body
-	$(call remove-deck, $O/root.tmp)
+	$(call remove-deck, $O/root.sandbox)
 	$(call remove-deck, $O/root.patched)
 	$(call remove-deck, $O/root.build)
 	$(call remove-deck, $O/bootstrap)
@@ -343,23 +346,29 @@ define root.patched/body
 	fab-chroot $O/root.patched "rm -rf /boot/*.bak"
 endef
 
-define root.patched/cleanup
-	# cleanup logs, caches and left over files
-	fab-chroot $O/root.patched "rm -f /var/log/dpkg.log"
-	fab-chroot $O/root.patched "rm -f /var/log/apt/*"
-	fab-chroot $O/root.patched "rm -f /var/cache/apt/*.bin"
-	fab-chroot $O/root.patched "rm -f /var/cache/apt/archives/*.deb"
-	fab-chroot $O/root.patched "rm -rf /var/lib/apt/lists/*"
-
-	# kill stray processes
-	fuser -k $O/root.patched || true
+define apt-cleanup
+	fab-chroot $1 "rm -f /var/cache/debconf/*-old"; \
+	fab-chroot $1 "rm -f /var/log/dpkg.log"; \
+	fab-chroot $1 "rm -f /var/log/apt/*"; \
+	fab-chroot $1 "rm -f /var/cache/apt/*.bin"; \
+	fab-chroot $1 "rm -f /var/cache/apt/archives/*.deb"; \
+	fab-chroot $1 "rm -rf /var/lib/apt/lists/*";
 endef
 
-# target root.tmp
-root.tmp/deps ?= $(STAMPS_DIR)/root.patched
-define root.tmp/body
-	$(call remove-deck, $O/root.tmp)
-	deck $O/root.patched $O/root.tmp
+define root-cleanup
+	$(call apt-cleanup, $1) \
+	fuser -k $1 || true;
+endef
+
+define root.patched/cleanup
+	$(call root-cleanup, $O/root.patched)
+endef
+
+# target root.sandbox
+root.sandbox/deps ?= $(STAMPS_DIR)/root.patched
+define root.sandbox/body
+	$(call remove-deck, $O/root.sandbox)
+	deck $O/root.patched $O/root.sandbox
 endef
 
 ifndef CHROOT_ONLY
@@ -395,20 +404,22 @@ define product.iso/body
 	$(run-isohybrid)
 endef
 
-cdroot-dynamic: $(STAMPS_DIR)/root.tmp
+cdroot-dynamic: $(STAMPS_DIR)/root.sandbox
 	$(cdroot-dynamic/pre)
 	$(cdroot-dynamic/body)
 	$(cdroot-dynamic/post)
 
 define cdroot-dynamic/body
-	cp $O/root.tmp/usr/lib/syslinux/isolinux.bin $O/cdroot/isolinux
-	cp $O/root.tmp/boot/$(shell basename $(shell readlink $O/root.tmp/vmlinuz)) $O/cdroot/casper/vmlinuz
-	cp $O/root.tmp/boot/$(shell basename $(shell readlink $O/root.tmp/initrd.img)) $O/cdroot/casper/initrd.gz
+	cp $O/root.sandbox/usr/lib/syslinux/isolinux.bin $O/cdroot/isolinux
+	cp $O/root.sandbox/boot/$(shell basename $(shell readlink $O/root.sandbox/vmlinuz)) $O/cdroot/casper/vmlinuz
+	cp $O/root.sandbox/boot/$(shell basename $(shell readlink $O/root.sandbox/initrd.img)) $O/cdroot/casper/initrd.gz
 
-	rm -f $O/cdroot/casper/20tmp.squashfs
-	@if deck --isdirty $O/root.tmp; then \
-		get_last_level="deck --get-level=last $O/root.tmp"; \
-		output=$O/cdroot/casper/20tmp.squashfs; \
+	rm -f $O/cdroot/casper/20sandbox.squashfs
+	@if deck --isdirty $O/root.sandbox; then \
+		$(call root-cleanup, $O/root.sandbox) \
+		\
+		get_last_level="deck --get-level=last $O/root.sandbox"; \
+		output=$O/cdroot/casper/20sandbox.squashfs; \
 		echo "mksquashfs \$$($$get_last_level) $$output"; \
 		\
 		last_level=$$($$get_last_level); \
@@ -456,7 +467,7 @@ $(STAMPS_DIR)/$1: $$($1/deps) $$($1/deps/extra)
 	touch $$@
 endef
 
-STAMPED_TARGETS := bootstrap root.spec root.build root.patched root.tmp cdroot
+STAMPED_TARGETS := bootstrap root.spec root.build root.patched root.sandbox cdroot
 $(foreach target,$(STAMPED_TARGETS),$(eval $(call _stamped_target,$(target))))
 
 .PHONY: all debug redeck help clean cdroot-dynamic updated-initramfs $(STAMPED_TARGETS) 
