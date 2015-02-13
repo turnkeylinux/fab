@@ -1,5 +1,5 @@
 #!/usr/bin/make -f
-# Copyright (c) TurnKey Linux - http://www.turnkeylinux.org
+# Copyright (c) TurnKey GNU/Linux - http://www.turnkeylinux.org
 #
 # This file is part of Fab
 #
@@ -213,7 +213,7 @@ define help/body
 	@echo '  root.spec     # the spec from which root.build is built (I.e., resolved plan)'
 	@echo '  root.build    # created by applying the root.spec to the bootstrap'
 	@echo '  root.patched  # deck root.build and apply the root overlay and removelist'
-        @echo
+    @echo
 	@echo '  root.sandbox  # changes (e.g., manual prototyping) inside the copy-on-write sandbox'
 	@echo '                # saved as a separate, temporary cdroot squashfs overlay'
 	@echo
