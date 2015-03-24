@@ -102,7 +102,7 @@ def main():
     if not os.path.isdir(chroot_path):
         fatal("chroot does not exist: " + chroot_path)
 
-    if pool_path and not resolve_deps:
+    if not pool_path and not resolve_deps:
         fatal("--no-deps cannot be specified if pool is not defined")
 
     if not arch:
