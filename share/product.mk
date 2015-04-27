@@ -410,7 +410,12 @@ cdroot-dynamic: $(STAMPS_DIR)/root.sandbox
 	$(cdroot-dynamic/post)
 
 define cdroot-dynamic/body
-	cp $O/root.sandbox/usr/lib/syslinux/isolinux.bin $O/cdroot/isolinux
+	cp $O/root.sandbox/usr/lib/ISOLINUX/isolinux.bin $O/cdroot/isolinux
+	cp $O/root.sandbox/usr/lib/syslinux/modules/bios/chain.c32 $O/cdroot/isolinux
+	cp $O/root.sandbox/usr/lib/syslinux/modules/bios/ldlinux.c32 $O/cdroot/isolinux
+	cp $O/root.sandbox/usr/lib/syslinux/modules/bios/libcom32.c32 $O/cdroot/isolinux
+	cp $O/root.sandbox/usr/lib/syslinux/modules/bios/vesamenu.c32 $O/cdroot/isolinux
+	cp $O/root.sandbox/usr/lib/syslinux/modules/bios/gfxboot.c32 $O/cdroot/isolinux
 	cp $O/root.sandbox/boot/$(shell basename $(shell readlink $O/root.sandbox/vmlinuz)) $O/cdroot/casper/vmlinuz
 	cp $O/root.sandbox/boot/$(shell basename $(shell readlink $O/root.sandbox/initrd.img)) $O/cdroot/casper/initrd.gz
 
