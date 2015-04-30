@@ -130,7 +130,7 @@ class Dependency:
         """
         string = string.strip()
 
-        m = re.match(r'([a-z0-9][a-z0-9\+\-\.]+)([\*]{0,2})(?:\s+\((.*?)\))?$', string)
+        m = re.match(r'([a-z0-9][a-z0-9\+\-\.]+)[\:a-z]{0,4}([\*]{0,2})(?:\s+\((.*?)\))?$', string)
         if not m:
             raise Error("illegally formatted dependency (%s)" % string)
 
