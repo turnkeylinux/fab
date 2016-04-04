@@ -98,6 +98,7 @@ ifeq ($(wildcard $(REMOVELIST)),)
 REMOVELIST =
 endif
 
+UNIT_DIRS ?= unit.d
 CONF_SCRIPTS ?= conf.d
 
 INITRAMFS_PACKAGES ?= busybox-initramfs casper
@@ -173,6 +174,7 @@ define help/body
 	@echo '# Local components           [VALUE]'
 	@echo '  PLAN                       $(value PLAN)'
 	@echo '  REMOVELIST                 $(value REMOVELIST)'
+	@echo '  UNIT_DIRS                  $(value UNIT_DIRS)/'
 	@echo '  ROOT_OVERLAY               $(value ROOT_OVERLAY)/'
 	@echo '  CONF_SCRIPTS               $(value CONF_SCRIPTS)/'
 	@echo '  CDROOT_OVERLAY             $(value CDROOT_OVERLAY)/'
@@ -258,7 +260,8 @@ endef
 # target: root.spec
 root.spec/deps ?= $(STAMPS_DIR)/bootstrap $(wildcard plan/*)
 define root.spec/body
-	fab-plan-resolve $(PLAN) $(EXTRA_PLAN) --bootstrap=$(BOOTSTRAP) --output=$O/root.spec $(foreach var,$(_CONF_VARS_BUILTIN),-D '$(var)=$($(var))')
+	unit_plans="$(wildcard $(UNIT_DIRS)/*/plan)"; \
+	fab-plan-resolve $(PLAN) $$unit_plans $(EXTRA_PLAN) --bootstrap=$(BOOTSTRAP) --output=$O/root.spec $(foreach var,$(_CONF_VARS_BUILTIN),-D '$(var)=$($(var))')
 endef
 
 # target: root.build
@@ -329,6 +332,19 @@ define root.patched/body
 	$(foreach removelist,$(_COMMON_REMOVELISTS),
 	  fab-apply-removelist $(removelist) $O/root.patched; \
 	  )
+
+	# apply the product-local units
+	$(foreach unit,$(wildcard $(UNIT_DIRS)/*), \
+	  if [ -d $(unit)/overlay ]; then \
+		echo fab-apply-overlay $(unit)/overlay $O/root.patched; \
+		fab-apply-overlay $(unit)/overlay $O/root.patched; \
+	  fi; \
+	  if [ -x $(unit)/conf ]; then \
+		echo fab-chroot $O/root.patched --script $(unit)/conf; \
+		fab-chroot $O/root.patched --script $(unit)/conf; \
+	  fi; \
+	  )
+
 
 	# apply the product-local root overlay
 	if [ -d $(ROOT_OVERLAY) ]; then \
