@@ -100,6 +100,7 @@ endif
 
 UNIT_DIRS ?= unit.d
 CONF_SCRIPTS ?= conf.d
+PATCHES_DIR ?= patches.d
 
 INITRAMFS_PACKAGES ?= busybox-initramfs casper
 
@@ -177,6 +178,7 @@ define help/body
 	@echo '  UNIT_DIRS                  $(value UNIT_DIRS)/'
 	@echo '  ROOT_OVERLAY               $(value ROOT_OVERLAY)/'
 	@echo '  CONF_SCRIPTS               $(value CONF_SCRIPTS)/'
+	@echo '  PATCHES_DIR                $(value PATCHES_DIR)/'
 	@echo '  CDROOT_OVERLAY             $(value CDROOT_OVERLAY)/'
 	@echo
 
@@ -298,6 +300,19 @@ define run-conf-scripts
 	done
 endef
 
+# target: root.patched
+define apply-patches
+	if [ -n "$(wildcard $1/*)" ]; then \
+		echo "\$$(call $0,$1)"; \
+	fi; \
+	for patch in $1/*; do \
+		[ -f "$$patch" ] || continue; \
+		\
+		echo fab-apply-patch $$patch $O/root.patched; \
+		fab-apply-patch $$patch $O/root.patched || exit; \
+	done
+endef
+
 root.patched/deps ?= $(STAMPS_DIR)/root.build $(REMOVELIST) $(wildcard $(CONF_SCRIPTS)/*)
 define root.patched/init
 	$(call remove-deck, $O/root.patched)
@@ -353,6 +368,9 @@ define root.patched/body
 
 	# run the product-local configuration scripts
 	@$(call run-conf-scripts, $(CONF_SCRIPTS))
+
+	# apply the product-local patches
+	@$(call apply-patches, $(PATCHES_DIR))
 
 	# apply the product-local removelist
 	$(if $(REMOVELIST),fab-apply-removelist $(REMOVELIST) $O/root.patched)
