@@ -47,10 +47,14 @@ def apply_patch(patch, dstpath):
        -t --batch       don't ask questions in batch mode
        -u --unified     interpret the patch file as a unified diff
        -d --directory   use as current directory for interpreting filenames
+       -r -             discard rejects
        -p1              strip leading / from filenames
     """
-    cmd += " %s | patch -Nbtu -p1 -d %s" % (patch, dstpath)
-    executil.system(cmd)
+    cmd += " %s | patch -Nbtur - -p1 -d %s" % (patch, dstpath)
+    try:
+        executil.system(cmd)
+    except:
+        print >> sys.stderr, "Warning: patch %s failed to apply" % patch
 
 def main():
     try:
