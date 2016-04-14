@@ -31,7 +31,7 @@ from common import fatal
 
 @help.usage(__doc__)
 def usage():
-    print >> sys.stderr, "Syntax: %s <patch> <path>" % sys.argv[0]
+    print >> sys.stderr, "Syntax: fab-%s <patch> <path>" % sys.argv[0]
 
 def apply_patch(patch, dstpath):
     if patch.endswith('.gz'):
