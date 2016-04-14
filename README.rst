@@ -221,8 +221,9 @@ inconvenient.
 I have developed a couple of new powerful mechanisms to support more
 efficient product configuration:
 
-1) conf.d/ chroot scripts
-2) product configuration variables
+1) conf.d/    chroot scripts
+2) product    configuration variables
+3) patches.d/ product-local patches
 
 conf.d/ chroot scripts
 ----------------------
@@ -344,4 +345,17 @@ Note that one things configuration variables *don't* effect are
 overlays, at least not by default. It is possible however to add this
 functionality by defining pre/post hooks which are effected by the value
 of the configuration variables.
+
+patches.d/ product-local patches
+--------------------------------
+
+It is sometimes useful to apply extra patches to packages. For example, a problem has been encountered that has been patched upstream, but the patch has not been included in Debian backports.
+
+Patches placed in the patches.d directory will be applied to root.patched after the conf.d scripts are run and before the product-local removelist is applied. Patches are ordered by filename, so if you have to control the order, you can prepend an integer (e.g., patches.d/10myfix.patch)
+
+Patches should be in unified context produced by diff -u. Filenames must be in absolute path format from the root. Patches may be uncompressed, compressed with gzip (.gz), or bzip2 (.bz2).
+
+Files that are patched are automatically backed up and marked <filename>.orig
+
+If a patch fails to apply, a warning is issued. Patches that are no longer needed should be removed from patches.d/.
 
