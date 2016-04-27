@@ -100,7 +100,7 @@ endif
 
 UNIT_DIRS ?= unit.d
 CONF_SCRIPTS ?= conf.d
-PATCHES_DIR ?= patches.d
+PATCHES_PATH ?= patches.d
 
 INITRAMFS_PACKAGES ?= busybox-initramfs casper
 
@@ -178,7 +178,7 @@ define help/body
 	@echo '  UNIT_DIRS                  $(value UNIT_DIRS)/'
 	@echo '  ROOT_OVERLAY               $(value ROOT_OVERLAY)/'
 	@echo '  CONF_SCRIPTS               $(value CONF_SCRIPTS)/'
-	@echo '  PATCHES_DIR                $(value PATCHES_DIR)/'
+	@echo '  PATCHES_PATH               $(value PATCHES_PATH)/'
 	@echo '  CDROOT_OVERLAY             $(value CDROOT_OVERLAY)/'
 	@echo
 
@@ -370,7 +370,7 @@ define root.patched/body
 	@$(call run-conf-scripts, $(CONF_SCRIPTS))
 
 	# apply the product-local patches
-	@$(call apply-patches, $(PATCHES_DIR))
+	@$(call apply-patches, $(PATCHES_PATH))
 
 	# apply the product-local removelist
 	$(if $(REMOVELIST),fab-apply-removelist $(REMOVELIST) $O/root.patched)
