@@ -43,6 +43,8 @@ ifndef FAB_HTTP_PROXY
 $(warning FAB_HTTP_PROXY is not defined)
 endif
 
+COMMON_PATCHES := turnkey.d $(COMMON_PATCHES)
+
 CONF_VARS_BUILTIN ?= FAB_ARCH FAB_HTTP_PROXY I386 AMD64 RELEASE DISTRO CODENAME DEBIAN UBUNTU KERNEL DEBUG CHROOT_ONLY
 
 define filter-undefined-vars
@@ -75,6 +77,7 @@ endif
 
 COMMON_OVERLAYS_PATH ?= $(FAB_PATH)/common/overlays
 COMMON_CONF_PATH ?= $(FAB_PATH)/common/conf
+COMMON_PATCHES_PATH ?= $(FAB_PATH)/common/patches
 COMMON_REMOVELISTS_PATH ?= $(FAB_PATH)/common/removelists
 
 define prefix-relative-paths
@@ -83,6 +86,7 @@ endef
 
 _COMMON_OVERLAYS = $(call prefix-relative-paths,$(COMMON_OVERLAYS),$(COMMON_OVERLAYS_PATH))
 _COMMON_CONF = $(call prefix-relative-paths,$(COMMON_CONF),$(COMMON_CONF_PATH))
+_COMMON_PATCHES = $(call prefix-relative-paths,$(COMMON_PATCHES),$(COMMON_PATCHES_PATH))
 _COMMON_REMOVELISTS = $(call prefix-relative-paths,$(COMMON_REMOVELISTS),$(COMMON_REMOVELISTS_PATH))
 
 FAB_PLAN_INCLUDE_PATH ?= $(FAB_PATH)/common/plans
@@ -169,6 +173,7 @@ define help/body
 	@echo '  CDROOTS_PATH               $(value CDROOTS_PATH)/'
 	@echo '  COMMON_CONF_PATH           $(value COMMON_CONF_PATH)/'
 	@echo '  COMMON_OVERLAYS_PATH       $(value COMMON_OVERLAYS_PATH)/'
+	@echo '  COMMON_PATCHES_PATH        $(value COMMON_PATCHES_PATH)/'
 	@echo '  COMMON_REMOVELISTS_PATH    $(value COMMON_REMOVELISTS_PATH)/'
 	@echo
 	
@@ -190,6 +195,7 @@ define help/body
 	@echo '  MKSQUASHFS_OPTS            $(value MKSQUASHFS_OPTS)'
 	@echo '  COMMON_CONF                $(value COMMON_CONF)'
 	@echo '  COMMON_OVERLAYS            $(value COMMON_OVERLAYS)'
+	@echo '  COMMON_PATCHES             $(value COMMON_PATCHES)'
 	@echo '  COMMON_REMOVELISTS         $(value COMMON_REMOVELISTS)'
 	@echo
 
@@ -336,13 +342,23 @@ define root.patched/body
 	# run the common configuration scripts
 	$(foreach conf,$(_COMMON_CONF),
 	  @if [ -d $(conf) ]; then \
-			$(call run-conf-scripts, $(conf)); \
+	    $(call run-conf-scripts, $(conf)); \
 	  else \
-	  		echo fab-chroot $O/root.patched --script $(conf); \
-	  		fab-chroot $O/root.patched --script $(conf); \
+	    echo fab-chroot $O/root.patched --script $(conf); \
+	    fab-chroot $O/root.patched --script $(conf); \
 	  fi
 	  )
 	  
+	# apply the common patches
+	$(foreach patch,$(_COMMON_PATCHES),
+	  @if [ -d $(patch) ]; then \
+	    $(call apply-patches, $(patch)); \
+	  else \
+	    echo fab-apply-patch $(patch) $O/root.patched; \
+	    fab-apply-patch $(patch) $O/root.patched; \
+	  fi
+	  )
+
 	# apply the common removelists
 	$(foreach removelist,$(_COMMON_REMOVELISTS),
 	  fab-apply-removelist $(removelist) $O/root.patched; \
