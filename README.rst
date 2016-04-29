@@ -223,7 +223,7 @@ efficient product configuration:
 
 1) conf.d/    chroot scripts
 2) product    configuration variables
-3) patches.d/ product-local patches
+3) patches    apply local or upstream patches
 
 conf.d/ chroot scripts
 ----------------------
@@ -346,16 +346,61 @@ overlays, at least not by default. It is possible however to add this
 functionality by defining pre/post hooks which are effected by the value
 of the configuration variables.
 
-patches.d/ product-local patches
---------------------------------
+local or upstream patches
+-------------------------
 
-It is sometimes useful to apply extra patches to packages. For example, a problem has been encountered that has been patched upstream, but the patch has not been included in Debian backports.
+Traditionally, TurnKey GNU/Linux has relied on upstream maintainers to include patches and updates in the packages they provide, and this is the preferred method. Sometimes, however, it is necessary to apply extra patches to packages. For example, a problem has been encountered that has been patched upstream, but the patch has not been included in Debian backports. In other cases, it may be useful to create a local patch to modify an appliance.
 
-Patches placed in the patches.d directory will be applied to root.patched after the conf.d scripts are run and before the product-local removelist is applied. Patches are ordered by filename, so if you have to control the order, you can prepend an integer (e.g., patches.d/10myfix.patch)
+fab-apply-patch
+---------------
+
+The command, fab-apply-patch, uses the *patch* command to apply a given patchfile to a chroot, typically build/root.patched.
+
+::
+
+    # fab-apply-patch --help
+    Syntax: fab-apply-patch <patch> <path>
+    Apply patch on top of given path
+    
+    Arguments:
+      <patch>           Path to patch
+      <path>            Path to apply patch ontop of (ie. build/root.patched)
+    
+    Patches:            Patches should be in unified context produced by diff -u
+                        Filenames must be in absolute path format from the root
+                        Patches may be uncompressed, compressed with gzip (.gz),
+                        or bzip2 (.bz2)
+
+fab-apply-patch has been designed to fail gracefully. If a patch cannot be applied, a warning is issued and the build is allowed to continue.
 
 Patches should be in unified context produced by diff -u. Filenames must be in absolute path format from the root. Patches may be uncompressed, compressed with gzip (.gz), or bzip2 (.bz2).
 
 Files that are patched are automatically backed up and marked <filename>.orig
 
-If a patch fails to apply, a warning is issued. Patches that are no longer needed should be removed from patches.d/.
+If a patch fails to apply, a warning is issued. Patches that are no longer needed should be removed.
+
+product patches - product/*appliance*/patches.d/
+------------------------------------------------
+
+Patches placed in the patches.d directory will be applied to root.patched after the conf.d scripts are run and before the product-local removelist is applied. Patches are ordered by filename, so if you have to control the order, you can prepend an integer (e.g., patches.d/10myfix.patch)
+
+common patches - common/patches/turnkey.d/
+------------------------------------------
+
+Patches placed in the common/patches/turnkey.d directory will be applied to all appliances during the build after the common configuration scripts are run and before the common removelists are applied. This is recommended for patches to common code shared by all appliances. Note that patches placed in product/core/patches.d/ will only be applied to the core appliance build.
+
+Patches that affect a group of appliances that share common code may be placed in common/patches/. For example, a patch that affects all the lamp appliances could be placed in common/patches/mylampfix.patch. In this case, the lamp.mk file must be modified to include the patchfile by name.
+
+lamp.mk::
+
+    WEBMIN_FW_TCP_INCOMING = 22 80 443 12320 12321 12322
+
+    COMMON_OVERLAYS += apache adminer confconsole-lamp
+    COMMON_CONF += phpsh apache-vhost adminer-apache adminer-mysql
+    COMMON_PATCHES += mylampfix.patch
+
+    include $(FAB_PATH)/common/mk/turnkey/php.mk
+    include $(FAB_PATH)/common/mk/turnkey/mysql.mk
+
+
 
