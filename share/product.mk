@@ -250,7 +250,7 @@ clean:
 ### STAMPED_TARGETS
 
 # target: bootstrap
-bootstrap/deps ?= $(BOOTSTRAP)
+bootstrap/deps ?=
 define bootstrap/body
 	$(call remove-deck, $O/bootstrap)
 	$(call remove-deck, $O/root.build)
