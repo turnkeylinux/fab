@@ -28,7 +28,7 @@ class CliWrapper(pyproject.CliWrapper):
                             '',
                             'install',
                             '',
-                            'apply-removelist', 'apply-overlay']
+                            'apply-removelist', 'apply-overlay', 'apply-patch']
     
 if __name__ == '__main__':
     CliWrapper.main()

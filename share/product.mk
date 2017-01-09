@@ -43,6 +43,8 @@ ifndef FAB_HTTP_PROXY
 $(warning FAB_HTTP_PROXY is not defined)
 endif
 
+COMMON_PATCHES := turnkey.d $(COMMON_PATCHES)
+
 CONF_VARS_BUILTIN ?= FAB_ARCH FAB_HTTP_PROXY I386 AMD64 RELEASE DISTRO CODENAME DEBIAN UBUNTU KERNEL DEBUG CHROOT_ONLY
 
 define filter-undefined-vars
@@ -75,6 +77,7 @@ endif
 
 COMMON_OVERLAYS_PATH ?= $(FAB_PATH)/common/overlays
 COMMON_CONF_PATH ?= $(FAB_PATH)/common/conf
+COMMON_PATCHES_PATH ?= $(FAB_PATH)/common/patches
 COMMON_REMOVELISTS_PATH ?= $(FAB_PATH)/common/removelists
 
 define prefix-relative-paths
@@ -83,6 +86,7 @@ endef
 
 _COMMON_OVERLAYS = $(call prefix-relative-paths,$(COMMON_OVERLAYS),$(COMMON_OVERLAYS_PATH))
 _COMMON_CONF = $(call prefix-relative-paths,$(COMMON_CONF),$(COMMON_CONF_PATH))
+_COMMON_PATCHES = $(call prefix-relative-paths,$(COMMON_PATCHES),$(COMMON_PATCHES_PATH))
 _COMMON_REMOVELISTS = $(call prefix-relative-paths,$(COMMON_REMOVELISTS),$(COMMON_REMOVELISTS_PATH))
 
 FAB_PLAN_INCLUDE_PATH ?= $(FAB_PATH)/common/plans
@@ -100,6 +104,7 @@ endif
 
 UNIT_DIRS ?= unit.d
 CONF_SCRIPTS ?= conf.d
+PATCHES_PATH ?= patches.d
 
 INITRAMFS_PACKAGES ?= busybox-initramfs casper
 
@@ -168,6 +173,7 @@ define help/body
 	@echo '  CDROOTS_PATH               $(value CDROOTS_PATH)/'
 	@echo '  COMMON_CONF_PATH           $(value COMMON_CONF_PATH)/'
 	@echo '  COMMON_OVERLAYS_PATH       $(value COMMON_OVERLAYS_PATH)/'
+	@echo '  COMMON_PATCHES_PATH        $(value COMMON_PATCHES_PATH)/'
 	@echo '  COMMON_REMOVELISTS_PATH    $(value COMMON_REMOVELISTS_PATH)/'
 	@echo
 	
@@ -177,6 +183,7 @@ define help/body
 	@echo '  UNIT_DIRS                  $(value UNIT_DIRS)/'
 	@echo '  ROOT_OVERLAY               $(value ROOT_OVERLAY)/'
 	@echo '  CONF_SCRIPTS               $(value CONF_SCRIPTS)/'
+	@echo '  PATCHES_PATH               $(value PATCHES_PATH)/'
 	@echo '  CDROOT_OVERLAY             $(value CDROOT_OVERLAY)/'
 	@echo
 
@@ -188,6 +195,7 @@ define help/body
 	@echo '  MKSQUASHFS_OPTS            $(value MKSQUASHFS_OPTS)'
 	@echo '  COMMON_CONF                $(value COMMON_CONF)'
 	@echo '  COMMON_OVERLAYS            $(value COMMON_OVERLAYS)'
+	@echo '  COMMON_PATCHES             $(value COMMON_PATCHES)'
 	@echo '  COMMON_REMOVELISTS         $(value COMMON_REMOVELISTS)'
 	@echo
 
@@ -298,6 +306,19 @@ define run-conf-scripts
 	done
 endef
 
+# target: root.patched
+define apply-patches
+	if [ -n "$(wildcard $1/*)" ]; then \
+		echo "\$$(call $0,$1)"; \
+	fi; \
+	for patch in $1/*; do \
+		[ -f "$$patch" ] || continue; \
+		\
+		echo fab-apply-patch $$patch $O/root.patched; \
+		fab-apply-patch $$patch $O/root.patched || exit; \
+	done
+endef
+
 root.patched/deps ?= $(STAMPS_DIR)/root.build $(REMOVELIST) $(wildcard $(CONF_SCRIPTS)/*)
 define root.patched/init
 	$(call remove-deck, $O/root.patched)
@@ -321,13 +342,23 @@ define root.patched/body
 	# run the common configuration scripts
 	$(foreach conf,$(_COMMON_CONF),
 	  @if [ -d $(conf) ]; then \
-			$(call run-conf-scripts, $(conf)); \
+	    $(call run-conf-scripts, $(conf)); \
 	  else \
-	  		echo fab-chroot $O/root.patched --script $(conf); \
-	  		fab-chroot $O/root.patched --script $(conf); \
+	    echo fab-chroot $O/root.patched --script $(conf); \
+	    fab-chroot $O/root.patched --script $(conf); \
 	  fi
 	  )
 	  
+	# apply the common patches
+	$(foreach patch,$(_COMMON_PATCHES),
+	  @if [ -d $(patch) ]; then \
+	    $(call apply-patches, $(patch)); \
+	  else \
+	    echo fab-apply-patch $(patch) $O/root.patched; \
+	    fab-apply-patch $(patch) $O/root.patched; \
+	  fi
+	  )
+
 	# apply the common removelists
 	$(foreach removelist,$(_COMMON_REMOVELISTS),
 	  fab-apply-removelist $(removelist) $O/root.patched; \
@@ -353,6 +384,9 @@ define root.patched/body
 
 	# run the product-local configuration scripts
 	@$(call run-conf-scripts, $(CONF_SCRIPTS))
+
+	# apply the product-local patches
+	@$(call apply-patches, $(PATCHES_PATH))
 
 	# apply the product-local removelist
 	$(if $(REMOVELIST),fab-apply-removelist $(REMOVELIST) $O/root.patched)
