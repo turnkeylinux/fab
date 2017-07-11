@@ -2,12 +2,20 @@ Source: fab
 Section: misc
 Priority: optional
 Maintainer: Liraz Siri <liraz@turnkeylinux.org>
-Build-Depends: pyproject-common, debhelper (>= 10)
+Build-Depends:
+ debhelper (>= 10),
+ pyproject-common,
 Standards-Version: 4.0.0
 
 Package: fab
 Architecture: any
-Depends: pyproject-common, cpp
-Recommends: pool
-Suggests: genisoimage, wodim, squashfs-tools
+Depends:
+ cpp,
+ pyproject-common,
+Recommends:
+ pool,
+Suggests:
+ genisoimage,
+ squashfs-tools,
+ wodim,
 Description: product fabrication framework
