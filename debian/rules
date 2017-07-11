@@ -1,3 +1,9 @@
-#!/usr/bin/make -f
-PYPROJECT_SHARE_PATH ?= /usr/share/pyproject
-include $(PYPROJECT_SHARE_PATH)/debian-rules.mk
+#! /usr/bin/make -f
+
+include /usr/share/dpkg/pkg-info.mk
+
+%:
+	dh $@ --with python2 --buildsystem=makefile
+
+override_dh_auto_install:
+	dh_auto_install -- prefix=debian/$(DEB_SOURCE)/usr
