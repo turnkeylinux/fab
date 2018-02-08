@@ -79,6 +79,7 @@ COMMON_OVERLAYS_PATH ?= $(FAB_PATH)/common/overlays
 COMMON_CONF_PATH ?= $(FAB_PATH)/common/conf
 COMMON_PATCHES_PATH ?= $(FAB_PATH)/common/patches
 COMMON_REMOVELISTS_PATH ?= $(FAB_PATH)/common/removelists
+COMMON_REMOVELISTS_FINAL_PATH ?= $(FAB_PATH)/common/removelists-final
 
 define prefix-relative-paths
 	$(foreach val,$1,$(shell echo $(val) | sed '/^[^\/]/ s|^|$2/|' ))
@@ -88,6 +89,7 @@ _COMMON_OVERLAYS = $(call prefix-relative-paths,$(COMMON_OVERLAYS),$(COMMON_OVER
 _COMMON_CONF = $(call prefix-relative-paths,$(COMMON_CONF),$(COMMON_CONF_PATH))
 _COMMON_PATCHES = $(call prefix-relative-paths,$(COMMON_PATCHES),$(COMMON_PATCHES_PATH))
 _COMMON_REMOVELISTS = $(call prefix-relative-paths,$(COMMON_REMOVELISTS),$(COMMON_REMOVELISTS_PATH))
+_COMMON_REMOVELISTS_FINAL = $(call prefix-relative-paths,$(COMMON_REMOVELISTS_FINAL),$(COMMON_REMOVELISTS_FINAL_PATH))
 
 FAB_PLAN_INCLUDE_PATH ?= $(FAB_PATH)/common/plans
 export FAB_PLAN_INCLUDE_PATH
@@ -175,6 +177,7 @@ define help/body
 	@echo '  COMMON_OVERLAYS_PATH       $(value COMMON_OVERLAYS_PATH)/'
 	@echo '  COMMON_PATCHES_PATH        $(value COMMON_PATCHES_PATH)/'
 	@echo '  COMMON_REMOVELISTS_PATH    $(value COMMON_REMOVELISTS_PATH)/'
+	@echo '  COMMON_REMOVELISTS_FINAL_PATH $(value COMMON_REMOVELISTS_FINAL_PATH)/'
 	@echo
 	
 	@echo '# Local components           [VALUE]'
@@ -197,6 +200,7 @@ define help/body
 	@echo '  COMMON_OVERLAYS            $(value COMMON_OVERLAYS)'
 	@echo '  COMMON_PATCHES             $(value COMMON_PATCHES)'
 	@echo '  COMMON_REMOVELISTS         $(value COMMON_REMOVELISTS)'
+	@echo '  COMMON_REMOVELISTS_FINAL   $(value COMMON_REMOVELISTS_FINAL)'
 	@echo
 
 	@echo '# Product output variables   [VALUE]'
@@ -394,6 +398,11 @@ define root.patched/body
 	# update initramfs (handle reconfigured initramfs scripts)
 	fab-chroot $O/root.patched "update-initramfs -u"
 	fab-chroot $O/root.patched "rm -rf /boot/*.bak"
+
+	# apply the common removelists-final
+	$(foreach removelist,$(_COMMON_REMOVELISTS_FINAL),
+	  fab-apply-removelist $(removelist) $O/root.patched; \
+	  )
 endef
 
 define apt-cleanup
