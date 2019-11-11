@@ -11,8 +11,7 @@
 import os
 import sys
 from os.path import *
-
-from executil import system
+import subprocess
 
 def usage(s=None):
     if s: print >> sys.stderr, s
@@ -24,6 +23,7 @@ def get_packages(spec_file):
              for line in file(spec_file).readlines() ]
 
 def main():
+
     args = sys.argv[1:]
     if len(args) != 6:
         usage()
@@ -34,7 +34,7 @@ def main():
     os.environ["BASE_PACKAGES"] = " ".join(get_packages(base_spec))
     repo = abspath(repo)
 
-    system("debootstrap --arch %s %s %s file://%s" % (arch, suite, target, repo))
+    subprocess.check_output(["debootstrap", "--arch", arch, suite, target, "file://"+repo])
 
 if __name__=="__main__":
     main()

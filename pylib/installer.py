@@ -132,7 +132,7 @@ class Installer(object):
         for packages in (high, regular):
             if packages:
                 try:
-                    args = ['install', '--force-yes', '--assume-yes']
+                    args = ['install', '--assume-yes']
                     args.extend(extra_apt_args)
                     self.chroot.system("apt-get", *(args + packages))
                 except executil.ExecError, e:
@@ -208,17 +208,23 @@ class PoolInstaller(Installer):
         def md5sum(path):
             return str(hashlib.md5(open(path, 'rb').read()).hexdigest())
 
+        def sha256sum(path):
+            return str(hashlib.sha256(open(path, 'rb').read()).hexdigest())
+
         index = []
         for package in os.listdir(packagedir):
             path = os.path.join(packagedir, package)
+            # dl_path would best be calculated; but we don't have access to chroot_path here...
+            dl_path = os.path.join('var/cache/apt/archives', package)
             if path.endswith('.deb'):
                 control = debinfo.get_control_fields(path)
                 for field in control.keys():
                     index.append(field + ": " + control[field])
 
-                index.append("Filename: " + path)
+                index.append("Filename: " + dl_path)
                 index.append("Size: " + filesize(path))
                 index.append("MD5sum: " + md5sum(path))
+                index.append("SHA256: " + sha256sum(path))
                 index.append("")
 
         return index
