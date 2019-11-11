@@ -1,5 +1,5 @@
 #!/usr/bin/make -f
-# Copyright (c) TurnKey GNU/Linux - http://www.turnkeylinux.org
+# Copyright (c) TurnKey GNU/Linux - https://www.turnkeylinux.org
 #
 # This file is part of Fab
 #
@@ -28,7 +28,7 @@ POOL ?= $(FAB_PATH)/pools/$(CODENAME)
 export FAB_POOL_PATH = $(POOL)
 
 FAB_ARCH = $(shell dpkg --print-architecture)
-DEBOOTSTRAP_SUITE ?= generic
+DEBOOTSTRAP_SUITE ?= turnkey
 
 # build output path
 O ?= build
@@ -121,7 +121,6 @@ define bootstrap/body
 	$(BSP)/exclude_spec.py $O/base.spec $O/required.spec > $O/base-excl-req.spec
 	$(BSP)/debootstrap.py $(FAB_ARCH) $(DEBOOTSTRAP_SUITE) $O/bootstrap `pwd`/$O/repo $O/required.spec $O/base-excl-req.spec
 
-	fab-chroot $O/bootstrap --script $(BSP)/cleanup.sh
 	fab-chroot $O/bootstrap 'echo "do_initrd = Yes" > /etc/kernel-img.conf'
 endef
 

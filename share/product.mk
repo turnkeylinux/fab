@@ -108,7 +108,7 @@ UNIT_DIRS ?= unit.d
 CONF_SCRIPTS ?= conf.d
 PATCHES_PATH ?= patches.d
 
-INITRAMFS_PACKAGES ?= busybox-initramfs casper
+INITRAMFS_PACKAGES ?= busybox live-boot
 
 # build output path
 O ?= build
@@ -437,10 +437,10 @@ cdroot/deps ?= $(STAMPS_DIR)/root.patched $(_CDROOT)
 define cdroot/body
 	if [ -e $O/cdroot ]; then rm -rf $O/cdroot; fi
 	cp -a $(_CDROOT) $O/cdroot
-	mkdir $O/cdroot/casper
+	mkdir $O/cdroot/live
 	if [ -d $(CDROOT_OVERLAY) ]; then fab-apply-overlay $(CDROOT_OVERLAY) $O/cdroot; fi
 
-	$(MKSQUASHFS) $O/root.patched $O/cdroot/casper/10root.squashfs $(MKSQUASHFS_OPTS)
+	$(MKSQUASHFS) $O/root.patched $O/cdroot/live/10root.squashfs $(MKSQUASHFS_OPTS)
 endef
 
 define run-genisoimage
@@ -475,15 +475,15 @@ define cdroot-dynamic/body
 	cp $O/root.sandbox/usr/lib/syslinux/modules/bios/libcom32.c32 $O/cdroot/isolinux
 	cp $O/root.sandbox/usr/lib/syslinux/modules/bios/vesamenu.c32 $O/cdroot/isolinux
 	cp $O/root.sandbox/usr/lib/syslinux/modules/bios/gfxboot.c32 $O/cdroot/isolinux
-	cp $O/root.sandbox/boot/$(shell basename $(shell readlink $O/root.sandbox/vmlinuz)) $O/cdroot/casper/vmlinuz
-	cp $O/root.sandbox/boot/$(shell basename $(shell readlink $O/root.sandbox/initrd.img)) $O/cdroot/casper/initrd.gz
+	cp $O/root.sandbox/boot/$(shell basename $(shell readlink $O/root.sandbox/vmlinuz)) $O/cdroot/live/vmlinuz
+	cp $O/root.sandbox/boot/$(shell basename $(shell readlink $O/root.sandbox/initrd.img)) $O/cdroot/live/initrd.gz
 
-	rm -f $O/cdroot/casper/20sandbox.squashfs
+	rm -f $O/cdroot/live/20sandbox.squashfs
 	@if deck --isdirty $O/root.sandbox; then \
 		$(call root-cleanup, $O/root.sandbox) \
 		\
 		get_last_level="deck --get-level=last $O/root.sandbox"; \
-		output=$O/cdroot/casper/20sandbox.squashfs; \
+		output=$O/cdroot/live/20sandbox.squashfs; \
 		echo "mksquashfs \$$($$get_last_level) $$output"; \
 		\
 		last_level=$$($$get_last_level); \
@@ -504,7 +504,7 @@ define updated-initramfs/body
 	rm -rf $O/product.iso
 	$(root.patched/body)
 	fab-install $$FAB_INSTALL_OPTS $O/root.patched $(INITRAMFS_PACKAGES)
-	cp $O/root.patched/boot/$(shell basename $(shell readlink $O/root.patched/initrd.img)) $O/cdroot/casper/initrd.gz
+	cp $O/root.patched/boot/$(shell basename $(shell readlink $O/root.patched/initrd.img)) $O/cdroot/live/initrd.gz
 	$(run-genisoimage)
 endef
 
