@@ -4,6 +4,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <stdlib.h>
 
 #ifndef MODULE_PATH
 #error "no MODULE_PATH defined"
