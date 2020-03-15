@@ -396,7 +396,9 @@ define root.patched/body
 	$(if $(REMOVELIST),fab-apply-removelist $(REMOVELIST) $O/root.patched)
 
 	# update initramfs (handle reconfigured initramfs scripts)
-	fab-chroot $O/root.patched "update-initramfs -u" || fab-chroot $O/root.patched "live-update-initramfs -u"
+	[ -n "$(BUILDROOT)" ] \
+		|| fab-chroot $O/root.patched "update-initramfs -u" \
+		|| fab-chroot $O/root.patched "live-update-initramfs -u"
 	fab-chroot $O/root.patched "rm -rf /boot/*.bak"
 
 	# apply the common removelists-final
