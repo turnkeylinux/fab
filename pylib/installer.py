@@ -185,9 +185,15 @@ class Installer(object):
                     break
 
             if exists(join(boot_path, "initrd.img-%s" % kversion)):
-                self.chroot.system("update-initramfs -u")
+                try:
+                    self.chroot.system("update-initramfs -u")
+                except executil.ExecError:
+                    self.chroot.system("live-update-initramfs -u")
             else:
-                self.chroot.system("update-initramfs -c -k %s" % kversion)
+                try:
+                    self.chroot.system("update-initramfs -c -k %s" % kversion)
+                except executil.ExecError:
+                    self.chroot.system("live-update-initramfs -c -k %s" % kversion)
 
             os.remove(defer_log)
 
