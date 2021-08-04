@@ -61,6 +61,10 @@ export FAB_INSTALL_ENV = $(FAB_CHROOT_ENV)
 # FAB_PATH dependent infrastructural components
 FAB_SHARE_PATH ?= /usr/share/fab
 BOOTSTRAP ?= $(FAB_PATH)/bootstraps/$(CODENAME)
+ifneq ("$(wildcard $(FAB_PATH)/altstraps/$(CODENAME).core)", "")
+	BOOTSTRAP := $(FAB_PATH)/altstraps/$(CODENAME).core
+endif
+
 CDROOTS_PATH ?= $(FAB_PATH)/cdroots
 CDROOT ?= generic
 MKSQUASHFS ?= /usr/bin/mksquashfs
