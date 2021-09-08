@@ -87,12 +87,15 @@ def main():
     if removelist == '-':
         removelist_fh = sys.stdin
     else:
-        removelist_fh = file(args[0], "r")
+        removelist_fh = open(args[0], "r")
 
-    if not os.path.isdir(root_path):
-        fatal("root path does not exist: " + root_path)
+    try:
+        if not os.path.isdir(root_path):
+            fatal("root path does not exist: " + root_path)
 
-    apply_removelist(removelist_fh, root_path)
+        apply_removelist(removelist_fh, root_path)
+    finally:
+        removelist_fh.close()
         
 if __name__=="__main__":
     main()

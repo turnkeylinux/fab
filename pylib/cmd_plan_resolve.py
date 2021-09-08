@@ -45,12 +45,13 @@ def usage():
 def iter_packages(root):
     def parse_status(path):
         control = ""
-        for line in file(path).readlines():
-            if not line.strip():
-                yield control
-                control = ""
-            else:
-                control += line
+        with open(path) as fob:
+            for line in fob:
+                if not line.strip():
+                    yield control
+                    control = ""
+                else:
+                    control += line
 
         if control.strip():
             yield control

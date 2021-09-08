@@ -7,6 +7,7 @@
 # Free Software Foundation; either version 3 of the License, or (at your
 # option) any later version.
 
+import io
 import os
 import shutil
 import hashlib
@@ -19,7 +20,7 @@ from chroot import Chroot
 class Error(Exception):
     pass
 
-class RevertibleFile(file):
+class RevertibleFile(io.FileIO):
     """File that automatically reverts to previous state on destruction
        or if the revert method is invoked"""
     @staticmethod
@@ -39,7 +40,7 @@ class RevertibleFile(file):
             shutil.move(path, self.orig_path)
         self.path = path
 
-        file.__init__(self, path, "w")
+        super().__init__(path, "w")
 
     def revert(self):
         if self.orig_path:
@@ -55,7 +56,7 @@ class RevertibleFile(file):
 
 class RevertibleScript(RevertibleFile):
     def __init__(self, path, lines):
-        RevertibleFile.__init__(self, path)
+        super().__init__(path)
         self.write("\n".join(lines))
         self.close()
         os.chmod(self.path, 0o755)
@@ -75,11 +76,12 @@ class RevertibleInitctl(RevertibleScript):
         self.chroot = chroot
         self._divert('add')
         path = join(self.chroot.path, "sbin/initctl")
-        content = file(self.dummy_path).read()
-        RevertibleScript.__init__(self, path, content.splitlines())
+        with open(self.dummy_path, 'r') as fob:
+            content = fob.read()
+        super().__init__(path, content.splitlines())
 
     def revert(self):
-        RevertibleScript.revert(self)
+        super().revert()
         self._divert('remove')
 
 class Installer(object):
@@ -138,12 +140,13 @@ class Installer(object):
                 except executil.ExecError as e:
                     def get_last_log(path):
                         log = []
-                        for line in reversed(file(path).readlines()):
-                            if line.startswith("Log ended: "):
-                                continue
-                            if line.startswith("Log started: "):
-                                break
-                            log.append(line.strip())
+                        with open(path) as fob:
+                            for line in fob:
+                                if line.startswith("Log ended: "):
+                                    continue
+                                if line.startswith("Log started: "):
+                                    break
+                                log.append(line.strip())
 
                         log.reverse()
                         return log
@@ -250,7 +253,8 @@ class PoolInstaller(Installer):
         index_file = "_dists_local_debs_binary-%s_Packages" % self.arch
         index_path = join(self.chroot.path, "var/lib/apt/lists", index_file)
         index = self._get_package_index(packagedir)
-        file(index_path, "w").write("\n".join(index))
+        with open(index_path, 'w') as fob:
+            fob.write("\n".join(index))
         self.chroot.system("apt-cache gencaches")
 
         print("installing packages...")
@@ -268,9 +272,9 @@ class LiveInstaller(Installer):
 
         if self.apt_proxy:
             print("setting apt proxy settings...")
-            fh = file(join(self.chroot.path, "etc/apt/apt.conf.d/01proxy"), "w")
-            fh.write('Acquire::http::Proxy "%s";\n' % self.apt_proxy)
-            fh.close()
+            conf_path = join(self.chroot.path, "etc/apt/apt.conf.d/01proxy")
+            with open(conf_path, "w") as fob:
+                fob.write('Acquire::http::Proxy "%s";\n' % self.apt_proxy)
 
         print("updating package lists...")
         self.chroot.system("apt-get update")

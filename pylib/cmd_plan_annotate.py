@@ -74,7 +74,8 @@ def get_packages_info(packages, pool_path):
 def plan_lint(plan_path, pool_path):
     package_info = {}
 
-    plan = file(plan_path, 'r').read().strip()
+    with open(plan_path, 'r') as fob:
+        plan = fob.read().strip()
 
     packages = parse_plan(plan)
     packages_info = get_packages_info(packages, pool_path)
