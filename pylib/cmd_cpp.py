@@ -30,7 +30,7 @@ import cpp
     
 @help.usage(__doc__)
 def usage():
-    print >> sys.stderr, "Syntax: %s [-options] <plan>" % sys.argv[0]
+    print("Syntax: %s [-options] <plan>" % sys.argv[0], file=sys.stderr)
 
 def main():
     args = sys.argv[1:]
@@ -43,7 +43,7 @@ def main():
         usage()
 
     plan_path = args[0]
-    print cpp.cpp(plan_path, cpp_opts)
+    print(cpp.cpp(plan_path, cpp_opts))
         
 if __name__=="__main__":
     main()

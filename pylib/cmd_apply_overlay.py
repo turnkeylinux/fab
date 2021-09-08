@@ -29,7 +29,7 @@ from common import fatal
 
 @help.usage(__doc__)
 def usage():
-    print >> sys.stderr, "Syntax: %s [-options] <overlay> <path>" % sys.argv[0]
+    print("Syntax: %s [-options] <overlay> <path>" % sys.argv[0], file=sys.stderr)
 
 def apply_overlay(overlay, dstpath, preserve=False):
     cmd = "cp -TdR"
@@ -42,7 +42,7 @@ def main():
     try:
         opts, args = getopt.gnu_getopt(sys.argv[1:], "",
                                        ['preserve'])
-    except getopt.GetoptError, e:
+    except getopt.GetoptError as e:
         usage(e)
 
     if not len(args) == 2:

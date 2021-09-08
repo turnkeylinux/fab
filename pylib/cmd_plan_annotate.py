@@ -30,7 +30,7 @@ from temp import TempDir
 
 @help.usage(__doc__)
 def usage():
-    print >> sys.stderr, "Syntax: %s [-options] path/to/plan" % sys.argv[0]
+    print("Syntax: %s [-options] path/to/plan" % sys.argv[0], file=sys.stderr)
 
 def parse_plan(plan):
     # strip c-style comments
@@ -110,7 +110,7 @@ def plan_lint(plan_path, pool_path):
 def main():
     try:
         opts, args = getopt.gnu_getopt(sys.argv[1:], "p:ih", ["pool=", "inplace"])
-    except getopt.GetoptError, e:
+    except getopt.GetoptError as e:
         usage(e)
 
     if not args:
@@ -140,7 +140,7 @@ def main():
     if inplace:
         open(plan_path, "w").write(newplan)
     else:
-        print newplan
+        print(newplan)
 
 
 if __name__=="__main__":

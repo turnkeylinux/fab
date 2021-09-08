@@ -34,7 +34,7 @@ from common import gnu_getopt
 
 @help.usage(__doc__)
 def usage():
-    print >> sys.stderr, "Syntax: %s [-options] <packages>" % sys.argv[0]
+    print("Syntax: %s [-options] <packages>" % sys.argv[0], file=sys.stderr)
 
 def generate_index(dctrls):
     # field ordering according to DPM - Chap5: Control files and their fields
@@ -46,9 +46,9 @@ def generate_index(dctrls):
               'Filename', 'Description')
 
     index = []
-    for dep, control in dctrls.items():
+    for dep, control in list(dctrls.items()):
         for field in fields:
-            if field not in control.keys():
+            if field not in list(control.keys()):
                 continue
             index.append(field + ": " + control[field])
 
@@ -60,7 +60,7 @@ def main():
     cpp_opts, args = cpp.getopt(sys.argv[1:])
     try:
         opts, args = gnu_getopt(args, 'p:', ['pool='])
-    except getopt.GetoptError, e:
+    except getopt.GetoptError as e:
         usage(e)
 
     if not args:
@@ -83,7 +83,7 @@ def main():
             plan.add(arg)
 
     dctrls = plan.dctrls()
-    print generate_index(dctrls)
+    print(generate_index(dctrls))
 
 
 if __name__=="__main__":

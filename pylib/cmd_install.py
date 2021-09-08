@@ -54,14 +54,14 @@ from executil import getoutput
 
 @help.usage(__doc__)
 def usage():
-    print >> sys.stderr, "Syntax: %s [-options] <chroot> <packages>" % sys.argv[0]
+    print("Syntax: %s [-options] <chroot> <packages>" % sys.argv[0], file=sys.stderr)
 
 def main():
     cpp_opts, args = cpp.getopt(sys.argv[1:])
     try:
         opts, args = gnu_getopt(args, 'np:a:i:e:x:',
              ['pool=', 'arch=', 'apt-proxy=', 'ignore-errors=', 'env=', 'no-deps'])
-    except getopt.GetoptError, e:
+    except getopt.GetoptError as e:
         usage(e)
 
     if not args:

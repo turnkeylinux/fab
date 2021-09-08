@@ -40,7 +40,7 @@ import debinfo
 
 @help.usage(__doc__)
 def usage():
-    print >> sys.stderr, "Syntax: %s [-options] <plan> ..." % sys.argv[0]
+    print("Syntax: %s [-options] <plan> ..." % sys.argv[0], file=sys.stderr)
 
 def iter_packages(root):
     def parse_status(path):
@@ -81,7 +81,7 @@ def main():
                                 ["output=",
                                  "pool=",
                                  "bootstrap=",])
-    except getopt.GetoptError, e:
+    except getopt.GetoptError as e:
         usage(e)
 
     if not args:
@@ -134,12 +134,12 @@ def main():
 
     if output_path is None:
         trapped_output = trap.stdout.read()
-        print >> sys.stderr, trapped_output,
+        print(trapped_output, end=' ', file=sys.stderr)
 
     spec = annotate_spec(spec, plan.packageorigins)
 
     if output_path is None:
-        print spec
+        print(spec)
     else:
         open(output_path, "w").write(str(spec) + "\n")
 

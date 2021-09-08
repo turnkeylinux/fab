@@ -32,8 +32,8 @@ def mkdir(path):
 
 ## cli common
 def fatal(s):
-    print >> sys.stderr, "error: " + str(s)
+    print("error: " + str(s), file=sys.stderr)
     sys.exit(1)
 
 def warn(s):
-    print >> sys.stderr, "warning: " + str(s)
+    print("warning: " + str(s), file=sys.stderr)

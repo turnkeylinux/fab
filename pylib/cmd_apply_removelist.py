@@ -31,7 +31,7 @@ from common import fatal, warn, mkdir
 
 @help.usage(__doc__)
 def usage():
-    print >> sys.stderr, "Syntax: %s [-options] <removelist> <srcpath>" % sys.argv[0]
+    print("Syntax: %s [-options] <removelist> <srcpath>" % sys.argv[0], file=sys.stderr)
 
 def parse_removelist(s):
     remove = []

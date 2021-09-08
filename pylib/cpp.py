@@ -9,11 +9,7 @@
 
 import os
 import sys
-
-import stdtrap
-import executil
-
-from executil import ExecError
+import subprocess
 
 CPP_ARGS = ("-I", "-D", "-U")
 
@@ -72,13 +68,8 @@ def cpp(input, cpp_opts=[]):
     if args:
         command += args
 
-    trap = stdtrap.StdTrap()
-    try:
-        executil.system(*command)
-    except ExecError, e:
-        trap.close()
-        trapped_stderr = trap.stderr.read()
-        raise ExecError(" ".join(command), e.exitcode, trapped_stderr)
+    c = subprocess.run(command, text=True)
 
-    trap.close()
-    return trap.stdout.read()
+    if c.returncode != 0:
+        raise Error(" ".join(command), e.exitcode, c.stderr)
+    return c.stdout

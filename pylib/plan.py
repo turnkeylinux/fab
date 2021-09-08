@@ -25,7 +25,7 @@ class PackageOrigins(dict):
 
     def add(self, name, origin):
         name = name.split("=")[0].strip("*")
-        if not self.has_key(name):
+        if name not in self:
             self[name] = []
 
         self[name].append(origin)
@@ -42,7 +42,7 @@ class Spec(dict):
 
     def __iter__(self):
         """return list of packages, as name=version"""
-        for name, version in self.items():
+        for name, version in list(self.items()):
             yield "%s=%s" % (name, version)
 
     def __str__(self):
@@ -61,7 +61,7 @@ class PackageGetter(dict):
             return "%s=%s" % (dep.name, dep.restrict.version)
 
         dir = TempDir()
-        pool.get(dir.path, map(f, deps))
+        pool.get(dir.path, list(map(f, deps)))
 
         deps = dict([ (d.name, d) for d in deps ])
         for fname in os.listdir(dir.path):

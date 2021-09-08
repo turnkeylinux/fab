@@ -58,7 +58,7 @@ class RevertibleScript(RevertibleFile):
         RevertibleFile.__init__(self, path)
         self.write("\n".join(lines))
         self.close()
-        os.chmod(self.path, 0755)
+        os.chmod(self.path, 0o755)
 
 class RevertibleInitctl(RevertibleScript):
     @property
@@ -135,7 +135,7 @@ class Installer(object):
                     args = ['install', '--assume-yes']
                     args.extend(extra_apt_args)
                     self.chroot.system("apt-get", *(args + packages))
-                except executil.ExecError, e:
+                except executil.ExecError as e:
                     def get_last_log(path):
                         log = []
                         for line in reversed(file(path).readlines()):
@@ -169,7 +169,7 @@ class Installer(object):
                     errors = set(errors) - set(ignore_errors)
 
                     if ignored_errors:
-                        print "Warning: ignoring package installation errors (%s)" % " ".join(ignored_errors)
+                        print("Warning: ignoring package installation errors (%s)" % " ".join(ignored_errors))
 
                     if errors:
                         raise
@@ -224,7 +224,7 @@ class PoolInstaller(Installer):
             dl_path = os.path.join('var/cache/apt/archives', package)
             if path.endswith('.deb'):
                 control = debinfo.get_control_fields(path)
-                for field in control.keys():
+                for field in list(control.keys()):
                     index.append(field + ": " + control[field])
 
                 index.append("Filename: " + dl_path)
@@ -238,13 +238,13 @@ class PoolInstaller(Installer):
     def install(self, packages, ignore_errors=[]):
         """install packages into chroot via pool"""
 
-        print "getting packages..."
+        print("getting packages...")
         packagedir = join(self.chroot.path, "var/cache/apt/archives")
         self.pool.get(packagedir, packages, strict=True)
 
-        print "generating package index..."
+        print("generating package index...")
         sources_list = RevertibleFile(join(self.chroot.path, "etc/apt/sources.list"))
-        print >> sources_list, "deb file:/// local debs"
+        print("deb file:/// local debs", file=sources_list)
         sources_list.close()
 
         index_file = "_dists_local_debs_binary-%s_Packages" % self.arch
@@ -253,7 +253,7 @@ class PoolInstaller(Installer):
         file(index_path, "w").write("\n".join(index))
         self.chroot.system("apt-cache gencaches")
 
-        print "installing packages..."
+        print("installing packages...")
         self._install(packages, ignore_errors, ['--allow-unauthenticated'])
 
 
@@ -267,14 +267,14 @@ class LiveInstaller(Installer):
         """install packages into chroot via live apt"""
 
         if self.apt_proxy:
-            print "setting apt proxy settings..."
+            print("setting apt proxy settings...")
             fh = file(join(self.chroot.path, "etc/apt/apt.conf.d/01proxy"), "w")
             fh.write('Acquire::http::Proxy "%s";\n' % self.apt_proxy)
             fh.close()
 
-        print "updating package lists..."
+        print("updating package lists...")
         self.chroot.system("apt-get update")
 
-        print "installing packages..."
+        print("installing packages...")
         self._install(packages, ignore_errors)
 

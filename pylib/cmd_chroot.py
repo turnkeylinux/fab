@@ -54,15 +54,15 @@ class Chroot(_Chroot):
     def system(self, *command):
         try:
             _Chroot.system(self, *command)
-        except ExecError, e:
+        except ExecError as e:
             return e.exitcode
 
         return 0
 
 @help.usage(__doc__)
 def usage():
-    print >> sys.stderr, "Syntax: %s [ -options ] <newroot> [ command ... ]" % sys.argv[0]
-    print >> sys.stderr, "Syntax: %s [ -options ] <newroot> --script path/to/executable [ args ]" % sys.argv[0]
+    print("Syntax: %s [ -options ] <newroot> [ command ... ]" % sys.argv[0], file=sys.stderr)
+    print("Syntax: %s [ -options ] <newroot> --script path/to/executable [ args ]" % sys.argv[0], file=sys.stderr)
 
 def chroot_script(chroot, script_path, *args):
     if not isfile(script_path):
@@ -74,7 +74,7 @@ def chroot_script(chroot, script_path, *args):
     script_path_chroot = join(tmpdir, basename(script_path))
     shutil.copy(script_path, script_path_chroot)
     
-    os.chmod(script_path_chroot, 0755)
+    os.chmod(script_path_chroot, 0o755)
     err = chroot.system(paths.make_relative(chroot.path, script_path_chroot),
                         *args)
     shutil.rmtree(tmpdir)
@@ -85,7 +85,7 @@ def main():
     try:
         opts, args = getopt.gnu_getopt(sys.argv[1:], 's:e:',
                                        [ 'script=', 'env=' ])
-    except getopt.GetoptError, e:
+    except getopt.GetoptError as e:
         usage(e)
 
     env_conf = os.environ.get('FAB_CHROOT_ENV')
