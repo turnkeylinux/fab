@@ -48,7 +48,9 @@ class Spec(dict):
     def __str__(self):
         return "\n".join(list(self))
 
-    exists = dict.has_key
+    def exists(self, key):
+        return key in self
+
 
 class PackageGetter(dict):
     def __new__(cls, deps, pool):
@@ -103,11 +105,12 @@ class Dependency:
         def __hash__(self):
             return hash(self.relation) ^ hash(self.version)
 
-        def __eq__(a, b):
-            if b is None:
+        def __eq__(self, other):
+            if other is None:
                 return False
 
-            return a.relation == b.relation and a.version == b.version
+            return self.relation == other.relation \
+                    and self.version == other.version
 
         def __contains__(self, version):
             true_results = self.RELATIONS[self.relation]
@@ -162,11 +165,11 @@ class Dependency:
     def __hash__(self):
         return hash(self.name)
 
-    def __eq__(a, b):
-        if type(b) == str:
-            return a.name == b
+    def __eq__(self, other):
+        if type(other) == str:
+            return self.name == other
 
-        return a.name == b.name
+        return self.name == other.name
 
     def is_version_ok(self, version):
         """compare package := name(relation)ver and version by relation"""
@@ -177,8 +180,10 @@ class Dependency:
 
 class Plan(set):
     @staticmethod
-    def _parse_plan_file(path, cpp_opts=[]):
+    def _parse_plan_file(path, cpp_opts=None):
         """process plan through cpp, then parse it and add packages to plan """
+        if cpp_opts is None:
+            cpp_opts = []
         processed_plan = cpp.cpp(path, cpp_opts)
         packages = set()
         for expr in processed_plan.splitlines():
@@ -200,7 +205,9 @@ class Plan(set):
         return packages
 
     @classmethod
-    def init_from_file(cls, plan_file_path, cpp_opts=[], pool_path=None):
+    def init_from_file(cls, plan_file_path, cpp_opts=None, pool_path=None):
+        if cpp_opts is None:
+            cpp_opts = []
         return cls(cls._parse_plan_file(plan_file_path, cpp_opts), pool_path)
 
     def __new__(cls, iterable=(), pool_path=None):

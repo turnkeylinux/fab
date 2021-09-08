@@ -13,10 +13,10 @@ def usage(doc):
     def decor(print_syntax):
         def wrapper(err=None):
             if err:
-                print >> sys.stderr, "error: %s" % err
+                print("error: %s" % err, file=sys.stderr)
             print_syntax()
             if doc:
-                print >> sys.stderr, doc.strip()
+                print(doc.strip(), file=sys.stderr)
             sys.exit(1)
         return wrapper
     return decor

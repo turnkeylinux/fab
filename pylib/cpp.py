@@ -46,14 +46,16 @@ def getopt(argv):
                 opts.append((opt, val))
                 break
         else:
-              i += 1
+            i += 1
               
     return opts, argv
 
-def cpp(input, cpp_opts=[]):
+def cpp(input, cpp_opts=None):
     """preprocess <input> through cpp -> preprocessed output
        input may be path/to/file or iterable data type
     """
+    if cpp_opts is None:
+        cpp_opts = []
     args = [ "-Ulinux" ]
 
     for opt, val in cpp_opts:

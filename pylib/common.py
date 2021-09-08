@@ -12,7 +12,9 @@ import sys
 import getopt
 
 # patch gnu_getopt to support "-" as a argument (like getopt does)
-def gnu_getopt(args, options, long_options=[]):
+def gnu_getopt(args, options, long_options=None):
+    if long_options is None:
+        long_options = []
     def list_replace(l, a, b):
         for i in range(len(l)):
             if l[i] == a:

@@ -84,8 +84,10 @@ class RevertibleInitctl(RevertibleScript):
         super().revert()
         self._divert('remove')
 
-class Installer(object):
-    def __init__(self, chroot_path, environ={}):
+class Installer:
+    def __init__(self, chroot_path, environ=None):
+        if environ is None:
+            environ = {}
         env = {'DEBIAN_FRONTEND': 'noninteractive', 'DEBIAN_PRIORITY': 'critical'}
         env.update(environ)
 
@@ -109,7 +111,11 @@ class Installer(object):
 
         return high, regular
 
-    def _install(self, packages, ignore_errors=[], extra_apt_args=[]):
+    def _install(self, packages, ignore_errors=None, extra_apt_args=None):
+        if ignore_errors is None:
+            ignore_errors = []
+        if extra_apt_args is None:
+            extra_apt_args = []
         high, regular = self._get_packages_priority(packages)
 
         lines = [ "#!/bin/sh",
@@ -137,7 +143,7 @@ class Installer(object):
                     args = ['install', '--assume-yes']
                     args.extend(extra_apt_args)
                     self.chroot.system("apt-get", *(args + packages))
-                except executil.ExecError as e:
+                except executil.ExecError:
                     def get_last_log(path):
                         log = []
                         with open(path) as fob:
@@ -202,7 +208,7 @@ class Installer(object):
 
 
 class PoolInstaller(Installer):
-    def __init__(self, chroot_path, pool_path, arch, environ={}):
+    def __init__(self, chroot_path, pool_path, arch, environ=None):
         super(PoolInstaller, self).__init__(chroot_path, environ)
 
         from pyproject.pool.pool import Pool
@@ -238,8 +244,11 @@ class PoolInstaller(Installer):
 
         return index
 
-    def install(self, packages, ignore_errors=[]):
+    def install(self, packages, ignore_errors=None):
         """install packages into chroot via pool"""
+
+        if ignore_errors is None:
+            ignore_errors = []
 
         print("getting packages...")
         packagedir = join(self.chroot.path, "var/cache/apt/archives")
@@ -262,13 +271,15 @@ class PoolInstaller(Installer):
 
 
 class LiveInstaller(Installer):
-    def __init__(self, chroot_path, apt_proxy=None, environ={}):
+    def __init__(self, chroot_path, apt_proxy=None, environ=None):
         super(LiveInstaller, self).__init__(chroot_path, environ)
 
         self.apt_proxy = apt_proxy
 
-    def install(self, packages, ignore_errors=[]):
+    def install(self, packages, ignore_errors=None):
         """install packages into chroot via live apt"""
+        if ignore_errors is None:
+            ignore_errors = []
 
         if self.apt_proxy:
             print("setting apt proxy settings...")
