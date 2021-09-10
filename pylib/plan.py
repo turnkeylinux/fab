@@ -9,7 +9,7 @@
 
 import re
 import os
-from os.path import *
+from os.path import basename, join
 
 import cpp
 import debinfo
@@ -229,7 +229,7 @@ class Plan(set):
             if val is None or val.strip() == "":
                 return []
 
-            return re.split("\s*,\s*", val.strip())
+            return re.split(r"\s*,\s*", val.strip())
 
         new_deps = set()
 
@@ -265,7 +265,7 @@ class Plan(set):
         if raw_provided is None or raw_provided.strip() == "":
             return set()
 
-        return set(re.split("\s*,\s*", raw_provided.strip()))
+        return set(re.split(r"\s*,\s*", raw_provided.strip()))
 
     def dctrls(self):
         """return plan dependencies control file info"""

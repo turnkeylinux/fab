@@ -22,7 +22,7 @@ Options:
 """
 
 import os
-from os.path import *
+from os.path import exists
 
 import sys
 import getopt
@@ -38,17 +38,17 @@ def usage():
 
 def generate_index(dctrls):
     # field ordering according to DPM - Chap5: Control files and their fields
-    fields = ('Package', 'Essential', 'Priority', 'Section', 'Installed-Size', 
-              'Maintainer', 'Original-Maintainer', 'Uploaders', 'Changed-By', 
+    fields = ('Package', 'Essential', 'Priority', 'Section', 'Installed-Size',
+              'Maintainer', 'Original-Maintainer', 'Uploaders', 'Changed-By',
               'Architecture', 'Source', 'Version',
-              'Depends', 'Pre-Depends', 'Recommends', 'Suggests', 'Conflicts', 
+              'Depends', 'Pre-Depends', 'Recommends', 'Suggests', 'Conflicts',
               'Provides', 'Replaces', 'Enhances',
               'Filename', 'Description')
 
     index = []
-    for dep, control in list(dctrls.items()):
+    for dep, control in dctrls.items():
         for field in fields:
-            if field not in list(control.keys()):
+            if field not in control.keys():
                 continue
             index.append(field + ": " + control[field])
 
@@ -86,6 +86,5 @@ def main():
     print(generate_index(dctrls))
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     main()
-

@@ -22,10 +22,10 @@ Usage examples:
   chroot path/to/chroot --script scripts/printargs arg1 arg2
 
   FOO=bar BAR=foo chroot path/to/chroot -e FOO:BAR env
-  
+
 """
 import os
-from os.path import *
+from os.path import basename, isfile, join
 import paths
 
 import sys
@@ -47,7 +47,7 @@ def get_environ(env_conf):
             val = os.environ.get(var)
             if val is not None:
                 environ[var] = val
-            
+
     return environ
 
 class Chroot(_Chroot):
@@ -73,7 +73,7 @@ def chroot_script(chroot, script_path, *args):
 
     script_path_chroot = join(tmpdir, basename(script_path))
     shutil.copy(script_path, script_path_chroot)
-    
+
     os.chmod(script_path_chroot, 0o755)
     err = chroot.system(paths.make_relative(chroot.path, script_path_chroot),
                         *args)
@@ -89,7 +89,7 @@ def main():
         usage(e)
 
     env_conf = os.environ.get('FAB_CHROOT_ENV')
-    
+
     script_path = None
     for opt, val in opts:
         if opt in ('-s', '--script'):
@@ -100,27 +100,26 @@ def main():
 
     if not args:
         usage()
-    
+
     newroot = args[0]
     args = args[1:]
-    
+
     if not isdir(newroot):
         fatal("no such chroot (%s)" % newroot)
 
     chroot = Chroot(newroot, environ=get_environ(env_conf))
     fake_initctl = RevertibleInitctl(chroot)
-    
+
     if script_path:
         err = chroot_script(chroot, script_path, *args)
         sys.exit(err)
-        
+
     else:
         if not args:
             args = ('/bin/bash',)
 
         err = chroot.system(*args)
         sys.exit(err)
-            
+
 if __name__=="__main__":
     main()
-

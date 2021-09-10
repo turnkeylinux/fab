@@ -17,14 +17,12 @@ Arguments:
 """
 
 import os
+from os.path import join, exists, dirname
 import re
 import sys
 import shutil
-import getopt
-from os.path import *
 
 import help
-import executil
 from temp import TempDir
 
 from common import fatal, warn, mkdir
@@ -36,7 +34,7 @@ def usage():
 def parse_removelist(s):
     remove = []
     restore = []
-    
+
     for expr in s.splitlines():
         expr = re.sub(r'#.*', '', expr)
         expr = expr.strip()
@@ -69,7 +67,7 @@ def apply_removelist(removelist_fh, root_path):
     remove, restore = parse_removelist(removelist_fh.read())
 
     tmpdir = TempDir()
-    
+
     # move entries out of root_path
     for entry in remove:
         _move(entry, root_path, tmpdir.path)
@@ -96,7 +94,6 @@ def main():
         apply_removelist(removelist_fh, root_path)
     finally:
         removelist_fh.close()
-        
-if __name__=="__main__":
-    main()
 
+if __name__ == "__main__":
+    main()
