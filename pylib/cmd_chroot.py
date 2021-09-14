@@ -25,8 +25,7 @@ Usage examples:
 
 """
 import os
-from os.path import basename, isfile, join, isdir
-import paths
+from os.path import basename, isfile, join, isdir, relpath
 
 import sys
 import getopt
@@ -85,7 +84,7 @@ def chroot_script(chroot, script_path, *args):
     shutil.copy(script_path, script_path_chroot)
 
     os.chmod(script_path_chroot, 0o755)
-    err = chroot.system(paths.make_relative(chroot.path, script_path_chroot), *args)
+    err = chroot.system(relpath(script_path_chroot, chroot.path), *args)
     shutil.rmtree(tmpdir)
 
     return err

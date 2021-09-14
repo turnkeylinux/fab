@@ -28,8 +28,6 @@ import os
 import sys
 import getopt
 
-from stdtrap import StdTrap
-
 import help
 import cpp
 

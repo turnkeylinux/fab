@@ -9,7 +9,7 @@
 
 import io
 import os
-from os.path import join, exists
+from os.path import join, exists, basename
 import shutil
 import hashlib
 
@@ -46,6 +46,7 @@ class RevertibleFile(io.FileIO):
         super().__init__(path, "w")
 
     def revert(self):
+        ''' revert file to original state '''
         if self.orig_path:
             shutil.move(self.orig_path, self.path)
             self.orig_path = None
@@ -59,6 +60,7 @@ class RevertibleFile(io.FileIO):
 
 
 class RevertibleScript(RevertibleFile):
+    ''' RevertibleFile that ensures file is executable '''
     def __init__(self, path, lines):
         super().__init__(path)
         self.write("\n".join(lines))

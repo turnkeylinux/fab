@@ -16,10 +16,11 @@ def gnu_getopt(args, options, long_options=None):
     if long_options is None:
         long_options = []
 
-    def list_replace(l, a, b):
-        for i in range(len(l)):
-            if l[i] == a:
-                l[i] = b
+    def list_replace(lst, a, b):
+        ''' replace instances of `a` with `b` in list `lst`'''
+        for i, v in enumerate(lst):
+            if v == a:
+                lst[i] = b
 
     list_replace(args, "-", "__stdin__")
 
@@ -33,7 +34,6 @@ def mkdir(path):
     path = str(path)
     if not os.path.exists(path):
         os.makedirs(path)
-
 
 ## cli common
 def fatal(s):
