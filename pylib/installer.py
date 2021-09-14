@@ -9,9 +9,9 @@
 
 import io
 import os
+from os.path import join, exists
 import shutil
 import hashlib
-from os.path import *
 
 import debinfo
 import executil
