@@ -26,7 +26,7 @@ import hashlib
 import help
 import debinfo
 
-from temp import TempDir
+from tempfile import TemporaryDirectory
 
 @help.usage(__doc__)
 def usage():
@@ -60,13 +60,13 @@ def get_packages_info(packages, pool_path):
     from pyproject.pool.pool import Pool
     pool = Pool(pool_path)
 
-    tmpdir = TempDir()
-    pool.get(tmpdir.path, packages, strict=True)
+    tmpdir = TemporaryDirectory('', 'pool')
+    pool.get(tmpdir.name, packages, strict=True)
 
-    for package in os.listdir(tmpdir.path):
-        path = os.path.join(tmpdir.path, package)
+    for package in os.listdir(tmpdir.name):
+        path = os.path.join(tmpdir.name, package)
         if path.endswith('.deb'):
-            control = debinfo.get_control_fields(path)
+            control = debinfo.get_control_fields(name)
             info[control['Package']] = control['Description']
 
     return info

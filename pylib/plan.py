@@ -15,7 +15,7 @@ import cpp
 import debinfo
 import debversion
 
-from temp import TempDir
+from tempfile import TemporaryDirectory
 
 class Error(Exception):
     pass
@@ -62,16 +62,16 @@ class PackageGetter(dict):
                 return dep.name
             return "%s=%s" % (dep.name, dep.restrict.version)
 
-        dir = TempDir()
-        pool.get(dir.path, list(map(f, deps)))
+        dir = TemporaryDirectory('package_getter', 'pool')
+        pool.get(dir.name, list(map(f, deps)))
 
         deps = dict([ (d.name, d) for d in deps ])
-        for fname in os.listdir(dir.path):
+        for fname in os.listdir(dir.name):
             if not fname.endswith(".deb"):
                 continue
 
             package_name = fname.split("_")[0]
-            self[deps[package_name]] = join(dir.path, fname)
+            self[deps[package_name]] = join(dir.name, fname)
 
         missing = set(deps) - set(self)
         for dep in missing:
