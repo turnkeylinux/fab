@@ -127,16 +127,7 @@ def main():
             plan.add(arg)
             plan.packageorigins.add(arg, "_")
 
-    trap = StdTrap(stdout=(output_path is None), stderr=False)
-    try:
-        spec = plan.resolve()
-    finally:
-        trap.close()
-
-    if output_path is None:
-        trapped_output = trap.stdout.read()
-        print(trapped_output, end=" ", file=sys.stderr)
-
+    spec = plan.resolve()
     spec = annotate_spec(spec, plan.packageorigins)
 
     if output_path is None:
