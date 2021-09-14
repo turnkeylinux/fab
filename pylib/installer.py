@@ -14,8 +14,8 @@ import shutil
 import hashlib
 
 import debinfo
-import executil
 from chroot import Chroot
+from subprocess import CallProcessError
 
 
 class Error(Exception):
@@ -153,7 +153,7 @@ class Installer:
                     args = ["install", "--assume-yes"]
                     args.extend(extra_apt_args)
                     self.chroot.system("apt-get", *(args + packages))
-                except executil.ExecError:
+                except CalledProcessError:
 
                     def get_last_log(path):
                         log = []
@@ -210,12 +210,12 @@ class Installer:
             if exists(join(boot_path, "initrd.img-%s" % kversion)):
                 try:
                     self.chroot.system("update-initramfs -u")
-                except executil.ExecError:
+                except CalledProcessError:
                     self.chroot.system("live-update-initramfs -u")
             else:
                 try:
                     self.chroot.system("update-initramfs -c -k %s" % kversion)
-                except executil.ExecError:
+                except CalledProcessError:
                     self.chroot.system("live-update-initramfs -c -k %s" % kversion)
 
             os.remove(defer_log)

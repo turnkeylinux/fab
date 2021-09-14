@@ -38,7 +38,7 @@ from chroot import Chroot as _Chroot
 from common import fatal
 
 from installer import RevertibleInitctl
-from executil import ExecError
+from subprocess import CalledProcessError
 
 
 def get_environ(env_conf):
@@ -56,8 +56,8 @@ class Chroot(_Chroot):
     def system(self, *command):
         try:
             _Chroot.system(self, *command)
-        except ExecError as e:
-            return e.exitcode
+        except CalledProcessError as e:
+            return e.returncode
 
         return 0
 

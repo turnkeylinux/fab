@@ -26,7 +26,7 @@ import sys
 import getopt
 
 import help
-import executil
+from subprocess import CalledProcessError, Popen, PIPE
 from common import fatal
 
 
@@ -52,10 +52,13 @@ def apply_patch(patch, dstpath):
        -r -             discard rejects
        -p1              strip leading / from filenames
     """
-    cmd += " %s | patch -Nbtur - -p1 -d %s" % (patch, dstpath)
     try:
-        executil.system(cmd)
-    except:
+        cat_proc = subprocess.Popen([cmd, patch], stdout=PIPE)
+        patch_proc = subprocess.Popen(['patch', '-Nbtur', '-', '-p1', '-d',
+            dstpath])
+        cat_proc.stdout.close()
+        patch_proc.wait()
+    except CalledProcessError:
         print("Warning: patch %s failed to apply" % patch, file=sys.stderr)
 
 

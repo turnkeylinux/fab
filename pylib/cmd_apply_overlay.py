@@ -22,9 +22,9 @@ Options:
 import os
 import sys
 import getopt
+import subprocess
 
 import help
-import executil
 from common import fatal
 
 
@@ -38,8 +38,7 @@ def apply_overlay(overlay, dstpath, preserve=False):
     if preserve:
         cmd += " -p"
 
-    executil.system(cmd, overlay, dstpath)
-
+    subprocess.run([cmd, overlay, dstpath])
 
 def main():
     try:

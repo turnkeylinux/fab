@@ -42,6 +42,7 @@ import os
 
 import sys
 import getopt
+import subprocess
 
 import help
 import cpp
@@ -50,7 +51,6 @@ from installer import PoolInstaller, LiveInstaller
 from common import fatal, gnu_getopt
 
 from cmd_chroot import get_environ
-from executil import getoutput
 
 
 @help.usage(__doc__)
@@ -111,7 +111,8 @@ def main():
         fatal("--no-deps cannot be specified if pool is not defined")
 
     if not arch:
-        arch = getoutput("dpkg --print-architecture")
+        arch = subprocess.run(["dpkg", "--print-architecture"],
+                text=True).stdout
 
     plan = Plan(pool_path=pool_path)
     for arg in args[1:]:
