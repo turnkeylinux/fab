@@ -27,16 +27,18 @@ from temp import TempDir
 
 from common import fatal, warn, mkdir
 
+
 @help.usage(__doc__)
 def usage():
     print("Syntax: %s [-options] <removelist> <srcpath>" % sys.argv[0], file=sys.stderr)
+
 
 def parse_removelist(s):
     remove = []
     restore = []
 
     for expr in s.splitlines():
-        expr = re.sub(r'#.*', '', expr)
+        expr = re.sub(r"#.*", "", expr)
         expr = expr.strip()
         if not expr:
             continue
@@ -51,6 +53,7 @@ def parse_removelist(s):
 
     return remove, restore
 
+
 def _move(entry, source_root_path, dest_root_path):
     entry = entry.strip("/")
     source_path = join(source_root_path, entry)
@@ -62,6 +65,7 @@ def _move(entry, source_root_path, dest_root_path):
 
     mkdir(dirname(dest_path))
     shutil.move(source_path, dest_path)
+
 
 def apply_removelist(removelist_fh, root_path):
     remove, restore = parse_removelist(removelist_fh.read())
@@ -76,13 +80,14 @@ def apply_removelist(removelist_fh, root_path):
     for entry in restore:
         _move(entry, tmpdir.path, root_path)
 
+
 def main():
     args = sys.argv[1:]
     if len(args) != 2:
         usage()
 
     removelist, root_path = args
-    if removelist == '-':
+    if removelist == "-":
         removelist_fh = sys.stdin
     else:
         removelist_fh = open(args[0], "r")
@@ -94,6 +99,7 @@ def main():
         apply_removelist(removelist_fh, root_path)
     finally:
         removelist_fh.close()
+
 
 if __name__ == "__main__":
     main()

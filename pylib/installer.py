@@ -17,12 +17,15 @@ import debinfo
 import executil
 from chroot import Chroot
 
+
 class Error(Exception):
     pass
+
 
 class RevertibleFile(io.FileIO):
     """File that automatically reverts to previous state on destruction
        or if the revert method is invoked"""
+
     @staticmethod
     def _get_orig_path(path):
         i = 1
@@ -54,6 +57,7 @@ class RevertibleFile(io.FileIO):
     def __del__(self):
         self.revert()
 
+
 class RevertibleScript(RevertibleFile):
     def __init__(self, path, lines):
         super().__init__(path)
@@ -61,11 +65,12 @@ class RevertibleScript(RevertibleFile):
         self.close()
         os.chmod(self.path, 0o755)
 
+
 class RevertibleInitctl(RevertibleScript):
     @property
     def dummy_path(self):
         fab_share = os.environ.get("FAB_SHARE_PATH", "/usr/share/fab")
-        return join(fab_share, 'initctl.dummy')
+        return join(fab_share, "initctl.dummy")
 
     def _divert(self, action):
         """actions: add, remove"""
@@ -74,21 +79,22 @@ class RevertibleInitctl(RevertibleScript):
 
     def __init__(self, chroot):
         self.chroot = chroot
-        self._divert('add')
+        self._divert("add")
         path = join(self.chroot.path, "sbin/initctl")
-        with open(self.dummy_path, 'r') as fob:
+        with open(self.dummy_path, "r") as fob:
             content = fob.read()
         super().__init__(path, content.splitlines())
 
     def revert(self):
         super().revert()
-        self._divert('remove')
+        self._divert("remove")
+
 
 class Installer:
     def __init__(self, chroot_path, environ=None):
         if environ is None:
             environ = {}
-        env = {'DEBIAN_FRONTEND': 'noninteractive', 'DEBIAN_PRIORITY': 'critical'}
+        env = {"DEBIAN_FRONTEND": "noninteractive", "DEBIAN_PRIORITY": "critical"}
         env.update(environ)
 
         self.chroot = Chroot(chroot_path, environ=env)
@@ -98,7 +104,7 @@ class Installer:
         """high priority packages must be installed before regular packages
            APT should handle this, but in some circumstances it chokes...
         """
-        HIGH_PRIORITY = ('linux-image')
+        HIGH_PRIORITY = "linux-image"
 
         high = []
         regular = []
@@ -118,32 +124,37 @@ class Installer:
             extra_apt_args = []
         high, regular = self._get_packages_priority(packages)
 
-        lines = [ "#!/bin/sh",
-                  "echo",
-                  "echo \"Warning: Fake invoke-rc.d called\"" ]
-        fake_invoke_rcd = RevertibleScript(join(self.chroot.path, "usr/sbin/invoke-rc.d"), lines)
+        lines = ["#!/bin/sh", "echo", 'echo "Warning: Fake invoke-rc.d called"']
+        fake_invoke_rcd = RevertibleScript(
+            join(self.chroot.path, "usr/sbin/invoke-rc.d"), lines
+        )
 
-        lines = [ "#!/bin/sh",
-                  "echo",
-                  "echo \"Warning: Fake start-stop-daemon called\"" ]
-        fake_start_stop = RevertibleScript(join(self.chroot.path, "sbin/start-stop-daemon"), lines)
+        lines = ["#!/bin/sh", "echo", 'echo "Warning: Fake start-stop-daemon called"']
+        fake_start_stop = RevertibleScript(
+            join(self.chroot.path, "sbin/start-stop-daemon"), lines
+        )
 
         defer_log = "var/lib/update-initramfs.deferred"
-        lines = [ "#!/bin/sh",
-                  "echo",
-                  "echo \"Warning: Deferring update-initramfs $@\"",
-                  "echo \"update-initramfs $@\" >> /%s" % defer_log ]
-        fake_update_initramfs = RevertibleScript(join(self.chroot.path, "usr/sbin/update-initramfs"), lines)
+        lines = [
+            "#!/bin/sh",
+            "echo",
+            'echo "Warning: Deferring update-initramfs $@"',
+            'echo "update-initramfs $@" >> /%s' % defer_log,
+        ]
+        fake_update_initramfs = RevertibleScript(
+            join(self.chroot.path, "usr/sbin/update-initramfs"), lines
+        )
 
         fake_initctl = RevertibleInitctl(self.chroot)
 
         for packages in (high, regular):
             if packages:
                 try:
-                    args = ['install', '--assume-yes']
+                    args = ["install", "--assume-yes"]
                     args.extend(extra_apt_args)
                     self.chroot.system("apt-get", *(args + packages))
                 except executil.ExecError:
+
                     def get_last_log(path):
                         log = []
                         with open(path) as fob:
@@ -178,7 +189,10 @@ class Installer:
                     errors = set(errors) - set(ignore_errors)
 
                     if ignored_errors:
-                        print("Warning: ignoring package installation errors (%s)" % " ".join(ignored_errors))
+                        print(
+                            "Warning: ignoring package installation errors (%s)"
+                            % " ".join(ignored_errors)
+                        )
 
                     if errors:
                         raise
@@ -212,6 +226,7 @@ class PoolInstaller(Installer):
         super(PoolInstaller, self).__init__(chroot_path, environ)
 
         from pyproject.pool.pool import Pool
+
         self.pool = Pool(pool_path)
         self.arch = arch
 
@@ -221,17 +236,17 @@ class PoolInstaller(Installer):
             return str(os.stat(path).st_size)
 
         def md5sum(path):
-            return str(hashlib.md5(open(path, 'rb').read()).hexdigest())
+            return str(hashlib.md5(open(path, "rb").read()).hexdigest())
 
         def sha256sum(path):
-            return str(hashlib.sha256(open(path, 'rb').read()).hexdigest())
+            return str(hashlib.sha256(open(path, "rb").read()).hexdigest())
 
         index = []
         for package in os.listdir(packagedir):
             path = os.path.join(packagedir, package)
             # dl_path would best be calculated; but we don't have access to chroot_path here...
-            dl_path = os.path.join('var/cache/apt/archives', package)
-            if path.endswith('.deb'):
+            dl_path = os.path.join("var/cache/apt/archives", package)
+            if path.endswith(".deb"):
                 control = debinfo.get_control_fields(path)
                 for field in list(control.keys()):
                     index.append(field + ": " + control[field])
@@ -262,12 +277,12 @@ class PoolInstaller(Installer):
         index_file = "_dists_local_debs_binary-%s_Packages" % self.arch
         index_path = join(self.chroot.path, "var/lib/apt/lists", index_file)
         index = self._get_package_index(packagedir)
-        with open(index_path, 'w') as fob:
+        with open(index_path, "w") as fob:
             fob.write("\n".join(index))
         self.chroot.system("apt-cache gencaches")
 
         print("installing packages...")
-        self._install(packages, ignore_errors, ['--allow-unauthenticated'])
+        self._install(packages, ignore_errors, ["--allow-unauthenticated"])
 
 
 class LiveInstaller(Installer):
@@ -292,4 +307,3 @@ class LiveInstaller(Installer):
 
         print("installing packages...")
         self._install(packages, ignore_errors)
-

@@ -17,8 +17,10 @@ import debversion
 
 from tempfile import TemporaryDirectory
 
+
 class Error(Exception):
     pass
+
 
 class PackageOrigins(dict):
     """class for holding package origins for dependency annotation """
@@ -29,6 +31,7 @@ class PackageOrigins(dict):
             self[name] = []
 
         self[name].append(origin)
+
 
 class Spec(dict):
     """class for holding a spec"""
@@ -62,10 +65,10 @@ class PackageGetter(dict):
                 return dep.name
             return "%s=%s" % (dep.name, dep.restrict.version)
 
-        dir = TemporaryDirectory('package_getter', 'pool')
+        dir = TemporaryDirectory("package_getter", "pool")
         pool.get(dir.name, list(map(f, deps)))
 
-        deps = dict([ (d.name, d) for d in deps ])
+        deps = dict([(d.name, d) for d in deps])
         for fname in os.listdir(dir.name):
             if not fname.endswith(".deb"):
                 continue
@@ -79,6 +82,7 @@ class PackageGetter(dict):
         self.missing = missing
         self.dir = dir
 
+
 class Dependency:
     """This class represents a dependency.
 
@@ -87,13 +91,9 @@ class Dependency:
 
     Whether two dependencies are equal depends only on the name.
     """
+
     class Restrict:
-        RELATIONS = {'<<': (-1,),
-                     '<=': (-1,0),
-                     '=':  (0,),
-                     '>=': (0,1),
-                     '>>': (1,),
-                     }
+        RELATIONS = {"<<": (-1,), "<=": (-1, 0), "=": (0,), ">=": (0, 1), ">>": (1,)}
 
         def __init__(self, relation, version):
             if relation not in self.RELATIONS:
@@ -109,8 +109,7 @@ class Dependency:
             if other is None:
                 return False
 
-            return self.relation == other.relation \
-                    and self.version == other.version
+            return self.relation == other.relation and self.version == other.version
 
         def __contains__(self, version):
             true_results = self.RELATIONS[self.relation]
@@ -133,7 +132,10 @@ class Dependency:
         """
         string = string.strip()
 
-        m = re.match(r'([a-z0-9][a-z0-9\+\-\.]+)[\:a-z]{0,4}([\*]{0,2})(?:\s+\((.*?)\))?$', string)
+        m = re.match(
+            r"([a-z0-9][a-z0-9\+\-\.]+)[\:a-z]{0,4}([\*]{0,2})(?:\s+\((.*?)\))?$",
+            string,
+        )
         if not m:
             raise Error("illegally formatted dependency (%s)" % string)
 
@@ -141,15 +143,15 @@ class Dependency:
         promote = m.group(2)
         parens = m.group(3)
 
-        self.fields = ['Pre-Depends', 'Depends']
+        self.fields = ["Pre-Depends", "Depends"]
         if promote:
-            self.fields.append('Recommends')
+            self.fields.append("Recommends")
         if len(promote) == 2:
-            self.fields.append('Suggests')
+            self.fields.append("Suggests")
 
         self.restrict = None
         if parens:
-            m = re.match(r'([<>=]+)\s+([\w\~\-\.\+\:]+)$', parens)
+            m = re.match(r"([<>=]+)\s+([\w\~\-\.\+\:]+)$", parens)
             if not m:
                 raise Error("illegal dependency restriction (%s)" % parens)
 
@@ -178,6 +180,7 @@ class Dependency:
 
         return version in self.restrict
 
+
 class Plan(set):
     @staticmethod
     def _parse_plan_file(path, cpp_opts=None):
@@ -187,7 +190,7 @@ class Plan(set):
         processed_plan = cpp.cpp(path, cpp_opts)
         packages = set()
         for expr in processed_plan.splitlines():
-            expr = re.sub(r'#.*', '', expr)
+            expr = re.sub(r"#.*", "", expr)
             expr = expr.strip()
             if not expr:
                 continue
@@ -218,6 +221,7 @@ class Plan(set):
 
         if pool_path:
             from pyproject.pool.pool import Pool
+
             self.pool = Pool(pool_path)
         else:
             self.pool = None
@@ -242,7 +246,7 @@ class Plan(set):
                 new_deps.add(Dependency(raw_depend))
                 continue
 
-            alternatives = [ Dependency(alt) for alt in raw_depend.split("|") ]
+            alternatives = [Dependency(alt) for alt in raw_depend.split("|")]
 
             # continue if any of the alternatives are already in resolved or unresolved sets
             if set(alternatives) & old_deps:
@@ -255,13 +259,13 @@ class Plan(set):
                     break
 
         for dep in new_deps:
-            self.packageorigins.add(dep.name, pkg_control.get('Package'))
+            self.packageorigins.add(dep.name, pkg_control.get("Package"))
 
         return new_deps
 
     @staticmethod
     def _get_provided(pkg_control):
-        raw_provided = pkg_control.get('Provides')
+        raw_provided = pkg_control.get("Provides")
         if raw_provided is None or raw_provided.strip() == "":
             return set()
 
@@ -269,16 +273,16 @@ class Plan(set):
 
     def dctrls(self):
         """return plan dependencies control file info"""
-        toquery = set([ Dependency(pkg) for pkg in self ])
+        toquery = set([Dependency(pkg) for pkg in self])
         packages = PackageGetter(toquery, self.pool)
 
         dctrls = {}
         for dep in toquery:
             package_path = packages[dep]
             if package_path is None:
-                raise Error('could not find package', dep.name)
+                raise Error("could not find package", dep.name)
             dctrls[dep] = debinfo.get_control_fields(package_path)
-            dctrls[dep]['Filename'] = basename(package_path)
+            dctrls[dep]["Filename"] = basename(package_path)
 
         return dctrls
 
@@ -294,13 +298,13 @@ class Plan(set):
         provided = set()
 
         def reformat2dep(pkg):
-            if '=' not in pkg:
+            if "=" not in pkg:
                 return pkg
 
             name, version = pkg.split("=", 1)
             return "%s (= %s)" % (name, version)
 
-        unresolved = set([ Dependency(reformat2dep(pkg)) for pkg in self ])
+        unresolved = set([Dependency(reformat2dep(pkg)) for pkg in self])
         while unresolved:
             # get newest package versions of unresolved dependencies from the pool
             # and pray they don't conflict with our dependency restrictions
@@ -313,19 +317,25 @@ class Plan(set):
 
                 pkg_control = debinfo.get_control_fields(package_path)
 
-                version = pkg_control['Version']
+                version = pkg_control["Version"]
                 if not dep.is_version_ok(version):
-                    raise Error("dependency '%s' incompatible with newest pool version (%s)" % (dep, version))
+                    raise Error(
+                        "dependency '%s' incompatible with newest pool version (%s)"
+                        % (dep, version)
+                    )
                 spec.add(dep.name, version)
                 resolved.add(dep)
 
-                new_deps |= self._get_new_deps(pkg_control, resolved | unresolved | new_deps, dep.fields)
+                new_deps |= self._get_new_deps(
+                    pkg_control, resolved | unresolved | new_deps, dep.fields
+                )
                 provided |= self._get_provided(pkg_control)
 
             unresolved = new_deps - resolved
             missing = (missing | packages.missing) - provided
 
         if missing:
+
             def get_origins(dep):
                 # trace the package origins
                 origins = []

@@ -15,6 +15,7 @@ import getopt
 def gnu_getopt(args, options, long_options=None):
     if long_options is None:
         long_options = []
+
     def list_replace(l, a, b):
         for i in range(len(l)):
             if l[i] == a:
@@ -26,16 +27,19 @@ def gnu_getopt(args, options, long_options=None):
 
     list_replace(args, "__stdin__", "-")
     return opts, args
-    
+
+
 def mkdir(path):
     path = str(path)
     if not os.path.exists(path):
         os.makedirs(path)
 
+
 ## cli common
 def fatal(s):
     print("error: " + str(s), file=sys.stderr)
     sys.exit(1)
+
 
 def warn(s):
     print("warning: " + str(s), file=sys.stderr)

@@ -32,18 +32,38 @@ import cpp
 from plan import Plan
 from common import gnu_getopt
 
+
 @help.usage(__doc__)
 def usage():
     print("Syntax: %s [-options] <packages>" % sys.argv[0], file=sys.stderr)
 
+
 def generate_index(dctrls):
     # field ordering according to DPM - Chap5: Control files and their fields
-    fields = ('Package', 'Essential', 'Priority', 'Section', 'Installed-Size',
-              'Maintainer', 'Original-Maintainer', 'Uploaders', 'Changed-By',
-              'Architecture', 'Source', 'Version',
-              'Depends', 'Pre-Depends', 'Recommends', 'Suggests', 'Conflicts',
-              'Provides', 'Replaces', 'Enhances',
-              'Filename', 'Description')
+    fields = (
+        "Package",
+        "Essential",
+        "Priority",
+        "Section",
+        "Installed-Size",
+        "Maintainer",
+        "Original-Maintainer",
+        "Uploaders",
+        "Changed-By",
+        "Architecture",
+        "Source",
+        "Version",
+        "Depends",
+        "Pre-Depends",
+        "Recommends",
+        "Suggests",
+        "Conflicts",
+        "Provides",
+        "Replaces",
+        "Enhances",
+        "Filename",
+        "Description",
+    )
 
     index = []
     for dep, control in dctrls.items():
@@ -52,14 +72,15 @@ def generate_index(dctrls):
                 continue
             index.append(field + ": " + control[field])
 
-        index.append('')
+        index.append("")
 
     return "\n".join(index)
+
 
 def main():
     cpp_opts, args = cpp.getopt(sys.argv[1:])
     try:
-        opts, args = gnu_getopt(args, 'p:', ['pool='])
+        opts, args = gnu_getopt(args, "p:", ["pool="])
     except getopt.GetoptError as e:
         usage(e)
 
@@ -69,11 +90,11 @@ def main():
     pool_path = None
 
     for opt, val in opts:
-        if opt in ('-p', '--pool'):
+        if opt in ("-p", "--pool"):
             pool_path = val
 
     if pool_path is None:
-        pool_path = os.environ.get('FAB_POOL_PATH')
+        pool_path = os.environ.get("FAB_POOL_PATH")
 
     plan = Plan(pool_path=pool_path)
     for arg in args:

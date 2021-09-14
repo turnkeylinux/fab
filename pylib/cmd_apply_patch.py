@@ -29,14 +29,16 @@ import help
 import executil
 from common import fatal
 
+
 @help.usage(__doc__)
 def usage():
     print("Syntax: fab-%s <patch> <path>" % sys.argv[0], file=sys.stderr)
 
+
 def apply_patch(patch, dstpath):
-    if patch.endswith('.gz'):
+    if patch.endswith(".gz"):
         cmd = "zcat"
-    elif patch.endswith('.bz2'):
+    elif patch.endswith(".bz2"):
         cmd = "bzcat"
     else:
         cmd = "cat"
@@ -56,6 +58,7 @@ def apply_patch(patch, dstpath):
     except:
         print("Warning: patch %s failed to apply" % patch, file=sys.stderr)
 
+
 def main():
     try:
         opts, args = getopt.gnu_getopt(sys.argv[1:], "")
@@ -65,7 +68,7 @@ def main():
 
     if not len(args) == 2:
         usage()
-    
+
     patch = args[0]
     dstpath = args[1]
 
@@ -77,7 +80,6 @@ def main():
 
     apply_patch(patch, dstpath)
 
-        
-if __name__=="__main__":
-    main()
 
+if __name__ == "__main__":
+    main()

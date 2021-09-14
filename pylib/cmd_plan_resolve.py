@@ -38,9 +38,11 @@ from common import fatal, gnu_getopt
 
 import debinfo
 
+
 @help.usage(__doc__)
 def usage():
     print("Syntax: %s [-options] <plan> ..." % sys.argv[0], file=sys.stderr)
+
 
 def iter_packages(root):
     def parse_status(path):
@@ -58,8 +60,9 @@ def iter_packages(root):
 
     for control in parse_status(os.path.join(root, "var/lib/dpkg/status")):
         d = debinfo.parse_control(control)
-        if d['Status'] == 'install ok installed':
-            yield d['Package']
+        if d["Status"] == "install ok installed":
+            yield d["Package"]
+
 
 def annotate_spec(spec, packageorigins):
     if not spec:
@@ -67,21 +70,19 @@ def annotate_spec(spec, packageorigins):
 
     annotated_spec = []
 
-    column_len = max([ len(s) + 1 for s in spec ])
+    column_len = max([len(s) + 1 for s in spec])
     for s in spec:
         name = s.split("=")[0]
-        origins = " ".join(list([ origin for origin in packageorigins[name] ]))
+        origins = " ".join(list([origin for origin in packageorigins[name]]))
         annotated_spec.append("%s # %s" % (s.ljust(column_len), origins))
 
     return "\n".join(annotated_spec)
 
+
 def main():
     cpp_opts, args = cpp.getopt(sys.argv[1:])
     try:
-        opts, args = gnu_getopt(args, "o:p:h",
-                                ["output=",
-                                 "pool=",
-                                 "bootstrap=",])
+        opts, args = gnu_getopt(args, "o:p:h", ["output=", "pool=", "bootstrap="])
     except getopt.GetoptError as e:
         usage(e)
 
@@ -90,15 +91,15 @@ def main():
 
     output_path = None
     bootstrap_path = None
-    pool_path = os.environ.get('FAB_POOL_PATH', None)
+    pool_path = os.environ.get("FAB_POOL_PATH", None)
     for opt, val in opts:
-        if opt == '-h':
+        if opt == "-h":
             usage()
 
-        if opt in ('-o', '--output'):
+        if opt in ("-o", "--output"):
             output_path = val
 
-        if opt in ('-p', '--pool'):
+        if opt in ("-p", "--pool"):
             pool_path = val
 
         if opt == "--bootstrap":
@@ -113,7 +114,7 @@ def main():
         plan |= bootstrap_packages
 
         for package in bootstrap_packages:
-            plan.packageorigins.add(package, 'bootstrap')
+            plan.packageorigins.add(package, "bootstrap")
 
     for arg in args:
         if arg == "-" or os.path.exists(arg):
@@ -125,7 +126,7 @@ def main():
 
         else:
             plan.add(arg)
-            plan.packageorigins.add(arg, '_')
+            plan.packageorigins.add(arg, "_")
 
     trap = StdTrap(stdout=(output_path is None), stderr=False)
     try:
@@ -135,7 +136,7 @@ def main():
 
     if output_path is None:
         trapped_output = trap.stdout.read()
-        print(trapped_output, end=' ', file=sys.stderr)
+        print(trapped_output, end=" ", file=sys.stderr)
 
     spec = annotate_spec(spec, plan.packageorigins)
 
@@ -144,7 +145,6 @@ def main():
     else:
         open(output_path, "w").write(str(spec) + "\n")
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     main()
-
-

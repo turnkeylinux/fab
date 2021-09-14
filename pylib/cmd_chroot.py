@@ -40,6 +40,7 @@ from common import fatal
 from installer import RevertibleInitctl
 from executil import ExecError
 
+
 def get_environ(env_conf):
     environ = {}
     if env_conf:
@@ -50,6 +51,7 @@ def get_environ(env_conf):
 
     return environ
 
+
 class Chroot(_Chroot):
     def system(self, *command):
         try:
@@ -59,43 +61,50 @@ class Chroot(_Chroot):
 
         return 0
 
+
 @help.usage(__doc__)
 def usage():
-    print("Syntax: %s [ -options ] <newroot> [ command ... ]" % sys.argv[0], file=sys.stderr)
-    print("Syntax: %s [ -options ] <newroot> --script path/to/executable [ args ]" % sys.argv[0], file=sys.stderr)
+    print(
+        "Syntax: %s [ -options ] <newroot> [ command ... ]" % sys.argv[0],
+        file=sys.stderr,
+    )
+    print(
+        "Syntax: %s [ -options ] <newroot> --script path/to/executable [ args ]"
+        % sys.argv[0],
+        file=sys.stderr,
+    )
+
 
 def chroot_script(chroot, script_path, *args):
     if not isfile(script_path):
         fatal("no such script (%s)" % script_path)
 
-    tmpdir = tempfile.mkdtemp(dir=join(chroot.path, "tmp"),
-                              prefix="chroot-script.")
+    tmpdir = tempfile.mkdtemp(dir=join(chroot.path, "tmp"), prefix="chroot-script.")
 
     script_path_chroot = join(tmpdir, basename(script_path))
     shutil.copy(script_path, script_path_chroot)
 
     os.chmod(script_path_chroot, 0o755)
-    err = chroot.system(paths.make_relative(chroot.path, script_path_chroot),
-                        *args)
+    err = chroot.system(paths.make_relative(chroot.path, script_path_chroot), *args)
     shutil.rmtree(tmpdir)
 
     return err
 
+
 def main():
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], 's:e:',
-                                       [ 'script=', 'env=' ])
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "s:e:", ["script=", "env="])
     except getopt.GetoptError as e:
         usage(e)
 
-    env_conf = os.environ.get('FAB_CHROOT_ENV')
+    env_conf = os.environ.get("FAB_CHROOT_ENV")
 
     script_path = None
     for opt, val in opts:
-        if opt in ('-s', '--script'):
+        if opt in ("-s", "--script"):
             script_path = val
 
-        if opt in ('-e', '--env'):
+        if opt in ("-e", "--env"):
             env_conf = val
 
     if not args:
@@ -116,10 +125,11 @@ def main():
 
     else:
         if not args:
-            args = ('/bin/bash',)
+            args = ("/bin/bash",)
 
         err = chroot.system(*args)
         sys.exit(err)
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     main()

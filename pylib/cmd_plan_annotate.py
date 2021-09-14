@@ -28,18 +28,20 @@ import debinfo
 
 from tempfile import TemporaryDirectory
 
+
 @help.usage(__doc__)
 def usage():
     print("Syntax: %s [-options] path/to/plan" % sys.argv[0], file=sys.stderr)
 
+
 def parse_plan(plan):
     # strip c-style comments
-    plan = re.sub(r'(?s)/\*.*?\*/', '', plan)
-    plan = re.sub(r'//.*', '', plan)
+    plan = re.sub(r"(?s)/\*.*?\*/", "", plan)
+    plan = re.sub(r"//.*", "", plan)
 
     packages = set()
-    for expr in plan.split('\n'):
-        expr = re.sub(r'#.*', '', expr)
+    for expr in plan.split("\n"):
+        expr = re.sub(r"#.*", "", expr)
         expr = expr.strip()
         expr = expr.rstrip("*")
         if not expr:
@@ -54,27 +56,30 @@ def parse_plan(plan):
 
     return packages
 
+
 def get_packages_info(packages, pool_path):
     info = {}
 
     from pyproject.pool.pool import Pool
+
     pool = Pool(pool_path)
 
-    tmpdir = TemporaryDirectory('', 'pool')
+    tmpdir = TemporaryDirectory("", "pool")
     pool.get(tmpdir.name, packages, strict=True)
 
     for package in os.listdir(tmpdir.name):
         path = os.path.join(tmpdir.name, package)
-        if path.endswith('.deb'):
+        if path.endswith(".deb"):
             control = debinfo.get_control_fields(name)
-            info[control['Package']] = control['Description']
+            info[control["Package"]] = control["Description"]
 
     return info
+
 
 def plan_lint(plan_path, pool_path):
     package_info = {}
 
-    with open(plan_path, 'r') as fob:
+    with open(plan_path, "r") as fob:
         plan = fob.read().strip()
 
     packages = parse_plan(plan)
@@ -83,30 +88,31 @@ def plan_lint(plan_path, pool_path):
     if not packages:
         column_len = 0
     else:
-        column_len = max([ len(package) for package in packages ])
+        column_len = max([len(package) for package in packages])
 
     comments = {}
+
     def get_comment_key(m):
         comment = m.group(1)
         key = hashlib.md5(comment).hexdigest()
         comments[key] = comment
         return "$" + key
 
-    plan = re.sub(r'(?s)(/\*.*?\*/)', get_comment_key, plan)
+    plan = re.sub(r"(?s)(/\*.*?\*/)", get_comment_key, plan)
     plan_linted = ""
 
-    for line in plan.split('\n'):
-        if re.search(r'#|\$|//', line) or line.strip() == "":
+    for line in plan.split("\n"):
+        if re.search(r"#|\$|//", line) or line.strip() == "":
             plan_linted += line + "\n"
             continue
 
         expr = line.strip()
         description = packages_info[expr.lstrip("!").rstrip("*")]
-        plan_linted += "%s # %s\n" % (expr.ljust(column_len + 3),
-                                      description)
+        plan_linted += "%s # %s\n" % (expr.ljust(column_len + 3), description)
 
-    plan_linted = re.sub(r'\$(\S+)', lambda m: comments[m.group(1)], plan_linted)
+    plan_linted = re.sub(r"\$(\S+)", lambda m: comments[m.group(1)], plan_linted)
     return plan_linted
+
 
 def main():
     try:
@@ -123,18 +129,18 @@ def main():
     inplace = False
     pool_path = None
     for opt, val in opts:
-        if opt == '-h':
+        if opt == "-h":
             usage()
 
-        if opt in ('-i', '--inplace'):
+        if opt in ("-i", "--inplace"):
             inplace = True
 
-        if opt in ('-p', '--pool'):
+        if opt in ("-p", "--pool"):
             pool_path = val
 
     plan_path = args[0]
     if pool_path is None:
-        pool_path = os.environ.get('FAB_POOL_PATH')
+        pool_path = os.environ.get("FAB_POOL_PATH")
 
     newplan = plan_lint(plan_path, pool_path)
 
@@ -144,6 +150,5 @@ def main():
         print(newplan)
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     main()
-

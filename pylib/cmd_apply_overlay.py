@@ -27,9 +27,11 @@ import help
 import executil
 from common import fatal
 
+
 @help.usage(__doc__)
 def usage():
     print("Syntax: %s [-options] <overlay> <path>" % sys.argv[0], file=sys.stderr)
+
 
 def apply_overlay(overlay, dstpath, preserve=False):
     cmd = "cp -TdR"
@@ -38,16 +40,16 @@ def apply_overlay(overlay, dstpath, preserve=False):
 
     executil.system(cmd, overlay, dstpath)
 
+
 def main():
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], "",
-                                       ['preserve'])
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "", ["preserve"])
     except getopt.GetoptError as e:
         usage(e)
 
     if not len(args) == 2:
         usage()
-    
+
     overlay = args[0]
     dstpath = args[1]
 
@@ -61,7 +63,6 @@ def main():
 
     apply_overlay(overlay, dstpath, **kws)
 
-        
-if __name__=="__main__":
-    main()
 
+if __name__ == "__main__":
+    main()

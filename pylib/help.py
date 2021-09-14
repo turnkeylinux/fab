@@ -9,6 +9,7 @@
 
 import sys
 
+
 def usage(doc):
     def decor(print_syntax):
         def wrapper(err=None):
@@ -18,9 +19,7 @@ def usage(doc):
             if doc:
                 print(doc.strip(), file=sys.stderr)
             sys.exit(1)
+
         return wrapper
+
     return decor
-
-
-        
-    

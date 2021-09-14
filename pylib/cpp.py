@@ -13,8 +13,10 @@ import subprocess
 
 CPP_ARGS = ("-I", "-D", "-U")
 
+
 class Error(Exception):
     pass
+
 
 def getopt(argv):
     """get cpp arguments in argv -> (cpp_arguments, non_cpp_arguments)"""
@@ -25,7 +27,7 @@ def getopt(argv):
     i = 0
     while i < len(argv):
         arg = argv[i]
-        
+
         for cpp_arg in CPP_ARGS:
             if arg.startswith(cpp_arg):
                 if arg == cpp_arg:
@@ -38,8 +40,8 @@ def getopt(argv):
                     del argv[i + 1]
                     del argv[i]
                 else:
-                    opt = arg[:len(cpp_arg)]
-                    val = arg[len(cpp_arg):]
+                    opt = arg[: len(cpp_arg)]
+                    val = arg[len(cpp_arg) :]
 
                     del argv[i]
 
@@ -47,8 +49,9 @@ def getopt(argv):
                 break
         else:
             i += 1
-              
+
     return opts, argv
+
 
 def cpp(input, cpp_opts=None):
     """preprocess <input> through cpp -> preprocessed output
@@ -56,14 +59,14 @@ def cpp(input, cpp_opts=None):
     """
     if cpp_opts is None:
         cpp_opts = []
-    args = [ "-Ulinux" ]
+    args = ["-Ulinux"]
 
     for opt, val in cpp_opts:
         args.append(opt + val)
 
-    include_path = os.environ.get('FAB_PLAN_INCLUDE_PATH')
+    include_path = os.environ.get("FAB_PLAN_INCLUDE_PATH")
     if include_path:
-        for path in include_path.split(':'):
+        for path in include_path.split(":"):
             args.append("-I" + path)
 
     command = ["cpp", input]

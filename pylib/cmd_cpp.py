@@ -27,16 +27,18 @@ See cpp(1) man page for further details.
 import sys
 import help
 import cpp
-    
+
+
 @help.usage(__doc__)
 def usage():
     print("Syntax: %s [-options] <plan>" % sys.argv[0], file=sys.stderr)
 
+
 def main():
     args = sys.argv[1:]
-    if not args or '-h' in args:
+    if not args or "-h" in args:
         usage()
-    
+
     cpp_opts, args = cpp.getopt(sys.argv[1:])
 
     if not args:
@@ -44,7 +46,7 @@ def main():
 
     plan_path = args[0]
     print(cpp.cpp(plan_path, cpp_opts))
-        
-if __name__=="__main__":
-    main()
 
+
+if __name__ == "__main__":
+    main()
