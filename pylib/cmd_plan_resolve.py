@@ -36,8 +36,7 @@ import cpp
 from plan import Plan
 from common import fatal, gnu_getopt
 
-import debinfo
-
+from debian import deb822
 
 @help.usage(__doc__)
 def usage():
@@ -59,7 +58,7 @@ def iter_packages(root):
             yield control
 
     for control in parse_status(os.path.join(root, "var/lib/dpkg/status")):
-        d = debinfo.parse_control(control)
+        d = debfile.deb822(control.splitlines())
         if d["Status"] == "install ok installed":
             yield d["Package"]
 

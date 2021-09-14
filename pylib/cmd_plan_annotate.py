@@ -24,7 +24,7 @@ import getopt
 import hashlib
 
 import help
-import debinfo
+from debian import debfile
 
 from tempfile import TemporaryDirectory
 
@@ -70,7 +70,7 @@ def get_packages_info(packages, pool_path):
     for package in os.listdir(tmpdir.name):
         path = os.path.join(tmpdir.name, package)
         if path.endswith(".deb"):
-            control = debinfo.get_control_fields(name)
+            control = debfile.DebFile(path).debcontrol()
             info[control["Package"]] = control["Description"]
 
     return info

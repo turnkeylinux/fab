@@ -21,9 +21,9 @@ from os.path import join, exists, dirname
 import re
 import sys
 import shutil
+from tempfile import TemporaryDirectory
 
 import help
-from temp import TempDir
 
 from common import fatal, warn, mkdir
 
@@ -70,15 +70,15 @@ def _move(entry, source_root_path, dest_root_path):
 def apply_removelist(removelist_fh, root_path):
     remove, restore = parse_removelist(removelist_fh.read())
 
-    tmpdir = TempDir()
+    tmpdir = TemporaryDirectory()
 
     # move entries out of root_path
     for entry in remove:
-        _move(entry, root_path, tmpdir.path)
+        _move(entry, root_path, tmpdir.name)
 
     # move entries back into root_path
     for entry in restore:
-        _move(entry, tmpdir.path, root_path)
+        _move(entry, tmpdir.name, root_path)
 
 
 def main():

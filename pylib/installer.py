@@ -13,9 +13,9 @@ from os.path import join, exists
 import shutil
 import hashlib
 
-import debinfo
+import debian
 from chroot import Chroot
-from subprocess import CallProcessError
+from subprocess import CalledProcessError
 
 
 class Error(Exception):
@@ -247,7 +247,7 @@ class PoolInstaller(Installer):
             # dl_path would best be calculated; but we don't have access to chroot_path here...
             dl_path = os.path.join("var/cache/apt/archives", package)
             if path.endswith(".deb"):
-                control = debinfo.get_control_fields(path)
+                control = debian.debfile.DebFile(path).debcontrol()
                 for field in list(control.keys()):
                     index.append(field + ": " + control[field])
 

@@ -12,8 +12,7 @@ import os
 from os.path import basename, join
 
 import cpp
-import debinfo
-import debversion
+from debian import debfile, debian_support
 
 from tempfile import TemporaryDirectory
 
@@ -114,7 +113,7 @@ class Dependency:
         def __contains__(self, version):
             true_results = self.RELATIONS[self.relation]
 
-            if debversion.compare(version, self.version) in true_results:
+            if debian_support.version_compare(version, self.version) in true_results:
                 return True
 
             return False
@@ -281,7 +280,7 @@ class Plan(set):
             package_path = packages[dep]
             if package_path is None:
                 raise Error("could not find package", dep.name)
-            dctrls[dep] = debinfo.get_control_fields(package_path)
+            dctrls[dep] = debfile.DebFile(package_path).control.debcontrol()
             dctrls[dep]["Filename"] = basename(package_path)
 
         return dctrls
@@ -315,7 +314,7 @@ class Plan(set):
                 if not package_path:
                     continue
 
-                pkg_control = debinfo.get_control_fields(package_path)
+                pkg_control = debfile.DebFile(package_path).debcontrol()
 
                 version = pkg_control["Version"]
                 if not dep.is_version_ok(version):

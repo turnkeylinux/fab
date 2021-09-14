@@ -25,7 +25,7 @@ Usage examples:
 
 """
 import os
-from os.path import basename, isfile, join
+from os.path import basename, isfile, join, isdir
 import paths
 
 import sys
