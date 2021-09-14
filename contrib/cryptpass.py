@@ -28,12 +28,12 @@ def random_salt():
     return "".join([SALTCHARS[random.randint(0, len(SALTCHARS) - 1)] for i in range(2)])
 
 def fatal(s):
-    print >> sys.stderr, "error: " + str(s)
+    print("error: " + str(s), file=sys.stderr)
     sys.exit(1)
 
 def usage():
-    print "Syntax: %s" % sys.argv[0]
-    print __doc__.strip()
+    print("Syntax: %s" % sys.argv[0])
+    print(__doc__.strip())
     
     sys.exit(1)
 
@@ -51,7 +51,7 @@ def main():
     else:
         password = sys.stdin.readline().rstrip("\n")
 
-    print crypt.crypt(password, random_salt())
+    print(crypt.crypt(password, random_salt()))
         
 if __name__ == "__main__":
     main()
