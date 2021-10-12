@@ -22,16 +22,18 @@ import crypt
 import getpass
 import random
 
+from typing import NoReturn
+
 SALTCHARS = './abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 
-def random_salt():
+def random_salt() -> str:
     return "".join([SALTCHARS[random.randint(0, len(SALTCHARS) - 1)] for i in range(2)])
 
-def fatal(s):
+def fatal(s: Any) -> NoReturn:
     print("error: " + str(s), file=sys.stderr)
     sys.exit(1)
 
-def usage():
+def usage() -> NoReturn:
     print("Syntax: %s" % sys.argv[0])
     print(__doc__.strip())
     

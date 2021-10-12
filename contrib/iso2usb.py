@@ -31,11 +31,11 @@ import stat
 import getopt
 import subprocess
 
-def fatal(e):
+def fatal(e: Any) -> NoReturn:
     print('Error: ' + str(e), file=sys.stderr)
     sys.exit(1)
 
-def usage(e=None):
+def usage(e: Any=None) -> NoReturn:
     if e:
         print('Error: ' + str(e), file=sys.stderr)
 
@@ -49,21 +49,21 @@ class Error(Exception):
     pass
 
 class ISO:
-    def __init__(self, path):
+    def __init__(self, path: str):
         self.path = os.path.realpath(path)
         self.name = os.path.basename(self.path)
 
         if not os.path.exists(self.path):
             raise Error("iso path does not exist: %s" % self.path)
 
-    def make_hybrid(self):
+    def make_hybrid(self) -> None:
         subprocess.run(["isohybrid", self.path])
 
         if not self.is_hybrid:
             raise Error("iso not verified as hybrid mode")
 
     @property
-    def is_hybrid(self):
+    def is_hybrid(self) -> bool:
         output = subprocess.run(["fdisk", "-l", self.path], text=True).stdout
         if "Hidden HPFS/NTFS" in output:
             return True
@@ -78,7 +78,7 @@ class ISO:
 
 
 class USB:
-    def __init__(self, path):
+    def __init__(self, path: str):
         self.path = path
 
         if not os.path.exists(self.path):
@@ -94,12 +94,12 @@ class USB:
             raise Error("usb path is not verifiable as a usb device: %s" % self.path)
 
     @property
-    def is_block_device(self):
+    def is_block_device(self) -> bool:
         mode = os.stat(self.path).st_mode
         return stat.S_ISBLK(mode)
 
     @property
-    def is_partition(self):
+    def is_partition(self) -> bool:
         try:
             int(self.path[-1])
             return True
@@ -107,18 +107,18 @@ class USB:
             return False
 
     @property
-    def is_usb_device(self):
+    def is_usb_device(self) -> bool:
         if "usb" in self.name:
             return True
         return False
 
     @property
-    def name(self):
+    def name(self) -> str:
         cmd = ["udevadm", "info", "-q", "symlink", "-n", self.path]
         output = subprocess.run(cmd, text=True).stdout
         return output.split(" ")[0]
 
-    def write_iso(self, iso_path):
+    def write_iso(self, iso_path: str):
         cmd = ["dd", "if=%s" % iso_path, "of=%s" % self.path]
         subprocess.run(cmd)
 
