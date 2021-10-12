@@ -10,9 +10,14 @@
 import re
 import os
 from os.path import basename, join
+from typing import (
+        List, Optional, Iterator, Dict, Set, Tuple, Iterable, Union, Any, Type,
+        Generator
+)
 
-import cpp
+from . import cpp
 from debian import debfile, debian_support
+from pool_lib import Pool
 
 from tempfile import TemporaryDirectory
 
@@ -21,65 +26,46 @@ class Error(Exception):
     pass
 
 
-class PackageOrigins(dict):
+class PackageOrigins:
     """class for holding package origins for dependency annotation """
 
-    def add(self, name, origin):
+    def __init__(self) -> None:
+        self._origins: Dict[str, List[str]] = {}
+
+    def add(self, name: str, origin: str) -> None:
         name = name.split("=")[0].strip("*")
-        if name not in self:
-            self[name] = []
+        if name not in self._origins:
+            self._origins[name] = []
 
-        self[name].append(origin)
+        self._origins[name].append(origin)
+
+    def __getitem__(self, name: str) -> List[str]:
+        return self._origins[name]
 
 
-class Spec(dict):
+class Spec:
     """class for holding a spec"""
 
-    def add(self, name, version):
+    def __init__(self) -> None:
+        self._pkgs: Dict[str, str] = {}
+
+    def add(self, name: str, version: str) -> None:
         """add package name and version to spec"""
-        self[name] = version
+        self._pkgs[name] = version
 
-    def remove(self, name):
-        del self[name]
+    def remove(self, name: str) -> None:
+        del self._pkgs[name]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         """return list of packages, as name=version"""
-        for name, version in list(self.items()):
+        for name, version in self._pkgs.items():
             yield "%s=%s" % (name, version)
 
-    def __str__(self):
-        return "\n".join(list(self))
+    def __str__(self) -> str:
+        return "\n".join(self._pkgs)
 
-    def exists(self, key):
-        return key in self
-
-
-class PackageGetter(dict):
-    def __new__(cls, deps, pool):
-        return dict.__new__(cls)
-
-    def __init__(self, deps, pool):
-        def f(dep):
-            if not dep.restrict or dep.restrict.relation != "=":
-                return dep.name
-            return "%s=%s" % (dep.name, dep.restrict.version)
-
-        dir = TemporaryDirectory("package_getter", "pool")
-        pool.get(dir.name, list(map(f, deps)))
-
-        deps = dict([(d.name, d) for d in deps])
-        for fname in os.listdir(dir.name):
-            if not fname.endswith(".deb"):
-                continue
-
-            package_name = fname.split("_")[0]
-            self[deps[package_name]] = join(dir.name, fname)
-
-        missing = set(deps) - set(self)
-        for dep in missing:
-            self[dep] = None
-        self.missing = missing
-        self.dir = dir
+    def exists(self, key: str) -> bool:
+        return key in self._pkgs
 
 
 class Dependency:
@@ -92,36 +78,35 @@ class Dependency:
     """
 
     class Restrict:
-        RELATIONS = {"<<": (-1,), "<=": (-1, 0), "=": (0,), ">=": (0, 1), ">>": (1,)}
+        RELATIONS = {"<<": [-1], "<=": [-1, 0], "=": [0], ">=": [0, 1], ">>": [1]}
 
-        def __init__(self, relation, version):
+        def __init__(self, relation: str, version: str) -> None:
             if relation not in self.RELATIONS:
                 raise Error("bad relation (%s)" % relation)
 
             self.relation = relation
             self.version = version
 
-        def __hash__(self):
+        def __hash__(self) -> int:
             return hash(self.relation) ^ hash(self.version)
 
-        def __eq__(self, other):
+        def __eq__(self, other: Any) -> bool:
             if other is None:
                 return False
 
             return self.relation == other.relation and self.version == other.version
 
-        def __contains__(self, version):
+        def __contains__(self, version: str) -> bool:
             true_results = self.RELATIONS[self.relation]
 
-            if debian_support.version_compare(version, self.version) in true_results:
-                return True
+            return debian_support.version_compare(version, self.version) in true_results
 
-            return False
-
-        def __str__(self):
+        def __str__(self) -> str:
             return self.relation + " " + self.version
 
-    def __init__(self, string):
+    restrict: Optional[Restrict]
+
+    def __init__(self, string: str):
         """initialize Dependency from a control file formatted dependency
         e.g.,
             libgpmg1 (>= 1.19.6-1)
@@ -157,22 +142,25 @@ class Dependency:
             relation, version = m.groups()
             self.restrict = Dependency.Restrict(relation, version)
 
-    def __str__(self):
+    def __str__(self) -> str:
         if not self.restrict:
             return self.name
 
         return "%s (%s)" % (self.name, str(self.restrict))
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.name)
 
-    def __eq__(self, other):
-        if type(other) == str:
+    def __eq__(self, other: Any) -> bool:
+        if isinstance(other, str) == str:
             return self.name == other
+        elif isinstance(other, Dependency):
+            return self.name == other.name
+        raise TypeError(
+            "don't know how to check equality between Dependency and "
+            f"{other!r} ({type(other)})")
 
-        return self.name == other.name
-
-    def is_version_ok(self, version):
+    def is_version_ok(self, version: str) -> bool:
         """compare package := name(relation)ver and version by relation"""
         if not self.restrict:
             return True
@@ -180,14 +168,44 @@ class Dependency:
         return version in self.restrict
 
 
-class Plan(set):
+class PackageGetter:
+    def __init__(self, dep_list: Iterable[Dependency], pool: Pool):
+        self._deps: Dict[Dependency, Optional[str]] = {}
+        def format_dep(dep: Dependency) -> str:
+            if not dep.restrict or dep.restrict.relation != "=":
+                return dep.name
+            return "%s=%s" % (dep.name, dep.restrict.version)
+
+        dir = TemporaryDirectory("package_getter", "pool")
+        pool.get(dir.name, list(map(format_dep, dep_list)))
+
+        deps = {d.name: d for d in dep_list}
+        for fname in os.listdir(dir.name):
+            if not fname.endswith(".deb"):
+                continue
+
+            package_name = fname.split("_")[0]
+            self._deps[deps[package_name]] = join(dir.name, fname)
+
+        missing: Set[Dependency] = set(deps.values()) - set(self._deps)
+        for dep in missing:
+            self._deps[dep] = None
+        self.missing = missing
+        self.dir = dir
+
+    def __getitem__(self, key: Dependency) -> Optional[str]:
+        return self._deps[key]
+
+
+class Plan:
     @staticmethod
-    def _parse_plan_file(path, cpp_opts=None):
+    def _parse_plan_file(
+            path: str, cpp_opts: Optional[List[Tuple[str, str]]]=None) -> Set[str]:
         """process plan through cpp, then parse it and add packages to plan """
         if cpp_opts is None:
             cpp_opts = []
         processed_plan = cpp.cpp(path, cpp_opts)
-        packages = set()
+        packages: Set[str] = set()
         for expr in processed_plan.splitlines():
             expr = re.sub(r"#.*", "", expr)
             expr = expr.strip()
@@ -207,28 +225,44 @@ class Plan(set):
         return packages
 
     @classmethod
-    def init_from_file(cls, plan_file_path, cpp_opts=None, pool_path=None):
+    def init_from_file(
+            cls: Type['Plan'],
+            plan_file_path: str,
+            cpp_opts: Optional[List[Tuple[str, str]]]=None,
+            pool_path: Optional[str]=None) -> 'Plan':
         if cpp_opts is None:
             cpp_opts = []
         return cls(cls._parse_plan_file(plan_file_path, cpp_opts), pool_path)
 
-    def __new__(cls, iterable=(), pool_path=None):
-        return set.__new__(cls, iterable)
+    pool: Optional[Pool]
 
-    def __init__(self, iterable=(), pool_path=None):
-        set.__init__(self, iterable)
+    def __init__(self, iterable: Iterable[str]=(), pool_path: Optional[str]=None):
+        self._plan: Set[str] = set(iterable)
 
-        if pool_path:
-            from pyproject.pool.pool import Pool
-
+        if not pool_path is None:
             self.pool = Pool(pool_path)
         else:
             self.pool = None
 
         self.packageorigins = PackageOrigins()
 
-    def _get_new_deps(self, pkg_control, old_deps, depend_fields):
-        def parse_depends(val):
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._plan)
+
+    def __ior__(self, other: Union['Plan', Set[str]]) -> 'Plan':
+        if isinstance(other, Plan):
+            self._plan |= other._plan
+        else:
+            self._plan |= other
+        return self
+
+    def add(self, v: str) -> None:
+        self._plan.add(v)
+
+    def _get_new_deps(
+            self, pkg_control: debfile.Deb822, old_deps: Set[Dependency],
+            depend_fields: List[str]) -> Set[Dependency]:
+        def parse_depends(val: Optional[str]) -> List[str]:
             if val is None or val.strip() == "":
                 return []
 
@@ -236,7 +270,7 @@ class Plan(set):
 
         new_deps = set()
 
-        raw_depends = []
+        raw_depends: List[str] = []
         for field_name in depend_fields:
             raw_depends += parse_depends(pkg_control.get(field_name))
 
@@ -253,31 +287,37 @@ class Plan(set):
 
             # add the first alternative that exists in the pool to set of new dependencies
             for alternative in alternatives:
-                if self.pool.exists(alternative.name):
+                assert self.pool is not None
+                if self.pool.kernel.exists(alternative.name):
                     new_deps.add(alternative)
                     break
 
         for dep in new_deps:
-            self.packageorigins.add(dep.name, pkg_control.get("Package"))
+            v = pkg_control.get("Package")
+            assert isinstance(v, str)
+            self.packageorigins.add(dep.name, v)
 
         return new_deps
 
     @staticmethod
-    def _get_provided(pkg_control):
+    def _get_provided(pkg_control: debfile.Deb822) -> Set[str]:
         raw_provided = pkg_control.get("Provides")
         if raw_provided is None or raw_provided.strip() == "":
             return set()
 
         return set(re.split(r"\s*,\s*", raw_provided.strip()))
 
-    def dctrls(self):
+    def dctrls(self) -> Dict[Dependency, debfile.Deb822]:
         """return plan dependencies control file info"""
-        toquery = set([Dependency(pkg) for pkg in self])
-        packages = PackageGetter(toquery, self.pool)
+        toquery = { Dependency(pkg) for pkg in self._plan }
+        if self.pool is None:
+            raise Error('attempt to use `None` pool value!')
+        else:
+            packages = PackageGetter(toquery, self.pool)
 
         dctrls = {}
         for dep in toquery:
-            package_path = packages[dep]
+            package_path = packages._deps[dep]
             if package_path is None:
                 raise Error("could not find package", dep.name)
             dctrls[dep] = debfile.DebFile(package_path).control.debcontrol()
@@ -285,30 +325,30 @@ class Plan(set):
 
         return dctrls
 
-    def resolve(self):
+    def resolve(self) -> Iterable[str]:
         """resolve plan dependencies recursively -> return spec"""
         spec = Spec()
 
         if not self.pool:
             return list(self)
 
-        resolved = set()
-        missing = set()
-        provided = set()
+        resolved: Set[Dependency] = set()
+        missing: Set[Dependency] = set()
+        provided: Set[str] = set()
 
-        def reformat2dep(pkg):
+        def reformat2dep(pkg: str) -> str:
             if "=" not in pkg:
                 return pkg
 
             name, version = pkg.split("=", 1)
             return "%s (= %s)" % (name, version)
 
-        unresolved = set([Dependency(reformat2dep(pkg)) for pkg in self])
+        unresolved = { Dependency(reformat2dep(pkg)) for pkg in self }
         while unresolved:
             # get newest package versions of unresolved dependencies from the pool
             # and pray they don't conflict with our dependency restrictions
             packages = PackageGetter(unresolved, self.pool)
-            new_deps = set()
+            new_deps: Set[Dependency] = set()
             for dep in unresolved:
                 package_path = packages[dep]
                 if not package_path:
@@ -335,17 +375,16 @@ class Plan(set):
 
         if missing:
 
-            def get_origins(dep):
+            def get_origins(dep: Dependency) -> Generator[str, None, None]:
+                depname: Optional[str] = dep.name
                 # trace the package origins
-                origins = []
-                while dep:
+                while depname is not None:
                     try:
-                        dep = self.packageorigins[dep][0]
-                        origins.append(dep)
+                        depname = self.packageorigins[depname][0]
+                        yield depname
                     except KeyError:
-                        dep = None
+                        depname = None
 
-                return origins
 
             brokendeps = []
             for dep in missing:

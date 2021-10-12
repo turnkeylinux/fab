@@ -12,6 +12,9 @@ import os
 from os.path import join, exists, basename
 import shutil
 import hashlib
+from typing import (
+        Iterable, Optional, Dict, Tuple, List, TextIO, IO, AnyStr, cast
+)
 
 import debian
 from chroot import Chroot
@@ -21,65 +24,75 @@ from subprocess import CalledProcessError
 class Error(Exception):
     pass
 
-
-class RevertibleFile(io.FileIO):
+class RevertibleFile:
     """File that automatically reverts to previous state on destruction
        or if the revert method is invoked"""
 
     @staticmethod
-    def _get_orig_path(path):
+    def _get_orig_path(path: str) -> str:
         i = 1
         while True:
-            orig_path = "%s.orig.%d" % (path, i)
+            orig_path = f"{path}.orig.{i}"
             if not exists(orig_path):
                 return orig_path
 
             i += 1
 
-    def __init__(self, path):
-        self.orig_path = None
+    def __init__(self, path: str):
+        self.orig_path: Optional[str] = None
         if exists(path):
             self.orig_path = self._get_orig_path(path)
             shutil.move(path, self.orig_path)
-        self.path = path
+        self.path: Optional[str] = path
 
-        super().__init__(path, "w")
+        self._inner = open(path, 'w')
 
-    def revert(self):
+    def revert(self) -> None:
         ''' revert file to original state '''
-        if self.orig_path:
+        if self.orig_path is not None:
+            assert self.path is not None
             shutil.move(self.orig_path, self.path)
             self.orig_path = None
             self.path = None
-        elif self.path:
+        elif self.path is not None:
             os.remove(self.path)
             self.path = None
 
-    def __del__(self):
+    def write(self, text: str) -> None:
+        self._inner.write(text)
+
+    def close(self) -> None:
+        self._inner.close()
+
+    def __del__(self) -> None:
         self.revert()
+        self._inner.close()
 
 
 class RevertibleScript(RevertibleFile):
     ''' RevertibleFile that ensures file is executable '''
-    def __init__(self, path, lines):
+    def __init__(self, path: str, lines: Iterable[str]):
         super().__init__(path)
         self.write("\n".join(lines))
         self.close()
+        assert self.path is not None
         os.chmod(self.path, 0o755)
 
 
 class RevertibleInitctl(RevertibleScript):
     @property
-    def dummy_path(self):
+    def dummy_path(self) -> str:
         fab_share = os.environ.get("FAB_SHARE_PATH", "/usr/share/fab")
         return join(fab_share, "initctl.dummy")
 
-    def _divert(self, action):
+    def _divert(self, action: str) -> None:
         """actions: add, remove"""
-        cmd = "dpkg-divert --local --rename --%s /sbin/initctl >/dev/null" % action
-        self.chroot.system(cmd)
+        cmd = f"dpkg-divert --local --rename --{action} /sbin/initctl >/dev/null"
+        self.chroot.system(
+            'sh', '-c', cmd
+        )
 
-    def __init__(self, chroot):
+    def __init__(self, chroot: Chroot):
         self.chroot = chroot
         self._divert("add")
         path = join(self.chroot.path, "sbin/initctl")
@@ -87,13 +100,16 @@ class RevertibleInitctl(RevertibleScript):
             content = fob.read()
         super().__init__(path, content.splitlines())
 
-    def revert(self):
+    def revert(self) -> None:
         super().revert()
         self._divert("remove")
 
 
 class Installer:
-    def __init__(self, chroot_path, environ=None):
+    def __init__(
+            self, chroot_path: str,
+            environ: Optional[Dict[str, str]]=None
+    ):
         if environ is None:
             environ = {}
         env = {"DEBIAN_FRONTEND": "noninteractive", "DEBIAN_PRIORITY": "critical"}
@@ -102,7 +118,7 @@ class Installer:
         self.chroot = Chroot(chroot_path, environ=env)
 
     @staticmethod
-    def _get_packages_priority(packages):
+    def _get_packages_priority(packages: List[str]) -> Tuple[List[str], List[str]]:
         """high priority packages must be installed before regular packages
            APT should handle this, but in some circumstances it chokes...
         """
@@ -119,7 +135,10 @@ class Installer:
 
         return high, regular
 
-    def _install(self, packages, ignore_errors=None, extra_apt_args=None):
+    def _install(
+            self, packages: List[str],
+            ignore_errors: Optional[List[str]]=None,
+            extra_apt_args: Optional[List[str]]=None) -> None:
         if ignore_errors is None:
             ignore_errors = []
         if extra_apt_args is None:
@@ -157,7 +176,7 @@ class Installer:
                     self.chroot.system("apt-get", *(args + packages))
                 except CalledProcessError:
 
-                    def get_last_log(path):
+                    def get_last_log(path: str) -> List[str]:
                         log = []
                         with open(path) as fob:
                             for line in fob:
@@ -170,7 +189,7 @@ class Installer:
                         log.reverse()
                         return log
 
-                    def get_errors(log, error_str):
+                    def get_errors(log: List[str], error_str: str) -> List[str]:
                         errors = []
                         for line in reversed(log):
                             if line == error_str:
@@ -185,7 +204,7 @@ class Installer:
                     if error_str not in log:
                         raise
 
-                    errors = get_errors(log, error_str)
+                    errors: Iterable[str] = get_errors(log, error_str)
 
                     ignored_errors = set(errors) & set(ignore_errors)
                     errors = set(errors) - set(ignore_errors)
@@ -211,37 +230,46 @@ class Installer:
 
             if exists(join(boot_path, "initrd.img-%s" % kversion)):
                 try:
-                    self.chroot.system("update-initramfs -u")
+                    self.chroot.system("update-initramfs", "-u")
                 except CalledProcessError:
-                    self.chroot.system("live-update-initramfs -u")
+                    self.chroot.system("live-update-initramfs", "-u")
             else:
                 try:
-                    self.chroot.system("update-initramfs -c -k %s" % kversion)
+                    self.chroot.system("update-initramfs", "-c", "-k", kversion)
                 except CalledProcessError:
-                    self.chroot.system("live-update-initramfs -c -k %s" % kversion)
+                    self.chroot.system("live-update-initramfs", "-c", "-k", kversion)
 
             os.remove(defer_log)
 
+    def install(
+            self, packages: List[str],
+            ignore_errors: Optional[List[str]]=None) -> None:
+        raise NotImplementedError()
+
 
 class PoolInstaller(Installer):
-    def __init__(self, chroot_path, pool_path, arch, environ=None):
+    def __init__(
+            self, chroot_path: str, pool_path: str,
+            arch: str, environ: Optional[Dict[str, str]]=None):
         super(PoolInstaller, self).__init__(chroot_path, environ)
 
-        from pyproject.pool.pool import Pool
+        from pool_lib import Pool
 
         self.pool = Pool(pool_path)
         self.arch = arch
 
     @staticmethod
-    def _get_package_index(packagedir):
-        def filesize(path):
+    def _get_package_index(packagedir: str) -> List[str]:
+        def filesize(path: str) -> str:
             return str(os.stat(path).st_size)
 
-        def md5sum(path):
-            return str(hashlib.md5(open(path, "rb").read()).hexdigest())
+        def md5sum(path: str) -> str:
+            with open(path, 'rb') as fob:
+                return str(hashlib.md5(fob.read()).hexdigest())
 
-        def sha256sum(path):
-            return str(hashlib.sha256(open(path, "rb").read()).hexdigest())
+        def sha256sum(path: str) -> str:
+            with open(path, 'rb') as fob:
+                return str(hashlib.sha256(fob.read()).hexdigest())
 
         index = []
         for package in os.listdir(packagedir):
@@ -261,7 +289,10 @@ class PoolInstaller(Installer):
 
         return index
 
-    def install(self, packages, ignore_errors=None):
+    def install(
+            self, packages: List[str],
+            ignore_errors: Optional[List[str]]=None
+    ) -> None:
         """install packages into chroot via pool"""
 
         if ignore_errors is None:
@@ -273,7 +304,10 @@ class PoolInstaller(Installer):
 
         print("generating package index...")
         sources_list = RevertibleFile(join(self.chroot.path, "etc/apt/sources.list"))
-        print("deb file:/// local debs", file=sources_list)
+        # making RevertibleFile a truly compliant TextIO is a high-effort,
+        # low-reward action. Here we just need it to support .write, so we
+        # pretend it is a full TextIO object.
+        print("deb file:/// local debs", file=cast(TextIO, sources_list))
         sources_list.close()
 
         index_file = "_dists_local_debs_binary-%s_Packages" % self.arch
@@ -281,19 +315,24 @@ class PoolInstaller(Installer):
         index = self._get_package_index(packagedir)
         with open(index_path, "w") as fob:
             fob.write("\n".join(index))
-        self.chroot.system("apt-cache gencaches")
+        self.chroot.system("apt-cache", "gencaches")
 
         print("installing packages...")
         self._install(packages, ignore_errors, ["--allow-unauthenticated"])
 
 
 class LiveInstaller(Installer):
-    def __init__(self, chroot_path, apt_proxy=None, environ=None):
+    def __init__(
+            self, chroot_path: str,
+            apt_proxy: Optional[str]=None,
+            environ: Optional[Dict[str, str]]=None):
         super(LiveInstaller, self).__init__(chroot_path, environ)
 
         self.apt_proxy = apt_proxy
 
-    def install(self, packages, ignore_errors=None):
+    def install(
+            self, packages: List[str],
+            ignore_errors: Optional[List[str]]=None) -> None:
         """install packages into chroot via live apt"""
         if ignore_errors is None:
             ignore_errors = []
@@ -305,7 +344,7 @@ class LiveInstaller(Installer):
                 fob.write('Acquire::http::Proxy "%s";\n' % self.apt_proxy)
 
         print("updating package lists...")
-        self.chroot.system("apt-get update")
+        self.chroot.system("apt-get", "update")
 
         print("installing packages...")
         self._install(packages, ignore_errors)

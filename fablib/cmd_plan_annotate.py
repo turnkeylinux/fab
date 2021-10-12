@@ -60,7 +60,7 @@ def parse_plan(plan):
 def get_packages_info(packages, pool_path):
     info = {}
 
-    from pyproject.pool.pool import Pool
+    from pool_lib import Pool
 
     pool = Pool(pool_path)
 
