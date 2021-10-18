@@ -17,7 +17,10 @@ from typing import (
 )
 
 if TYPE_CHECKING:
-    from typing import Protocol
+    try:
+        from typing import Protocol # type: ignore
+    except:
+        from typing_extensions import Protocol # type: ignore
 import shutil
 import sys
 import os
@@ -535,7 +538,16 @@ Environment:
     apply_removelist.add_argument('root',
             help='Root path relative to which we remove entries')
 
-    args = parser.parse_args()
+    unparsed = sys.argv[1:]
+    filename = basename(__file__)
+    if filename.startswith('fab-') and filename[4:] in (
+            'query', 'cpp', 'chroot', 'install', 
+            'plan-annotate', 'plan-resolve',
+            'apply-overlay', 'apply-patch'
+            ):
+        unparsed.insert(0, filename[4:])
+
+    args = parser.parse_args(unparsed)
 
     if args.command == "query":
         cmd_query(args.pool, args.packages)
