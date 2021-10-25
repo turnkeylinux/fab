@@ -1,0 +1,8 @@
+/usr/bin/fab    /usr/bin/fab-query
+/usr/bin/fab    /usr/bin/fab-cpp
+/usr/bin/fab    /usr/bin/fab-chroot
+/usr/bin/fab    /usr/bin/fab-install
+/usr/bin/fab    /usr/bin/fab-plan-annotate
+/usr/bin/fab    /usr/bin/fab-plan-resolve
+/usr/bin/fab    /usr/bin/fab-apply-overlay
+/usr/bin/fab    /usr/bin/fab-apply-patch
