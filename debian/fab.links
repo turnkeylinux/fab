@@ -6,3 +6,4 @@
 /usr/bin/fab    /usr/bin/fab-plan-resolve
 /usr/bin/fab    /usr/bin/fab-apply-overlay
 /usr/bin/fab    /usr/bin/fab-apply-patch
+/usr/bin/fab    /usr/bin/fab-apply-removelist

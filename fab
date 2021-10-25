@@ -13,14 +13,13 @@ import argparse
 import tempfile
 import subprocess
 from typing import (
-        List, Optional, Tuple, Dict, NoReturn, Union, Any, Sequence, TYPE_CHECKING
+        List, Optional, Tuple, Dict, NoReturn, Union, Any, Sequence
 )
 
-if TYPE_CHECKING:
-    try:
-        from typing import Protocol # type: ignore
-    except:
-        from typing_extensions import Protocol # type: ignore
+try:
+    from typing import Protocol # type: ignore
+except:
+    from typing_extensions import Protocol # type: ignore
 import shutil
 import sys
 import os
@@ -543,7 +542,8 @@ Environment:
     if filename.startswith('fab-') and filename[4:] in (
             'query', 'cpp', 'chroot', 'install', 
             'plan-annotate', 'plan-resolve',
-            'apply-overlay', 'apply-patch'
+            'apply-overlay', 'apply-patch',
+            'apply-removelist'
             ):
         unparsed.insert(0, filename[4:])
 
@@ -570,10 +570,10 @@ Environment:
     elif args.command == "plan-annotate":
         cmd_plan_annotate(args.pool, args.inplace, args.plan)
     elif args.command == "plan-resolve":
-        cmd_plan_resolve(args.output_path, args.bootstrap_path, args.pool_path,
+        cmd_plan_resolve(args.output, args.bootstrap, args.pool,
                 args.cpp_opts, args.plan)
     elif args.command == "apply-overlay":
-        cmd_apply_overlay(args.overlay, args.dstpath, args.preserve)
+        cmd_apply_overlay(args.overlay, args.path, args.preserve)
     elif args.command == "apply-patch":
         if not os.path.isfile(args.patch):
             fatal(f'patch file "{args.patch}" does not exist!')
@@ -582,8 +582,8 @@ Environment:
 
         cmd_apply_patch(args.patch, args.dstpath)
     elif args.command == 'apply-removelist':
-        if not os.path.isdir(args.root_path):
-            fatal(f"root path does not exist: {args.root_path}")
+        if not os.path.isdir(args.root):
+            fatal(f"root path does not exist: {args.root}")
 
         try:
             if args.removelist == '-':

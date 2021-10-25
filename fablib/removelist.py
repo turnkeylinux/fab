@@ -38,12 +38,14 @@ def _move(entry: str, source_root_path: str, dest_root_path: str) -> None:
 
 def apply_removelist(removelist_fob: IO[str], root_path: str) -> None:
     remove, restore = parse_removelist(removelist_fob)
+    if restore:
+        warn("Deprecation Warning: restoring functiononality is deprecated,"
+             " non-functional and will produce a hard error in the future")
 
-    with TemporaryDirectory() as tmpdir:
-        # move entries out of root_path
-        for entry in remove:
-            _move(entry, root_path, tmpdir)
-
-        # move entries back into root_path
-        for entry in restore:
-            _move(entry, tmpdir, root_path)
+    for entry in remove:
+        path = join(root_path, entry.strip('/'))
+        print(f'rm {path}')
+        if not exists(path):
+            warn(f'file or directory {path!r} not found!')
+        else:
+            os.remove(path)

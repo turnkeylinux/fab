@@ -9,7 +9,7 @@ def iter_packages(root: str) -> Generator[str, None, None]:
     with open(join(root, "var/lib/dpkg/status"), 'r') as fob:
         for line in fob:
             if not line.strip():
-                deb = Deb822(fields=control.splitlines())
+                deb = Deb822(control.splitlines())
                 if deb['Status'] == 'install ok installed':
                     yield deb['Package']
                 control = ''
@@ -63,5 +63,5 @@ def resolve_plan(
     if output_path == '-':
         print(spec)
     else:
-        with open(output_path, 'r') as fob:
+        with open(output_path, 'w') as fob:
             fob.write(str(spec) + '\n')
