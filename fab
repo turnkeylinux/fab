@@ -131,7 +131,7 @@ def cmd_chroot(
     script_path_raw: Optional[str],
     env_vars_raw: Optional[str],
     script_args: List[str],
-) -> None:
+) -> Union[None, NoReturn]:
     env_vars: List[str]
     if env_vars_raw is None:
         env_vars = []
