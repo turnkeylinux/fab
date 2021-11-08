@@ -1,7 +1,7 @@
 from typing import IO, List, Tuple
 import os
 from os import mkdir
-from os.path import exists, dirname, join
+from os.path import exists, dirname, join, isfile
 import re
 import sys
 import shutil
@@ -44,8 +44,12 @@ def apply_removelist(removelist_fob: IO[str], root_path: str) -> None:
 
     for entry in remove:
         path = join(root_path, entry.strip('/'))
-        print(f'rm {path}')
         if not exists(path):
+            print(f'rm {path}')
             warn(f'file or directory {path!r} not found!')
-        else:
+        elif isfile(path):
+            print(f'rm {path}')
             os.remove(path)
+        else:
+            print(f'rm -r {path}')
+            shutil.rmtree(path)
