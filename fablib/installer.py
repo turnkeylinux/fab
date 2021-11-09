@@ -170,12 +170,9 @@ class Installer:
 
         for packages in (high, regular):
             if packages:
-                try:
-                    args = ["install", "--assume-yes"]
-                    args.extend(extra_apt_args)
-                    self.chroot.system("apt-get", *(args + packages))
-                except CalledProcessError:
-
+                args = ["install", "--assume-yes"]
+                args.extend(extra_apt_args)
+                if self.chroot.system("apt-get", *(args + packages)) != 0:
                     def get_last_log(path: str) -> List[str]:
                         log = []
                         with open(path) as fob:
@@ -229,14 +226,11 @@ class Installer:
                     break
 
             if exists(join(boot_path, "initrd.img-%s" % kversion)):
-                try:
-                    self.chroot.system("update-initramfs", "-u")
-                except CalledProcessError:
+                if self.chroot.system("update-initramfs", "-u") != 0:
                     self.chroot.system("live-update-initramfs", "-u")
             else:
-                try:
-                    self.chroot.system("update-initramfs", "-c", "-k", kversion)
-                except CalledProcessError:
+                if self.chroot.system(
+                        "update-initramfs", "-c", "-k", kversion) != 0:
                     self.chroot.system("live-update-initramfs", "-c", "-k", kversion)
 
             os.remove(defer_log)
