@@ -48,7 +48,7 @@ def usage(e: Any=None) -> NoReturn:
 class Error(Exception):
     pass
 
-class ISO:
+class Iso:
     def __init__(self, path: str):
         self.path = os.path.realpath(path)
         self.name = os.path.basename(self.path)
@@ -81,7 +81,7 @@ class ISO:
         raise Error("unable to determine ISO hybrid status")
 
 
-class USB:
+class Usb:
     def __init__(self, path: str):
         self.path = path
 
@@ -143,8 +143,8 @@ def main():
         fatal("root privileges are required")
 
     try:
-        iso = ISO(args[0])
-        usb = USB(args[1])
+        iso = Iso(args[0])
+        usb = Usb(args[1])
     except Error as e:
         fatal(e)
 
