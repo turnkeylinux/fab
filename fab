@@ -1,1 +1,595 @@
-wrapper.py
+#!/usr/bin/env python3
+# Copyright (c) TurnKey GNU/Linux - http://www.turnkeylinux.org
+#
+# This file is part of Fab
+#
+# Fab is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Affero General Public License as published by the
+# Free Software Foundation; either version 3 of the License, or (at your
+# option) any later version.
+
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
+import argparse
+import tempfile
+import subprocess
+from typing import (
+        List, Optional, Tuple, Dict, NoReturn, Union, Any, Sequence
+)
+
+try:
+    from typing import Protocol # type: ignore
+except:
+    from typing_extensions import Protocol # type: ignore
+import shutil
+import sys
+import os
+from os.path import isdir, join, basename, relpath
+
+from debian import debfile
+
+from fablib.installer import RevertibleInitctl, PoolInstaller, LiveInstaller, Installer
+from chroot import Chroot
+from fablib.plan import Plan, Dependency
+from fablib import cpp, annotate, resolve, removelist
+
+
+class SupportsStr(Protocol):
+    def __str__(self) -> str:
+        ...
+
+
+def fatal(msg: SupportsStr) -> NoReturn:
+    print("fatal:", msg)
+    sys.exit(1)
+
+
+class AssociatedAppendAction(argparse.Action):
+    def __init__(
+        self,
+        option_strings: Sequence[str],
+        dest: str,
+        nargs: Optional[Union[int, str]] = None,
+        **kwargs: Any,
+    ) -> None:
+        if nargs is not None:
+            raise ValueError("nargs not allowed")
+        super().__init__(option_strings, dest, **kwargs)
+
+    def __call__(
+        self,
+        parser: ArgumentParser,
+        namespace: argparse.Namespace,
+        values: Optional[Union[str, Sequence[Any]]],
+        option_string: Optional[str] = None,
+    ) -> None:
+        if hasattr(namespace, self.dest) and getattr(namespace, self.dest) is not None:
+            getattr(namespace, self.dest).append((option_string, values))
+        else:
+            setattr(namespace, self.dest, [(option_string, values)])
+
+
+def generate_index(dctrls: Dict[Dependency, debfile.Deb822]) -> str:
+    fields = (
+        "Package",
+        "Essential",
+        "Priority",
+        "Section",
+        "Installed-Size",
+        "Maintainer",
+        "Original-Maintainer",
+        "Uploaders",
+        "Changed-By",
+        "Architecture",
+        "Source",
+        "Version",
+        "Depends",
+        "Pre-Depends",
+        "Recommends",
+        "Suggests",
+        "Conflicts",
+        "Provides",
+        "Replaces",
+        "Enhances",
+        "Filename",
+        "Description",
+    )
+    index = []
+    for _, control in dctrls.items():
+        for field in fields:
+            if field not in control.keys():
+                continue
+            index.append(f"{field}: {control[field]}")
+        index.append("")
+    return "\n".join(index)
+
+
+def cmd_query(pool_path: Optional[str], packages: List[str]) -> None:
+    if pool_path is None:
+        fatal(
+            "no pool path provided: either pass -p/--pool or set "
+            "`FAB_POOL_PATH` env-var"
+        )
+    plan: Plan = Plan(pool_path=pool_path)
+    for package in packages:
+        if package == "-" or os.path.exists(package):
+            plan |= Plan.init_from_file(package, [], pool_path)
+        else:
+            plan.add(package)
+    dctrls = plan.dctrls()
+    print(generate_index(dctrls))
+
+
+def cmd_cpp(plan_path: str, cpp_opts: List[Tuple[str, str]]) -> None:
+    try:
+        print(cpp.cpp(plan_path, cpp_opts))
+    except cpp.Error as e:
+        fatal(e.args[2])
+
+
+def cmd_chroot(
+    chroot_path: str,
+    script_path_raw: Optional[str],
+    env_vars_raw: Optional[str],
+    script_args: List[str],
+) -> Union[None, NoReturn]:
+    env_vars: List[str]
+    if env_vars_raw is None:
+        env_vars = []
+    else:
+        env_vars = env_vars_raw.split(":")
+
+    if not isdir(chroot_path):
+        fatal(f"no such chroot ({chroot_path})")
+
+    environ = {}
+    for name in env_vars:
+        val = os.getenv(name)
+        if val is not None:
+            environ[name] = val
+
+    chroot = Chroot(chroot_path, environ=environ)
+    fake_initctl = RevertibleInitctl(chroot)
+
+    if script_path_raw is None:
+        chroot.system("/bin/bash", *script_args)
+    else:
+        script_path = script_path_raw
+        with tempfile.TemporaryDirectory(
+            dir=join(chroot.path, "tmp"), prefix="chroot-script."
+        ) as temp_path:
+
+            script_path_chroot = join(temp_path, basename(script_path))
+            shutil.copy(script_path, script_path_chroot)
+            os.chmod(script_path_chroot, 0o755)
+            err = chroot.system(relpath(script_path_chroot, chroot.path), *script_args)
+        sys.exit(err)
+
+
+def cmd_install(
+    chroot_path: str,
+    packages: List[str],
+    pool_path: Optional[str],
+    arch: Optional[str],
+    no_deps: bool,
+    apt_proxy: Optional[str],
+    ignore_errors_raw: Optional[str],
+    env_vars_raw: Optional[str],
+    cpp_opts: List[Tuple[str, str]],
+) -> None:
+
+    if not isdir(chroot_path):
+        fatal(f"no such chroot ({chroot_path})")
+
+    if pool_path is None and no_deps:
+        fatal("-n/--no-deps cannot be specified if pool is not defined")
+
+    if arch is None:
+        arch = subprocess.run(["dpkg", "--print-architecture"], text=True).stdout
+
+    environ: Dict[str, str]
+    if env_vars_raw is None:
+        environ = {}
+    else:
+        environ = {}
+        for name in env_vars_raw.split(":"):
+            val = os.getenv(name)
+            if val is not None:
+                environ[name] = val
+
+    ignore_errors: List[str]
+    if ignore_errors_raw is None:
+        ignore_errors = []
+    else:
+        ignore_errors = ignore_errors_raw.split(":")
+
+    plan = Plan(pool_path=pool_path)
+    for package in packages:
+        if package == "-" or os.path.exists(package):
+            plan |= Plan.init_from_file(package, cpp_opts, pool_path)
+        else:
+            plan.add(package)
+
+    installer: Installer
+    if pool_path is not None:
+        if no_deps:
+            packages = list(plan)
+        else:
+            packages = list(plan.resolve())
+
+        installer = PoolInstaller(chroot_path, pool_path, arch, environ)
+    else:
+        packages = list(plan)
+        installer = LiveInstaller(chroot_path, apt_proxy, environ)
+
+    installer.install(packages, ignore_errors)
+
+
+def cmd_plan_annotate(pool_path: str, inplace: bool, plan_path: str) -> None:
+
+    newplan = annotate.plan_lint(plan_path, pool_path)
+    if inplace:
+        with open(plan_path, "w") as fob:
+            fob.write(newplan)
+    else:
+        print(newplan)
+
+
+def cmd_plan_resolve(
+    output_path: str,
+    bootstrap_path: Optional[str],
+    pool_path: str,
+    cpp_opts: List[Tuple[str, str]],
+    plans: List[str],
+) -> None:
+
+    resolve.resolve_plan(output_path, bootstrap_path, pool_path, cpp_opts, plans)
+
+def cmd_apply_overlay(
+        overlay: str,
+        dstpath: str,
+        preserve: bool = False) -> None:
+    
+    cmd = ['cp', '-TdR']
+    if preserve:
+        cmd.append('-p')
+
+    subprocess.run(cmd + [overlay, dstpath])
+
+def cmd_apply_patch(
+        patch: str, dstpath: str) -> None:
+    if patch.endswith('.gz'):
+        cmd = 'zcat'
+    elif patch.endswith('.bz2'):
+        cmd = 'bzcat'
+    else:
+        cmd = 'cat'
+
+    try:
+        cat_proc = subprocess.Popen([cmd, patch], stdout=subprocess.PIPE)
+        patch_proc = subprocess.Popen(['patch', '-Nbtur', '-', '-p1', '-d',
+            dstpath])
+        cat_proc.stdout.close()
+        patch_proc.wait()
+    except subprocess.CalledProcessError:
+        print(f'Warning: patch {patch} failed to apply', file=sys.stderr)
+
+def add_cpp_opts(parser: ArgumentParser) -> None:
+    cpp_group = parser.add_argument_group("fab-cpp options", "For plan pre-processing")
+    cpp_group.add_argument(
+        "-D",
+        metavar="name[=def]",
+        action=AssociatedAppendAction,
+        dest="cpp_opts",
+        help="Predefine name as a macro, with optional definition. If "
+        "definition is not specified, default is 1",
+    )
+    cpp_group.add_argument(
+        "-U",
+        metavar="name",
+        action=AssociatedAppendAction,
+        dest="cpp_opts",
+        help="Cancel any previous definition of name",
+    )
+    cpp_group.add_argument(
+        "-I",
+        metavar="dir",
+        action=AssociatedAppendAction,
+        dest="cpp_opts",
+        help="Include dir to add to list of dirs searched for header files",
+    )
+
+
+if __name__ == "__main__":
+    parser = ArgumentParser(
+        formatter_class=RawDescriptionHelpFormatter,
+        description="""
+Configuration environment variables:
+    FAB_POOL_PATH           Path to the package pool
+    FAB_PLAN_INCLUDE_PATH   Global include path for plan preprocessing""",
+    )
+
+    subparsers = parser.add_subparsers(dest="command")
+
+    query_parser = subparsers.add_parser(
+        "query", description="Prints package information"
+    )
+    query_parser.add_argument(
+        "packages",
+        nargs="*",
+        metavar="( - | path/to/plan | path/to/spec | package[=version] )",
+        help="If a version isn't specified, the newest version is implied.",
+    )
+    query_parser.add_argument(
+        "-p",
+        "--pool",
+        metavar="PATH",
+        help="set pool path (default: $FAB_POOL_PATH)",
+        default=os.environ.get("FAB_POOL_PATH", None),
+    )
+
+    cpp_parser = subparsers.add_parser(
+        "cpp",
+        description="Preprocess a plan",
+        formatter_class=RawDescriptionHelpFormatter,
+        epilog="""note:
+    cpp options are not taken exactly as `cpp` would. For `-I<path>` is invalid,
+    you must do `-I=<path>` or `-I <path>`
+        
+See cpp(1) man page for further details""",
+    )
+    cpp_parser.add_argument("plan", help="path to plan")
+    cpp_parser.add_argument(
+        "-D",
+        metavar="name[=def]",
+        action=AssociatedAppendAction,
+        dest="cpp_opts",
+        help="Predefine name as a macro, with optional definition. If "
+        "definition is not specified, default is 1",
+    )
+    cpp_parser.add_argument(
+        "-U",
+        metavar="name",
+        action=AssociatedAppendAction,
+        dest="cpp_opts",
+        help="Cancel any previous definition of name",
+    )
+    cpp_parser.add_argument(
+        "-I",
+        metavar="dir",
+        action=AssociatedAppendAction,
+        dest="cpp_opts",
+        help="Include dir to add to list of dirs searched for header files",
+    )
+
+    chroot_parser = subparsers.add_parser(
+        "chroot",
+        description="Executes command in a new root",
+        formatter_class=RawDescriptionHelpFormatter,
+        epilog="""Usage examples:
+  chroot path/to/chroot echo hello
+  chroot path/to/chroot "ls -la /"
+  chroot path/to/chroot -- ls -la /
+  chroot path/to/chroot --script scripts/printargs arg1 arg2
+
+  FOO=bar BAR=foo chroot path/to/chroot -e FOO:BAR env""",
+    )
+    chroot_parser.add_argument(
+        "-s", "--script", metavar="PATH", help="Run script inside chroot"
+    )
+    chroot_parser.add_argument(
+        "-e",
+        "--env",
+        metavar="VARNAME[: ...]",
+        help="List of environment variable names to pass through\n"
+        + "default: $FAB_CHROOT_ENV",
+        default=os.getenv("FAB_CHROOT_ENV", None),
+    )
+    chroot_parser.add_argument(
+        "chroot", metavar="path/to/chroot", help="Path to chroot"
+    )
+    chroot_parser.add_argument(
+        "args", metavar="ARG", nargs="*", help="script arguments"
+    )
+
+    install_parser = subparsers.add_parser(
+        "install",
+        description="Install packages into chroot",
+        formatter_class=RawDescriptionHelpFormatter,
+        epilog="""  (Also accepts fab-cpp options to effect plan
+            preprocessing)
+
+Environment:
+
+    FAB_SHARE_PATH              Path to direcory containing initctl.dummy
+                                default: /usr/share/fab
+""",
+    )
+    install_parser.add_argument("chroot", metavar="PATH", help="path to chroot")
+    install_parser.add_argument(
+        "packages",
+        nargs="*",
+        metavar="( - | path/to/plan | path/to/spec | package[=version] )",
+        help="If a version isn't specified, the newest version is implied.",
+    )
+    pool_group = install_parser.add_argument_group("pool options")
+    pool_group.add_argument(
+        "-p",
+        "--pool",
+        metavar="PATH",
+        help="Set pool path (default: $FAB_POOL_PATH)",
+        default=os.environ.get("FAB_POOL_PATH", None),
+    )
+    pool_group.add_argument(
+        "-a",
+        "--arch",
+        metavar="ARCH",
+        help="Set architectuure (default: $FAB_ARCH)",
+        default=os.environ.get("FAB_ARCH", None),
+    )
+    pool_group.add_argument(
+        "-n",
+        "--no-deps",
+        action="store_true",
+        help="Do not resolve/install package dependencies",
+        default=False,
+    )
+    apt_group = install_parser.add_argument_group("APT proxy")
+    apt_group.add_argument(
+        "-x",
+        "--apt-proxy",
+        metavar="URL",
+        help="Set apt proxy (default $FAB_APT_PROXY)",
+        default=os.environ.get("FAB_APT_PROXY", None),
+    )
+    install_parser.add_argument(
+        "-i",
+        "--ignore-errors",
+        metavar="PKG[: ...]",
+        help="Ignore errors generated by list of packages",
+    )
+    install_parser.add_argument(
+        "-e",
+        "--env",
+        metavar="VARNAME[: ...]",
+        help="List of environment variable names to pass through "
+        "default: $FAB_INSTALL_ENV",
+        default=os.environ.get("FAB_INSTALL_ENV", None),
+    )
+
+    add_cpp_opts(install_parser)
+
+    plan_annotate = subparsers.add_parser(
+        "plan-annotate",
+        formatter_class=RawDescriptionHelpFormatter,
+        description="""Annotate plan with short package descriptions
+
+(comments, cpp macros and already annotated packages are ignored)""",
+    )
+    plan_annotate.add_argument(
+        "-i", "--inplace", action="store_true", help="Edit plan inplace", default=False
+    )
+    plan_annotate.add_argument(
+        "-p",
+        "--pool",
+        help="set pool path (default: $FAB_POOL_PATH)",
+        default=os.getenv("FAB_POOL_PATH"),
+    )
+    plan_annotate.add_argument("plan", metavar="path/to/plan")
+    add_cpp_opts(plan_annotate)
+
+    plan_resolve = subparsers.add_parser(
+        "plan-resolve",
+        formatter_class=RawDescriptionHelpFormatter,
+        description=
+"Resolve plan into spec (using latest packages from pool if defined)\n\n"
+"(comments, cpp macros and already annotated packages are ignored)",
+    )
+    plan_resolve.add_argument("plan", metavar="( - | path/to/plan | package )", nargs="*")
+
+    plan_resolve.add_argument(
+        "-o", "--output", default="-", help="Path to spec-output (default is stdout)"
+    )
+    plan_resolve.add_argument(
+        "-p",
+        "--pool",
+        metavar="PATH",
+        default=os.getenv("FAB_POOL_PATH"),
+        help="Set pool path (default: $FAB_POOL_PATH)",
+    )
+    plan_resolve.add_argument(
+        "--bootstrap",
+        metavar="PATH",
+        help="Extract list of installed packages from the bootstrap"
+        " and append to the plan",
+    )
+    add_cpp_opts(plan_resolve)
+
+    apply_overlay = subparsers.add_parser(
+            'apply-overlay',
+            description = 'Apply overlay on top of given path')
+    apply_overlay.add_argument('overlay',
+            help='Path to overlay')
+    apply_overlay.add_argument('path',
+            help='Path to apply overlay ontop of (ie. chroot)')
+    apply_overlay.add_argument('--preserve',
+            help='Preserve mode, ownership and timestamps')
+
+    apply_patch = subparsers.add_parser('apply-patch',
+            description=(
+                'Patches should be in unified context produced by diff -u.'
+                ' Filenames must be in absolute path format from the root.'
+                ' Patches may be uncompressed, compressed with gzip (.gz),'
+                ' or bzip2 (.bz2)'
+    ))
+    apply_patch.add_argument('patch',
+            help='Path to patch file')
+    apply_patch.add_argument('dstpath',
+            help='Destination path for applying patch (ie. build/root.patched)')
+
+    apply_removelist = subparsers.add_parser(
+            'apply-removelist',
+            description='Remove files and folders according to removelist')
+    apply_removelist.add_argument('removelist',
+            help=(
+            'Path to read removelist from (- for stdin)'
+            ' Entries may be negated by prefixing a `!`'
+    ))
+    apply_removelist.add_argument('root',
+            help='Root path relative to which we remove entries')
+
+    unparsed = sys.argv[1:]
+    filename = basename(__file__)
+    if filename.startswith('fab-') and filename[4:] in (
+            'query', 'cpp', 'chroot', 'install', 
+            'plan-annotate', 'plan-resolve',
+            'apply-overlay', 'apply-patch',
+            'apply-removelist'
+            ):
+        unparsed.insert(0, filename[4:])
+
+    args = parser.parse_args(unparsed)
+
+    if args.command == "query":
+        cmd_query(args.pool, args.packages)
+    elif args.command == "cpp":
+        cmd_cpp(args.plan, args.cpp_opts)
+    elif args.command == "chroot":
+        cmd_chroot(args.chroot, args.script, args.env, args.args)
+    elif args.command == "install":
+        cmd_install(
+            args.chroot,
+            args.packages,
+            args.pool,
+            args.arch,
+            args.no_deps,
+            args.apt_proxy,
+            args.ignore_errors,
+            args.env,
+            args.cpp_opts,
+        )
+    elif args.command == "plan-annotate":
+        cmd_plan_annotate(args.pool, args.inplace, args.plan)
+    elif args.command == "plan-resolve":
+        cmd_plan_resolve(args.output, args.bootstrap, args.pool,
+                args.cpp_opts, args.plan)
+    elif args.command == "apply-overlay":
+        cmd_apply_overlay(args.overlay, args.path, args.preserve)
+    elif args.command == "apply-patch":
+        if not os.path.isfile(args.patch):
+            fatal(f'patch file "{args.patch}" does not exist!')
+        if not os.path.isdir(args.patch):
+            fatal(f'destination path "{args.path}" does not exist!')
+
+        cmd_apply_patch(args.patch, args.dstpath)
+    elif args.command == 'apply-removelist':
+        if not os.path.isdir(args.root):
+            fatal(f"root path does not exist: {args.root}")
+
+        try:
+            if args.removelist == '-':
+                removelist_fob = sys.stdin
+            else:
+                removelist_fob = open(args.removelist)
+            removelist.apply_removelist(removelist_fob, args.root)
+        finally:
+            removelist_fob.close()

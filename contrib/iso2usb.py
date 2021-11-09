@@ -29,43 +29,46 @@ import os
 import sys
 import stat
 import getopt
+import subprocess
 
-import executil
-
-def fatal(e):
-    print >> sys.stderr, 'Error: ' + str(e)
+def fatal(e: Any) -> NoReturn:
+    print('Error: ' + str(e), file=sys.stderr)
     sys.exit(1)
 
-def usage(e=None):
+def usage(e: Any=None) -> NoReturn:
     if e:
-        print >> sys.stderr, 'Error: ' + str(e)
+        print('Error: ' + str(e), file=sys.stderr)
 
     cmd = os.path.basename(sys.argv[0])
-    print >> sys.stderr, 'Syntax: %s iso_path usb_device' % cmd
-    print >> sys.stderr, __doc__.strip()
+    print('Syntax: %s iso_path usb_device' % cmd, file=sys.stderr)
+    print(__doc__.strip(), file=sys.stderr)
 
     sys.exit(1)
 
 class Error(Exception):
     pass
 
-class ISO:
-    def __init__(self, path):
+class Iso:
+    def __init__(self, path: str):
         self.path = os.path.realpath(path)
         self.name = os.path.basename(self.path)
 
         if not os.path.exists(self.path):
             raise Error("iso path does not exist: %s" % self.path)
 
-    def make_hybrid(self):
-        executil.system("isohybrid", self.path)
+    def make_hybrid(self) -> None:
+        subprocess.run(["isohybrid", self.path])
 
         if not self.is_hybrid:
             raise Error("iso not verified as hybrid mode")
 
     @property
-    def is_hybrid(self):
-        output = executil.getoutput("fdisk", "-l", self.path)
+    def is_hybrid(self) -> bool:
+        output = subprocess.run(
+            ["fdisk", "-l", self.path],
+            capture_output=True, text=True
+        ).stdout
+
         if "Hidden HPFS/NTFS" in output:
             return True
 
@@ -78,8 +81,8 @@ class ISO:
         raise Error("unable to determine ISO hybrid status")
 
 
-class USB:
-    def __init__(self, path):
+class Usb:
+    def __init__(self, path: str):
         self.path = path
 
         if not os.path.exists(self.path):
@@ -95,12 +98,12 @@ class USB:
             raise Error("usb path is not verifiable as a usb device: %s" % self.path)
 
     @property
-    def is_block_device(self):
+    def is_block_device(self) -> bool:
         mode = os.stat(self.path).st_mode
         return stat.S_ISBLK(mode)
 
     @property
-    def is_partition(self):
+    def is_partition(self) -> bool:
         try:
             int(self.path[-1])
             return True
@@ -108,25 +111,25 @@ class USB:
             return False
 
     @property
-    def is_usb_device(self):
+    def is_usb_device(self) -> bool:
         if "usb" in self.name:
             return True
         return False
 
     @property
-    def name(self):
+    def name(self) -> str:
         cmd = ["udevadm", "info", "-q", "symlink", "-n", self.path]
-        output = executil.getoutput(*cmd)
+        output = subprocess.run(cmd, text=True).stdout
         return output.split(" ")[0]
 
-    def write_iso(self, iso_path):
+    def write_iso(self, iso_path: str):
         cmd = ["dd", "if=%s" % iso_path, "of=%s" % self.path]
-        executil.system(*cmd)
+        subprocess.run(cmd)
 
 def main():
     try:
         opts, args = getopt.gnu_getopt(sys.argv[1:], 'h', ['help'])
-    except getopt.GetoptError, e:
+    except getopt.GetoptError as e:
         usage(e)
 
     for opt, val in opts:
@@ -140,25 +143,25 @@ def main():
         fatal("root privileges are required")
 
     try:
-        iso = ISO(args[0])
-        usb = USB(args[1])
-    except Error, e:
+        iso = Iso(args[0])
+        usb = Usb(args[1])
+    except Error as e:
         fatal(e)
 
-    print "*" * 78
-    print "iso: %s (hybrid: %s)" % (iso.name, iso.is_hybrid)
-    print "usb: %s (%s)" % (usb.name, usb.path)
-    print "*" * 78
+    print("*" * 78)
+    print("iso: %s (hybrid: %s)" % (iso.name, iso.is_hybrid))
+    print("usb: %s (%s)" % (usb.name, usb.path))
+    print("*" * 78)
 
-    cont = raw_input("Is the above correct? (y/N): ").strip()
+    cont = input("Is the above correct? (y/N): ").strip()
     if not cont.lower() == "y":
         fatal("aborting...")
 
     if not iso.is_hybrid:
-        print "processing ISO for hybrid mode..."
+        print("processing ISO for hybrid mode...")
         iso.make_hybrid()
 
-    print "writing ISO to USB, this could take a while..."
+    print("writing ISO to USB, this could take a while...")
     usb.write_iso(iso.path)
 
 

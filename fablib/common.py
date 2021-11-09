@@ -7,20 +7,20 @@
 # Free Software Foundation; either version 3 of the License, or (at your
 # option) any later version.
 
+import os
 import sys
+from typing import Any, NoReturn
 
-def usage(doc):
-    def decor(print_syntax):
-        def wrapper(err=None):
-            if err:
-                print >> sys.stderr, "error: %s" % err
-            print_syntax()
-            if doc:
-                print >> sys.stderr, doc.strip()
-            sys.exit(1)
-        return wrapper
-    return decor
+def mkdir(path: os.PathLike) -> None:
+    path = os.fspath(path)
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+## cli common
+def fatal(s: Any) -> NoReturn:
+    print("error: " + str(s), file=sys.stderr)
+    sys.exit(1)
 
 
-        
-    
+def warn(s: Any) -> None:
+    print("warning: " + str(s), file=sys.stderr)

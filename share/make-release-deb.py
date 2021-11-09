@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # Copyright (c) TurnKey GNU/Linux - http://www.turnkeylinux.org
 #
 # This file is part of Fab
@@ -34,7 +34,7 @@ import re
 from string import Template
 
 from temp import TempDir
-from executil import system
+import subprocess
 
 CONTROL_TPL = """\
 Package: $NAME
@@ -53,10 +53,10 @@ class Error(Exception):
 
 def usage(e=None):
     if e:
-        print >> sys.stderr, "Error: " + str(e)
+        print("Error: " + str(e), file=sys.stderr)
 
-    print >> sys.stderr, "Syntax: %s path/to/changelog path/to/output" % sys.argv[0]
-    print >> sys.stderr, __doc__.strip()
+    print("Syntax: %s path/to/changelog path/to/output" % sys.argv[0], file=sys.stderr)
+    print(__doc__.strip(), file=sys.stderr)
 
     sys.exit(1)
 
@@ -91,19 +91,19 @@ def make_release_deb(path_changelog, path_output, depends=[]):
                                                VERSION=version,
                                                MAINTAINER=maintainer,
                                                DEPENDS=", ".join(depends))
-    print >> control, re.sub("Depends: \n", "", content),
+    print(re.sub("Depends: \n", "", content), end=' ', file=control)
     control.close()
 
     tmpdir_doc = join(tmpdir.path, "usr/share/doc/" + name)
     os.makedirs(tmpdir_doc)
 
     shutil.copy(path_changelog, tmpdir_doc)
-    system("dpkg-deb -b", tmpdir.path, path_output)
+    subprocess.run(["dpkg-deb", "-b", tmpdir.path, path_output])
 
 def main():
     try:
         opts, args = getopt.gnu_getopt(sys.argv[1:], 'h', ['dep='])
-    except getopt.GetoptError, e:
+    except getopt.GetoptError as e:
         usage(e)
 
     if len(args) != 2:

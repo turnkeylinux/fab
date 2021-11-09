@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # Copyright (c) TurnKey GNU/Linux - http://www.turnkeylinux.org
 #
 # This file is part of Fab
@@ -29,16 +29,16 @@ import getopt
 
 def usage(e=None):
     if e:
-        print >> sys.stderr, "error: " + str(e)
+        print("error: " + str(e), file=sys.stderr)
 
-    print >> sys.stderr, "Syntax: %s path/to/changelog architecture" % sys.argv[0]
+    print("Syntax: %s path/to/changelog architecture" % sys.argv[0], file=sys.stderr)
     sys.exit(1)
 
 class Error(Exception):
     pass
 
 def fatal(s):
-    print >> sys.stderr, "error: " + str(s)
+    print("error: " + str(s), file=sys.stderr)
     sys.exit(1)
 
 def parse_changelog(fpath):
@@ -65,7 +65,7 @@ def main():
     try:
         opts, args = getopt.gnu_getopt(sys.argv[1:], 'h',
                                        ['dist=', 'tag='])
-    except getopt.GetoptError, e:
+    except getopt.GetoptError as e:
         usage(e)
 
     if len(args) != 2:
@@ -86,8 +86,8 @@ def main():
             version_tag = val
 
     try:
-        print get_turnkey_version(changelog_path, architecture, dist_override, version_tag)
-    except Error, e:
+        print(get_turnkey_version(changelog_path, architecture, dist_override, version_tag))
+    except Error as e:
         fatal(e)
 
 if __name__=="__main__":

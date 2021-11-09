@@ -8,7 +8,4 @@ include /usr/share/dpkg/pkg-info.mk
 include /usr/share/dpkg/buildflags.mk
 
 %:
-	dh $@ --with python2 --buildsystem=makefile
-
-override_dh_auto_install:
-	dh_auto_install -- prefix=debian/$(DEB_SOURCE)/usr
+	dh $@ --with python3 --buildsystem=pybuild
