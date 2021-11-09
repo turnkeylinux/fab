@@ -45,7 +45,8 @@ def parse_changelog(fpath):
     if not os.path.exists(fpath):
         raise Error("changelog does not exist '%s'" % fpath)
 
-    firstline = file(fpath).readline()
+    with open(fpath) as fob:
+        firstline = fob.readline()
     m = re.match(r'(\S+) \((.*?)\) (\w+);', firstline)
     if not m:
         raise Error("couldn't parse changelog '%s'" % fpath)
