@@ -64,7 +64,11 @@ class ISO:
 
     @property
     def is_hybrid(self) -> bool:
-        output = subprocess.run(["fdisk", "-l", self.path], text=True).stdout
+        output = subprocess.run(
+            ["fdisk", "-l", self.path],
+            capture_output=True, text=True
+        ).stdout
+
         if "Hidden HPFS/NTFS" in output:
             return True
 
