@@ -19,6 +19,7 @@ from typing import (
 import debian
 from chroot import Chroot
 from subprocess import CalledProcessError
+from fablib import common
 
 
 class Error(Exception):
@@ -199,7 +200,7 @@ class Installer:
 
                     error_str = "Errors were encountered while processing:"
                     if error_str not in log:
-                        raise
+                        continue 
 
                     errors: Iterable[str] = get_errors(log, error_str)
 
@@ -213,7 +214,9 @@ class Installer:
                         )
 
                     if errors:
-                        raise
+                        for error in error:
+                            common.error(error)
+                        raise Error('package installation errors')
 
         fake_update_initramfs.revert()
         defer_log = join(self.chroot.path, defer_log)

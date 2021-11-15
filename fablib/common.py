@@ -21,6 +21,8 @@ def fatal(s: Any) -> NoReturn:
     print("error: " + str(s), file=sys.stderr)
     sys.exit(1)
 
+def error(s: Any) -> None:
+    print("error: " + str(s), file=sys.stderr)
 
 def warn(s: Any) -> None:
     print("warning: " + str(s), file=sys.stderr)
