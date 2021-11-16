@@ -8,7 +8,6 @@ Build-Depends:
  python3-debian,
  dh-python
 Standards-Version: 4.0.0
-X-Python-Version: >= 3.7
 
 Package: fab
 Architecture: any
@@ -17,11 +16,13 @@ Depends:
  ${misc:Depends},
  ${python3:Depends},
  ${shlibs:Depends},
+ turnkey-chroot,
  python3-debian
 Recommends:
  pool,
+ xorriso,
+ squashfs-tools
 Suggests:
- genisoimage,
- squashfs-tools,
+ dd,
  wodim,
-Description: product fabrication framework
+Description: TurnKey GNU/Linux product fabrication framework

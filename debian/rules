@@ -8,4 +8,4 @@ include /usr/share/dpkg/pkg-info.mk
 include /usr/share/dpkg/buildflags.mk
 
 %:
-	dh $@ --with python3 --buildsystem=pybuild
+	dh $@ --buildsystem=pybuild
