@@ -17,9 +17,9 @@ Depends:
  ${python3:Depends},
  ${shlibs:Depends},
  turnkey-chroot,
- python3-debian
+ python3-debian,
+ pool
 Recommends:
- pool,
  xorriso,
  squashfs-tools
 Suggests:
