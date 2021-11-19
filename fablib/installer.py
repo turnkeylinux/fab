@@ -11,19 +11,20 @@ import io
 import os
 from os.path import join, exists, basename
 import shutil
-import hashlib
 from typing import (
         Iterable, Optional, Dict, Tuple, List, TextIO, IO, AnyStr, cast
 )
 
+import hashlib
 import debian
+
 from chroot import Chroot
-from subprocess import CalledProcessError
 from fablib import common
 
 
 class Error(Exception):
     pass
+
 
 class RevertibleFile:
     """File that automatically reverts to previous state on destruction
@@ -89,9 +90,7 @@ class RevertibleInitctl(RevertibleScript):
     def _divert(self, action: str) -> None:
         """actions: add, remove"""
         cmd = f"dpkg-divert --local --rename --{action} /sbin/initctl >/dev/null"
-        self.chroot.system(
-            'sh', '-c', cmd
-        )
+        self.chroot.system(cmd)
 
     def __init__(self, chroot: Chroot):
         self.chroot = chroot
@@ -140,6 +139,7 @@ class Installer:
             self, packages: List[str],
             ignore_errors: Optional[List[str]]=None,
             extra_apt_args: Optional[List[str]]=None) -> None:
+
         if ignore_errors is None:
             ignore_errors = []
         if extra_apt_args is None:
@@ -173,7 +173,10 @@ class Installer:
             if packages:
                 args = ["install", "--assume-yes"]
                 args.extend(extra_apt_args)
-                if self.chroot.system("apt-get", *(args + packages)) != 0:
+                apt_return_code = self.chroot.system(
+                        f"apt-get {' '.join((args + packages))}")
+                if apt_return_code != 0:
+
                     def get_last_log(path: str) -> List[str]:
                         log = []
                         with open(path) as fob:
@@ -200,7 +203,18 @@ class Installer:
 
                     error_str = "Errors were encountered while processing:"
                     if error_str not in log:
-                        continue 
+                        # XXX Hack to workaround apt not writing log file when
+                        # experiencing 'E: Unable to locate package ...'
+                        # This may have unexpected side effects?!
+                        # TODO Implement proper fix to collect stdout (in
+                        # turnkey-chroot) and check that for 'E: ...' messages
+                        if apt_return_code == 100:
+                            # always seems to return 100 when hitting
+                            # 'E: Unable to locate package ...'
+                            raise Error(
+                                    'Errors encountered installing packages')
+                        else:
+                            continue
 
                     errors: Iterable[str] = get_errors(log, error_str)
 
@@ -228,13 +242,13 @@ class Installer:
                     kversion = f.replace("vmlinuz-", "")
                     break
 
-            if exists(join(boot_path, "initrd.img-%s" % kversion)):
-                if self.chroot.system("update-initramfs", "-u") != 0:
-                    self.chroot.system("live-update-initramfs", "-u")
+            if exists(join(boot_path, f"initrd.img-{kversion}")):
+                if self.chroot.system("update-initramfs -u") != 0:
+                    self.chroot.system("live-update-initramfs -u")
             else:
                 if self.chroot.system(
-                        "update-initramfs", "-c", "-k", kversion) != 0:
-                    self.chroot.system("live-update-initramfs", "-c", "-k", kversion)
+                        f"update-initramfs -c -k {kversion}") != 0:
+                    self.chroot.system(f"live-update-initramfs -c -k {kversion}")
 
             os.remove(defer_log)
 
@@ -312,7 +326,7 @@ class PoolInstaller(Installer):
         index = self._get_package_index(packagedir)
         with open(index_path, "w") as fob:
             fob.write("\n".join(index))
-        self.chroot.system("apt-cache", "gencaches")
+        self.chroot.system("apt-cache gencaches")
 
         print("installing packages...")
         self._install(packages, ignore_errors, ["--allow-unauthenticated"])
@@ -334,14 +348,17 @@ class LiveInstaller(Installer):
         if ignore_errors is None:
             ignore_errors = []
 
-        if self.apt_proxy:
-            print("setting apt proxy settings...")
-            conf_path = join(self.chroot.path, "etc/apt/apt.conf.d/01proxy")
-            with open(conf_path, "w") as fob:
-                fob.write('Acquire::http::Proxy "%s";\n' % self.apt_proxy)
+        # For v17.x I've moved the apt setting to common. I think that is the
+        # right place for it, but haven't 100% committed yet. For now I'm
+        # leaving this here commented...
+        #if self.apt_proxy:
+        #    print("setting apt proxy settings...")
+        #    conf_path = join(self.chroot.path, "etc/apt/apt.conf.d/01proxy")
+        #    with open(conf_path, "w") as fob:
+        #        fob.write('Acquire::http::Proxy "%s";\n' % self.apt_proxy)
 
         print("updating package lists...")
-        self.chroot.system("apt-get", "update")
+        self.chroot.system("apt-get update")
 
         print("installing packages...")
         self._install(packages, ignore_errors)
