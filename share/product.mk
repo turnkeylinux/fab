@@ -420,8 +420,14 @@ define apt-cleanup
 	fab-chroot $1 "rm -rf /var/lib/apt/lists/*";
 endef
 
+define custom-ca-cleanup
+	fab-chroot $1 "rm -rf /usr/local/share/ca-certificates/*"; \
+	fab-chroot $1 "update-ca-certificates";
+endef
+
 define root-cleanup
 	$(call apt-cleanup, $1) \
+	$(call custom-ca-cleanup, $1) \
 	fuser -k $1 || true;
 endef
 

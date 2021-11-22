@@ -149,10 +149,10 @@ def cmd_chroot(
             environ[name] = val
 
     # unless explicitly set, run as root & UID/EUID=0 in chroot
-    if 'USER' not in env_vars and UID not in env_vars:
+    if 'USER' not in env_vars and 'UID' not in env_vars:
         environ['USER'] = 'root'
-        environ['UID'] = 0
-        environ['EUID'] = 0
+        environ['UID'] = '0'
+        environ['EUID'] = '0'
     chroot = Chroot(chroot_path, environ=environ)
     if script_args:
         fake_initctl = RevertibleInitctl(chroot)
