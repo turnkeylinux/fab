@@ -456,13 +456,20 @@ define cdroot/body
 endef
 
 define run-genisoimage
-	genisoimage -o $O/product.iso -r -J -l \
+	xorriso -as mkisofs \
+		-o $O/product.iso -r -J \
 		-V ${ISOLABEL} \
 		-b isolinux/isolinux.bin \
 		-c isolinux/boot.cat \
+		-isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
 		-no-emul-boot \
 		-boot-load-size 4 \
-		-boot-info-table $O/cdroot/
+		-boot-info-table \
+		-eltorito-alt-boot \
+		-e efi.img \
+		-no-emul-boot \
+		-isohybrid-gpt-basdat \
+		$O/cdroot/
 endef
 
 define run-isohybrid
