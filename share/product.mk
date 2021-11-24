@@ -422,7 +422,7 @@ endef
 
 define custom-ca-cleanup
 	fab-chroot $1 "rm -rf /usr/local/share/ca-certificates/*"; \
-	fab-chroot $1 "update-ca-certificates";
+	fab-chroot $1 "update-ca-certificates --fresh --verbose";
 endef
 
 define root-cleanup
