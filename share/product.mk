@@ -33,14 +33,14 @@ endif
 
 ifdef FAB_POOL_PATH
 FAB_INSTALL_OPTS = '--no-deps'
-else
-ifndef FAB_APT_PROXY
-$(warning FAB_POOL_PATH and FAB_APT_PROXY are not defined)
-endif
 endif
 
 ifndef FAB_HTTP_PROXY
 $(warning FAB_HTTP_PROXY is not defined)
+endif
+
+ifndef FAB_HTTPS_PROXY
+$(warning FAB_HTTPS_PROXY is not defined)
 endif
 
 COMMON_PATCHES := turnkey.d $(COMMON_PATCHES)
