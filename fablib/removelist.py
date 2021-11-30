@@ -39,8 +39,8 @@ def _move(entry: str, source_root_path: str, dest_root_path: str) -> None:
 def apply_removelist(removelist_fob: IO[str], root_path: str) -> None:
     remove, restore = parse_removelist(removelist_fob)
     if restore:
-        warn("Deprecation Warning: restoring functiononality is deprecated,"
-             " non-functional and will produce a hard error in the future")
+        warn("DEPRECATED: fab-apply-removelist restore functionality is non-"
+             "functional and will produce a hard error in the future")
 
     for entry in remove:
         path = join(root_path, entry.strip('/'))

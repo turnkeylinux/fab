@@ -33,7 +33,7 @@ import getopt
 import re
 from string import Template
 
-from temp import TempDir
+from tempfile import TemporaryDirectory
 import subprocess
 
 CONTROL_TPL = """\
@@ -61,18 +61,20 @@ def usage(e=None):
     sys.exit(1)
 
 def parse_changelog(path):
-    firstline = file(path).readline()
+    with open(path) as fob:
+        firstline = fob.readline()
     m = re.match('^(\w[-+0-9a-z.]*) \((\S+)\)', firstline)
     if not m:
         raise Error("can't parse first line of changelog:\n" + firstline)
 
     name, version = m.groups()
 
-    for line in file(path).readlines():
-        if not line.startswith(" -- "):
-            continue
+    with open(path) as fob:
+        for line in fob:
+            if not line.startswith(" -- "):
+                continue
 
-        break
+            break
 
     m = re.match(r' -- (.* <.*?>)', line)
     if not m:
@@ -84,21 +86,20 @@ def parse_changelog(path):
 def make_release_deb(path_changelog, path_output, depends=[]):
     name, version, maintainer = parse_changelog(path_changelog)
 
-    tmpdir = TempDir()
-    os.mkdir(join(tmpdir.path, "DEBIAN"))
-    control = file(join(tmpdir.path, "DEBIAN/control"), "w")
-    content = Template(CONTROL_TPL).substitute(NAME=name,
-                                               VERSION=version,
-                                               MAINTAINER=maintainer,
-                                               DEPENDS=", ".join(depends))
-    print(re.sub("Depends: \n", "", content), end=' ', file=control)
-    control.close()
+    with TemporaryDirectory() as tmpdir:
+        os.mkdir(join(tmpdir, "DEBIAN"))
+        with open(join(tmpdir, "DEBIAN/control"), "w") as fob:
+            content = Template(CONTROL_TPL).substitute(NAME=name,
+                                                       VERSION=version,
+                                                       MAINTAINER=maintainer,
+                                                       DEPENDS=", ".join(depends))
+            print(re.sub("Depends: \n", "", content), end=' ', file=fob)
 
-    tmpdir_doc = join(tmpdir.path, "usr/share/doc/" + name)
-    os.makedirs(tmpdir_doc)
+        tmpdir_doc = join(tmpdir, "usr/share/doc/" + name)
+        os.makedirs(tmpdir_doc)
 
-    shutil.copy(path_changelog, tmpdir_doc)
-    subprocess.run(["dpkg-deb", "-b", tmpdir.path, path_output])
+        shutil.copy(path_changelog, tmpdir_doc)
+        subprocess.run(["dpkg-deb", "-b", tmpdir, path_output])
 
 def main():
     try:
