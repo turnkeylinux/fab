@@ -33,14 +33,14 @@ endif
 
 ifdef FAB_POOL_PATH
 FAB_INSTALL_OPTS = '--no-deps'
-else
-ifndef FAB_APT_PROXY
-$(warning FAB_POOL_PATH and FAB_APT_PROXY are not defined)
-endif
 endif
 
 ifndef FAB_HTTP_PROXY
 $(warning FAB_HTTP_PROXY is not defined)
+endif
+
+ifndef FAB_HTTPS_PROXY
+$(warning FAB_HTTPS_PROXY is not defined)
 endif
 
 COMMON_PATCHES := turnkey.d $(COMMON_PATCHES)
@@ -420,8 +420,14 @@ define apt-cleanup
 	fab-chroot $1 "rm -rf /var/lib/apt/lists/*";
 endef
 
+define custom-ca-cleanup
+	fab-chroot $1 "rm -rf /usr/local/share/ca-certificates/*"; \
+	fab-chroot $1 "update-ca-certificates --fresh";
+endef
+
 define root-cleanup
 	$(call apt-cleanup, $1) \
+	$(call custom-ca-cleanup, $1) \
 	fuser -k $1 || true;
 endef
 
@@ -450,13 +456,20 @@ define cdroot/body
 endef
 
 define run-genisoimage
-	genisoimage -o $O/product.iso -r -J -l \
+	xorriso -as mkisofs \
+		-o $O/product.iso -r -J \
 		-V ${ISOLABEL} \
 		-b isolinux/isolinux.bin \
 		-c isolinux/boot.cat \
+		-isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
 		-no-emul-boot \
 		-boot-load-size 4 \
-		-boot-info-table $O/cdroot/
+		-boot-info-table \
+		-eltorito-alt-boot \
+		-e efi.img \
+		-no-emul-boot \
+		-isohybrid-gpt-basdat \
+		$O/cdroot/
 endef
 
 define run-isohybrid

@@ -1,26 +1,28 @@
 Source: fab
 Section: misc
 Priority: optional
-Maintainer: Liraz Siri <liraz@turnkeylinux.org>
+Maintainer: Stefan Davis <stefan@turnkeylinux.org>
 Build-Depends:
  debhelper (>= 10),
- pyproject-common,
- python-all (>= 2.6.6-3~),
+ python3-all (>= 3.7~),
+ python3-debian,
+ dh-python
 Standards-Version: 4.0.0
-X-Python-Version: >= 2.6
 
 Package: fab
 Architecture: any
 Depends:
  cpp,
  ${misc:Depends},
- ${python:Depends},
+ ${python3:Depends},
  ${shlibs:Depends},
- pyproject-common,
+ turnkey-chroot,
+ python3-debian,
+ pool
 Recommends:
- pool,
+ xorriso,
+ squashfs-tools
 Suggests:
- genisoimage,
- squashfs-tools,
+ dd,
  wodim,
-Description: product fabrication framework
+Description: TurnKey GNU/Linux product fabrication framework
