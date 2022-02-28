@@ -456,6 +456,18 @@ define cdroot/body
 endef
 
 define run-genisoimage
+    xorriso -as mkisofs \
+        -o $O/product.iso -r -J \
+        -V ${ISOLABEL} \
+        -b isolinux/isolinux.bin \
+        -c isolinux/boot.cat \
+        -no-emul-boot \
+        -boot-load-size 4 \
+        -boot-info-table \
+        $O/cdroot/
+endef
+
+define run-genisoimage-uefi
 	xorriso -as mkisofs \
 		-o $O/product.iso -r -J \
 		-V ${ISOLABEL} \
