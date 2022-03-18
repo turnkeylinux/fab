@@ -38,8 +38,21 @@ class SupportsStr(Protocol):
         ...
 
 
+def get_version() -> NoReturn:
+    ver = subprocess.run(['apt-cache', 'policy', 'fab'],
+                         capture_output=True,
+                         text=True).stdout.split()
+    if ver and len(ver) > 2:
+        print(ver[2])
+    else:
+        print("Could not detect version via apt.",
+              file=sys.stderr)
+        print('unknown')
+    sys.exit(0)
+
+
 def fatal(msg: SupportsStr) -> NoReturn:
-    print("fatal:", msg)
+    print("fatal:", msg, file=sys.stderr)
     sys.exit(1)
 
 
@@ -315,7 +328,9 @@ Configuration environment variables:
     FAB_POOL_PATH           Path to the package pool
     FAB_PLAN_INCLUDE_PATH   Global include path for plan preprocessing""",
     )
-
+    parser.add_argument(
+        "-v", "--version", action='store_true',
+        help="Echo version (from apt) and exit")
     subparsers = parser.add_subparsers(dest="command")
 
     query_parser = subparsers.add_parser(
@@ -546,6 +561,8 @@ Environment:
             help='Root path relative to which we remove entries')
 
     unparsed = sys.argv[1:]
+    if '-v' in unparsed or '--version' in unparsed:
+        get_version()
     filename = basename(__file__)
     if filename.startswith('fab-') and filename[4:] in (
             'query', 'cpp', 'chroot', 'install', 
