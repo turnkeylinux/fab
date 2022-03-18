@@ -583,8 +583,6 @@ Environment:
             help='Root path relative to which we remove entries')
 
     unparsed = sys.argv[1:]
-    if '-v' in unparsed or '--version' in unparsed:
-        get_version()
     filename = basename(__file__)
     if filename.startswith('fab-') and filename[4:] in (
             'query', 'cpp', 'chroot', 'install',
@@ -594,6 +592,12 @@ Environment:
             ):
         unparsed.insert(0, filename[4:])
 
+    if '-v' in unparsed or '--version' in unparsed:
+        get_version()
+    elif not unparsed:
+        parser.print_help()
+        parser.exit(status=1,
+                    message='\nNo command, options or arguments passed\n')
     args = parser.parse_args(unparsed)
 
     if args.command == "query":
