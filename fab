@@ -18,7 +18,7 @@ from typing import (
 
 try:
     from typing import Protocol  # type: ignore
-except ModuleNotFoundError:
+except ImportError:
     from typing_extensions import Protocol  # type: ignore
 import shutil
 import sys
@@ -364,7 +364,7 @@ Configuration environment variables:
         description="Preprocess a plan",
         formatter_class=RawDescriptionHelpFormatter,
         epilog=("Note: cpp options are not taken exactly as `cpp` would.\n"
-                "      For example: `-I<path>` is invalid, youu must instead"
+                "      For example: `-I<path>` is invalid, you must instead"
                 " do `-I=<path>` or `-I <path>`\n\n"
                 "See cpp(1) man page for further details"),
     )
