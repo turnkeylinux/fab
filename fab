@@ -17,9 +17,9 @@ from typing import (
 )
 
 try:
-    from typing import Protocol # type: ignore
-except:
-    from typing_extensions import Protocol # type: ignore
+    from typing import Protocol  # type: ignore
+except ImportError:
+    from typing_extensions import Protocol  # type: ignore
 import shutil
 import sys
 import os
@@ -27,7 +27,8 @@ from os.path import isdir, join, basename, relpath
 
 from debian import debfile
 
-from fablib.installer import RevertibleInitctl, PoolInstaller, LiveInstaller, Installer
+from fablib.installer import (RevertibleInitctl, PoolInstaller,
+                              LiveInstaller, Installer)
 from chroot import Chroot
 from fablib.plan import Plan, Dependency
 from fablib import cpp, annotate, resolve, removelist
@@ -38,8 +39,21 @@ class SupportsStr(Protocol):
         ...
 
 
+def get_version() -> NoReturn:
+    ver = subprocess.run(['apt-cache', 'policy', 'fab'],
+                         capture_output=True,
+                         text=True).stdout.split()
+    if ver and len(ver) > 2:
+        print(ver[2])
+    else:
+        print("Could not detect version via apt.",
+              file=sys.stderr)
+        print('unknown')
+    sys.exit(0)
+
+
 def fatal(msg: SupportsStr) -> NoReturn:
-    print("fatal:", msg)
+    print("fatal:", msg, file=sys.stderr)
     sys.exit(1)
 
 
@@ -62,7 +76,8 @@ class AssociatedAppendAction(argparse.Action):
         values: Optional[Union[str, Sequence[Any]]],
         option_string: Optional[str] = None,
     ) -> None:
-        if hasattr(namespace, self.dest) and getattr(namespace, self.dest) is not None:
+        if (hasattr(namespace, self.dest) and
+                getattr(namespace, self.dest) is not None):
             getattr(namespace, self.dest).append((option_string, values))
         else:
             setattr(namespace, self.dest, [(option_string, values)])
@@ -192,7 +207,9 @@ def cmd_install(
         fatal("-n/--no-deps cannot be specified if pool is not defined")
 
     if arch is None:
-        arch = subprocess.run(["dpkg", "--print-architecture"], text=True).stdout
+        arch = subprocess.run(["dpkg", "--print-architecture"],
+                              capture_output=True,
+                              text=True).stdout.strip()
 
     environ: Dict[str, str]
     if env_vars_raw is None:
@@ -250,18 +267,21 @@ def cmd_plan_resolve(
     plans: List[str],
 ) -> None:
 
-    resolve.resolve_plan(output_path, bootstrap_path, pool_path, cpp_opts, plans)
+    resolve.resolve_plan(output_path, bootstrap_path,
+                         pool_path, cpp_opts, plans)
+
 
 def cmd_apply_overlay(
         overlay: str,
         dstpath: str,
         preserve: bool = False) -> None:
-    
+
     cmd = ['cp', '-TdR']
     if preserve:
         cmd.append('-p')
 
     subprocess.run(cmd + [overlay, dstpath])
+
 
 def cmd_apply_patch(
         patch: str, dstpath: str) -> None:
@@ -275,14 +295,16 @@ def cmd_apply_patch(
     try:
         cat_proc = subprocess.Popen([cmd, patch], stdout=subprocess.PIPE)
         patch_proc = subprocess.Popen(['patch', '-Nbtur', '-', '-p1', '-d',
-            dstpath])
+                                      dstpath])
         cat_proc.stdout.close()
         patch_proc.wait()
     except subprocess.CalledProcessError:
         print(f'Warning: patch {patch} failed to apply', file=sys.stderr)
 
+
 def add_cpp_opts(parser: ArgumentParser) -> None:
-    cpp_group = parser.add_argument_group("fab-cpp options", "For plan pre-processing")
+    cpp_group = parser.add_argument_group("fab-cpp options",
+                                          "For plan pre-processing")
     cpp_group.add_argument(
         "-D",
         metavar="name[=def]",
@@ -315,7 +337,9 @@ Configuration environment variables:
     FAB_POOL_PATH           Path to the package pool
     FAB_PLAN_INCLUDE_PATH   Global include path for plan preprocessing""",
     )
-
+    parser.add_argument(
+        "-v", "--version", action='store_true',
+        help="Echo version (from apt) and exit")
     subparsers = parser.add_subparsers(dest="command")
 
     query_parser = subparsers.add_parser(
@@ -339,11 +363,10 @@ Configuration environment variables:
         "cpp",
         description="Preprocess a plan",
         formatter_class=RawDescriptionHelpFormatter,
-        epilog="""note:
-    cpp options are not taken exactly as `cpp` would. For `-I<path>` is invalid,
-    you must do `-I=<path>` or `-I <path>`
-        
-See cpp(1) man page for further details""",
+        epilog=("Note: cpp options are not taken exactly as `cpp` would.\n"
+                "      For example: `-I<path>` is invalid, you must instead"
+                " do `-I=<path>` or `-I <path>`\n\n"
+                "See cpp(1) man page for further details"),
     )
     cpp_parser.add_argument("plan", help="path to plan")
     cpp_parser.add_argument(
@@ -412,7 +435,8 @@ Environment:
                                 default: /usr/share/fab
 """,
     )
-    install_parser.add_argument("chroot", metavar="PATH", help="path to chroot")
+    install_parser.add_argument("chroot", metavar="PATH",
+                                help="path to chroot")
     install_parser.add_argument(
         "packages",
         nargs="*",
@@ -474,7 +498,8 @@ Environment:
 (comments, cpp macros and already annotated packages are ignored)""",
     )
     plan_annotate.add_argument(
-        "-i", "--inplace", action="store_true", help="Edit plan inplace", default=False
+        "-i", "--inplace", action="store_true",
+        help="Edit plan inplace", default=False
     )
     plan_annotate.add_argument(
         "-p",
@@ -488,18 +513,22 @@ Environment:
     plan_resolve = subparsers.add_parser(
         "plan-resolve",
         formatter_class=RawDescriptionHelpFormatter,
-        description=
-"Resolve plan into spec (using latest packages from pool if defined)\n\n"
-"(comments, cpp macros and already annotated packages are ignored)",
+        description="Resolve plan into spec (using latest packages from pool"
+                    " if defined)\n\n"
+                    "(comments, cpp macros and already annotated packages are"
+                    " ignored)",
     )
-    plan_resolve.add_argument("plan", metavar="( - | path/to/plan | package )", nargs="*")
+    plan_resolve.add_argument("plan",
+                              metavar="( - | path/to/plan | package )",
+                              nargs="*")
 
     plan_resolve.add_argument(
-        "-o", "--output", default="-", help="Path to spec-output (default is stdout)"
+        "-o", "--output",
+        default="-",
+        help="Path to spec-output (default is stdout)"
     )
     plan_resolve.add_argument(
-        "-p",
-        "--pool",
+        "-p", "--pool",
         metavar="PATH",
         default=os.getenv("FAB_POOL_PATH"),
         help="Set pool path (default: $FAB_POOL_PATH)",
@@ -508,53 +537,67 @@ Environment:
         "--bootstrap",
         metavar="PATH",
         help="Extract list of installed packages from the bootstrap"
-        " and append to the plan",
+             " and append to the plan",
     )
     add_cpp_opts(plan_resolve)
 
     apply_overlay = subparsers.add_parser(
             'apply-overlay',
-            description = 'Apply overlay on top of given path')
-    apply_overlay.add_argument('overlay',
+            description='Apply overlay on top of given path')
+    apply_overlay.add_argument(
+            'overlay',
             help='Path to overlay')
-    apply_overlay.add_argument('path',
-            help='Path to apply overlay ontop of (ie. chroot)')
-    apply_overlay.add_argument('--preserve',
+    apply_overlay.add_argument(
+            'path',
+            help='Path to apply overlay ontop of (i.e. chroot)')
+    apply_overlay.add_argument(
+            '--preserve',
             help='Preserve mode, ownership and timestamps')
 
-    apply_patch = subparsers.add_parser('apply-patch',
+    apply_patch = subparsers.add_parser(
+            'apply-patch',
             description=(
                 'Patches should be in unified context produced by diff -u.'
                 ' Filenames must be in absolute path format from the root.'
                 ' Patches may be uncompressed, compressed with gzip (.gz),'
-                ' or bzip2 (.bz2)'
-    ))
-    apply_patch.add_argument('patch',
+                ' or bzip2 (.bz2)')
+    )
+    apply_patch.add_argument(
+            'patch',
             help='Path to patch file')
-    apply_patch.add_argument('dstpath',
-            help='Destination path for applying patch (ie. build/root.patched)')
+    apply_patch.add_argument(
+            'dstpath',
+            help='Destination path for applying patch'
+                 ' (i.e. build/root.patched)')
 
     apply_removelist = subparsers.add_parser(
             'apply-removelist',
             description='Remove files and folders according to removelist')
-    apply_removelist.add_argument('removelist',
-            help=(
-            'Path to read removelist from (- for stdin)'
-            ' Entries may be negated by prefixing a `!`'
-    ))
-    apply_removelist.add_argument('root',
+    apply_removelist.add_argument(
+            'removelist',
+            help=('Path to read removelist from (- for stdin)'
+                  ' Entries may be negated by prefixing a `!`')
+    )
+    apply_removelist.add_argument(
+            'root',
             help='Root path relative to which we remove entries')
 
     unparsed = sys.argv[1:]
     filename = basename(__file__)
     if filename.startswith('fab-') and filename[4:] in (
-            'query', 'cpp', 'chroot', 'install', 
+            'query', 'cpp', 'chroot', 'install',
             'plan-annotate', 'plan-resolve',
             'apply-overlay', 'apply-patch',
             'apply-removelist'
             ):
         unparsed.insert(0, filename[4:])
 
+    if '-v' in unparsed or '--version' in unparsed:
+        get_version()
+    elif not unparsed:
+        parser.print_help()
+        parser.exit(status=1,
+                    message='\nNo command, options or arguments passed\n')
     args = parser.parse_args(unparsed)
 
     if args.command == "query":
@@ -579,7 +622,7 @@ Environment:
         cmd_plan_annotate(args.pool, args.inplace, args.plan)
     elif args.command == "plan-resolve":
         cmd_plan_resolve(args.output, args.bootstrap, args.pool,
-                args.cpp_opts, args.plan)
+                         args.cpp_opts, args.plan)
     elif args.command == "apply-overlay":
         cmd_apply_overlay(args.overlay, args.path, args.preserve)
     elif args.command == "apply-patch":
