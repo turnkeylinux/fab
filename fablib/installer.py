@@ -139,7 +139,7 @@ class Installer:
             "#!/bin/sh",
             "echo",
             'echo "Warning: Deferring update-initramfs $@"',
-            'echo "update-initramfs $@" >> /%s' % defer_log,
+            f'echo "update-initramfs $@" >> /{defer_log}'
         ]
 
         for packages in (high, regular):
@@ -195,10 +195,8 @@ class Installer:
                     errors = set(errors) - set(ignore_errors)
 
                     if ignored_errors:
-                        print(
-                            "Warning: ignoring package installation errors (%s)"
-                            % " ".join(ignored_errors)
-                        )
+                        print(f"Warning: ignoring package installation errors"
+                              f" ({' '.join(ignored_errors)})")
 
                     if errors:
                         for error in errors:
@@ -297,7 +295,7 @@ class PoolInstaller(Installer):
         print("deb file:/// local debs", file=cast(TextIO, sources_list))
         sources_list.close()
 
-        index_file = "_dists_local_debs_binary-%s_Packages" % self.arch
+        index_file = f"_dists_local_debs_binary-{self.arch}_Packages"
         index_path = join(self.chroot.path, "var/lib/apt/lists", index_file)
         index = self._get_package_index(packagedir)
         with open(index_path, "w") as fob:
