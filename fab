@@ -27,7 +27,7 @@ from os.path import isdir, join, basename, relpath
 
 from debian import debfile
 
-from fablib.installer import (RevertibleInitctl, PoolInstaller,
+from fablib.installer import (PoolInstaller,
                               LiveInstaller, Installer)
 from chroot import Chroot
 from fablib.plan import Plan, Dependency
@@ -169,8 +169,6 @@ def cmd_chroot(
         environ['UID'] = '0'
         environ['EUID'] = '0'
     chroot = Chroot(chroot_path, environ=environ)
-    if script_args:
-        fake_initctl = RevertibleInitctl(chroot)
 
     if not script_args and not script_path_raw:
         chroot.system()
