@@ -81,30 +81,6 @@ class RevertibleScript(RevertibleFile):
         os.chmod(self.path, 0o755)
 
 
-class RevertibleInitctl(RevertibleScript):
-    @property
-    def dummy_path(self) -> str:
-        fab_share = os.environ.get("FAB_SHARE_PATH", "/usr/share/fab")
-        return join(fab_share, "initctl.dummy")
-
-    def _divert(self, action: str) -> None:
-        """actions: add, remove"""
-        cmd = f"dpkg-divert --local --rename --{action} /sbin/initctl >/dev/null"
-        self.chroot.system(cmd)
-
-    def __init__(self, chroot: Chroot):
-        self.chroot = chroot
-        self._divert("add")
-        path = join(self.chroot.path, "sbin/initctl")
-        with open(self.dummy_path, "r") as fob:
-            content = fob.read()
-        super().__init__(path, content.splitlines())
-
-    def revert(self) -> None:
-        super().revert()
-        self._divert("remove")
-
-
 class Installer:
     def __init__(
             self, chroot_path: str,
@@ -163,11 +139,6 @@ class Installer:
             'echo "Warning: Deferring update-initramfs $@"',
             'echo "update-initramfs $@" >> /%s' % defer_log,
         ]
-        fake_update_initramfs = RevertibleScript(
-            join(self.chroot.path, "usr/sbin/update-initramfs"), lines
-        )
-
-        fake_initctl = RevertibleInitctl(self.chroot)
 
         for packages in (high, regular):
             if packages:
@@ -232,7 +203,6 @@ class Installer:
                             common.error(error)
                         raise Error('package installation errors')
 
-        fake_update_initramfs.revert()
         defer_log = join(self.chroot.path, defer_log)
         if exists(defer_log):
             kversion = "all"
