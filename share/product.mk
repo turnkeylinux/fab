@@ -456,42 +456,25 @@ define cdroot/body
 endef
 
 define run-genisoimage
-    xorriso -as mkisofs \
-        -o $O/product.iso -r -J \
-        -V ${ISOLABEL} \
-        -b isolinux/isolinux.bin \
-        -c isolinux/boot.cat \
-        -no-emul-boot \
-        -boot-load-size 4 \
-        -boot-info-table \
-        $O/cdroot/
-endef
-
-define run-genisoimage-uefi
 	xorriso -as mkisofs \
-		-o $O/product.iso -r -J \
+		-r $O/cdroot \
+		-o $O/product.iso \
 		-V ${ISOLABEL} \
-		-b isolinux/isolinux.bin \
-		-c isolinux/boot.cat \
-		-isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
-		-no-emul-boot \
-		-boot-load-size 4 \
+		-b boot/grub/i386-pc/eltorito.img \
+		-no-emul-boot -boot-load-size 4 \
 		-boot-info-table \
-		-eltorito-alt-boot \
-		-e efi.img \
-		-no-emul-boot \
-		-isohybrid-gpt-basdat \
-		$O/cdroot/
-endef
-
-define run-isohybrid
-	isohybrid $O/product.iso
+		--grub2-boot-info \
+		--grub2-mbr /usr/lib/grub/i386-pc/boot_hybrid.img \
+		--efi-boot efi.img \
+		-efi-boot-part --efi-boot-image \
+		--protective-msdos-label \
+		--sort-weight 0 / \
+		--sort-weight 1 /boot
 endef
 
 # target: product.iso
 define product.iso/body
 	$(run-genisoimage)
-	$(run-isohybrid)
 endef
 
 cdroot-dynamic: $(STAMPS_DIR)/root.sandbox
@@ -500,12 +483,6 @@ cdroot-dynamic: $(STAMPS_DIR)/root.sandbox
 	$(cdroot-dynamic/post)
 
 define cdroot-dynamic/body
-	cp $O/root.sandbox/usr/lib/ISOLINUX/isolinux.bin $O/cdroot/isolinux
-	cp $O/root.sandbox/usr/lib/syslinux/modules/bios/chain.c32 $O/cdroot/isolinux
-	cp $O/root.sandbox/usr/lib/syslinux/modules/bios/ldlinux.c32 $O/cdroot/isolinux
-	cp $O/root.sandbox/usr/lib/syslinux/modules/bios/libcom32.c32 $O/cdroot/isolinux
-	cp $O/root.sandbox/usr/lib/syslinux/modules/bios/vesamenu.c32 $O/cdroot/isolinux
-	cp $O/root.sandbox/usr/lib/syslinux/modules/bios/gfxboot.c32 $O/cdroot/isolinux
 	cp $O/root.sandbox/boot/$(shell basename $(shell readlink $O/root.sandbox/vmlinuz)) $O/cdroot/live/vmlinuz
 	cp $O/root.sandbox/boot/$(shell basename $(shell readlink $O/root.sandbox/initrd.img)) $O/cdroot/live/initrd.gz
 
