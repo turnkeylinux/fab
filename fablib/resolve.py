@@ -2,7 +2,10 @@ from typing import Optional, List, Tuple, Generator, Iterable
 from os.path import join
 import os
 from debian.deb822 import Deb822
+import logging
 from .plan import Plan, Spec, PackageOrigins
+
+logger = logging.getLogger("fab.resolve")
 
 def iter_packages(root: str) -> Generator[str, None, None]:
     control = ''
@@ -16,17 +19,21 @@ def iter_packages(root: str) -> Generator[str, None, None]:
             else:
                 control += line
 
-def annotate_spec(spec: Iterable[str], packageorigins: PackageOrigins) -> str:
-    if not spec:
+def annotate_spec(repo_spec: Iterable[str], pool_spec: Iterable[str], packageorigins: PackageOrigins) -> str:
+    if not repo_spec and not pool_spec:
         return ""
 
     annotated_spec = []
 
-    column_len = max(len(s) + 1 for s in spec)
-    for s in spec:
+    column_len = max(len(s) + 1 for s in [*repo_spec, *pool_spec])
+    for s in repo_spec:
         name = s.split('=')[0]
         origins = " ".join(origin for origin in packageorigins[name])
         annotated_spec.append("%s # %s" % (s.ljust(column_len), origins))
+    for s in pool_spec:
+        name = s.split('=')[0]
+        origins = " ".join(origin for origin in packageorigins[name])
+        annotated_spec.append("%s # %s [FORCE_POOL]" % (s.ljust(column_len), origins))
 
     return '\n'.join(annotated_spec)
 
@@ -57,8 +64,11 @@ def resolve_plan(
             plan.add(plan_path)
             plan.packageorigins.add(plan_path, "_")
 
-    spec = plan.resolve()
-    spec = annotate_spec(spec, plan.packageorigins)
+    spec, unresolved = plan.resolve()
+    logger.debug("unresolved" + '\n'.join(unresolved))
+    spec = annotate_spec(unresolved, spec, plan.packageorigins)
+    logger.debug(spec)
+    logger.debug(f"{output_path=}")
 
     if output_path == '-':
         print(spec)
