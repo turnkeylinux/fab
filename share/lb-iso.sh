@@ -57,9 +57,13 @@ chmod +x auto/*
 lb config
 lb build
 
-rm -f binary/live/filesystem.squashfs turnkey-amd64.hybrid.iso .build/binary_iso
-cp build/cdroot/live/10root.squashfs binary/live/filesystem.squashfs
+rm -rf \
+    turnkey-amd64.hybrid.iso \
+    .build/binary_iso \
+    binary/live/filesystem.squashfs \
+    binary/pool binary/pool-udeb binary/*sum*
 
+cp build/cdroot/live/10root.squashfs binary/live/filesystem.squashfs
 sed -i 's/initrd.gz/initrd.img/g' build/cdroot/isolinux/menu.cfg
 cp build/cdroot/isolinux/* binary/isolinux/
 
