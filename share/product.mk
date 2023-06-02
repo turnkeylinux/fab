@@ -255,7 +255,8 @@ define clean/body
 	$(call remove-deck, $O/root.patched)
 	$(call remove-deck, $O/root.build)
 	$(call remove-deck, $O/bootstrap)
-	-rm -rf $O/root.spec $O/cdroot $O/product.iso $O/log $(STAMPS_DIR)
+	-rm -rf auto $O/root.spec $O/cdroot $O/product.iso $O/log $(STAMPS_DIR)
+	lb clean
 endef
 
 clean:
@@ -490,8 +491,7 @@ endef
 
 # target: product.iso
 define product.iso/body
-	$(run-genisoimage)
-	$(run-isohybrid)
+	${FAB_SHARE_PATH}/lb-iso.sh
 endef
 
 cdroot-dynamic: $(STAMPS_DIR)/root.sandbox
