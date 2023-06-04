@@ -32,7 +32,20 @@ from fablib.installer import (PoolInstaller,
 from chroot import Chroot
 from fablib.plan import Plan, Dependency
 from fablib import cpp, annotate, resolve, removelist
+import logging 
 
+log_level={
+    'DEBUG': logging.DEBUG,
+    'WARN': logging.WARNING,
+    'WARNING': logging.WARNING,
+    'INFO': logging.INFO,
+    'ERROR': logging.ERROR,
+    'ERR': logging.ERROR,
+    'CRITICAL': logging.CRITICAL,
+    'FATAL': logging.CRITICAL,
+}[os.getenv('FAB_LOG_LEVEL', 'warn').upper()]
+logger = logging.getLogger().getChild("fab")
+logger.setLevel(log_level)
 
 class SupportsStr(Protocol):
     def __str__(self) -> str:
@@ -198,6 +211,18 @@ def cmd_install(
         env_vars_raw: Optional[str],
         cpp_opts: List[Tuple[str, str]],
 ) -> None:
+    logger.debug(
+        "fab-install("
+        f"{chroot_path=}, "
+        f"{packages=}, "
+        f"{pool_path=}, "
+        f"{arch=}, "
+        f"{no_deps=}, "
+        f"{apt_proxy=}, "
+        f"{ignore_errors_raw=}, "
+        f"{env_vars_raw=}, "
+        f"{cpp_opts=})"
+    )
     if not isdir(chroot_path):
         fatal(f"no such chroot ({chroot_path})")
 
@@ -225,6 +250,10 @@ def cmd_install(
     else:
         ignore_errors = ignore_errors_raw.split(":")
 
+    logger.debug(f"  with environ={environ}")
+    logger.debug(f"  with ignore_errors={ignore_errors}")
+    logger.debug(f"  with pool_path={pool_path}")
+
     plan = Plan(pool_path=pool_path)
     for package in packages:
         if package == "-" or os.path.exists(package):
@@ -232,19 +261,41 @@ def cmd_install(
         else:
             plan.add(package)
 
+    logger.debug(f"plan={plan}")
+
     installer: Installer
     if pool_path is not None:
         if no_deps:
-            packages = list(plan)
+            pool_packages = list(plan)
+            other_packages = []
         else:
-            packages = list(plan.resolve())
+            pool_packages, other_packages = plan.resolve()
+            pool_packages = list(pool_packages)
+        logger.debug("using PoolInstaller for ")
+        logger.debug('\n'.join(map(repr, pool_packages)))
+        # find all packages which are present in pool
 
-        installer = PoolInstaller(chroot_path, pool_path, arch, environ)
-    else:
-        packages = list(plan)
+        pool_installer = PoolInstaller(chroot_path, pool_path, arch, environ)
         installer = LiveInstaller(chroot_path, apt_proxy, environ)
 
+        print("note these packages will be installed via pool:")
+        for pkg in pool_packages:
+            print(f" - {pkg}")
+        print("these packages will be installed via apt:")
+        for pkg in other_packages:
+            print(f" - {pkg}")
+        pool_installer.install(pool_packages, ignore_errors)
+        installer.install(other_packages, ignore_errors)
+        return
+    else:
+        packages = list(plan)
+        logger.debug("using LiveInstaller for ")
+        logger.debug('\n'.join(packages))
+        installer = LiveInstaller(chroot_path, apt_proxy, environ)
+
+    logger.debug("pre package install")
     installer.install(packages, ignore_errors)
+    logger.debug("post package install")
 
 
 def cmd_plan_annotate(pool_path: str, inplace: bool, plan_path: str) -> None:
@@ -597,6 +648,7 @@ Environment:
         parser.exit(status=1,
                     message='\nNo command, options or arguments passed\n')
     args = parser.parse_args(unparsed)
+    logger.debug(f"fab command: {' '.join(map(repr, unparsed))}")
 
     if args.command == "query":
         cmd_query(args.pool, args.packages)

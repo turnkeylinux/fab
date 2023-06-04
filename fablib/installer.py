@@ -14,6 +14,8 @@ import shutil
 from typing import (
         Iterable, Optional, Dict, Tuple, List, TextIO, IO, AnyStr, cast
 )
+import logging
+logger = logging.getLogger('fab.installer')
 
 import hashlib
 import debian
@@ -142,7 +144,7 @@ class Installer:
 
         for packages in (high, regular):
             if packages:
-                args = ["install", "--assume-yes"]
+                args = ["-o", "Debug::pkgProblemResolver=true", "install", "--assume-yes"]
                 args.extend(extra_apt_args)
                 apt_return_code = self.chroot.system(
                         f"apt-get {' '.join((args + packages))}")
@@ -236,7 +238,9 @@ class PoolInstaller(Installer):
 
         from pool_lib import Pool
 
+        logger.debug("initializing pool")
         self.pool = Pool(pool_path)
+        logger.debug("pool initialized")
         self.arch = arch
 
     @staticmethod
@@ -281,6 +285,8 @@ class PoolInstaller(Installer):
 
         print("getting packages...")
         packagedir = join(self.chroot.path, "var/cache/apt/archives")
+        logger.debug(f"{packagedir=}")
+        logger.debug(f"{packages=}")
         self.pool.get(packagedir, packages, strict=True)
 
         print("generating package index...")

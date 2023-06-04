@@ -20,6 +20,8 @@ from debian import debfile, debian_support
 from pool_lib import Pool
 
 from tempfile import TemporaryDirectory
+from logging import getLogger
+logger = getLogger("fab.plan")
 
 
 class Error(Exception):
@@ -170,6 +172,7 @@ class Dependency:
 
 class PackageGetter:
     def __init__(self, dep_list: Iterable[Dependency], pool: Pool):
+        logger.debug(f"initializing PackageGetter({list(map(str, dep_list))}, {pool})")
         self._deps: Dict[Dependency, Optional[str]] = {}
         def format_dep(dep: Dependency) -> str:
             if not dep.restrict or dep.restrict.relation != "=":
@@ -325,12 +328,15 @@ class Plan:
 
         return dctrls
 
-    def resolve(self) -> Iterable[str]:
+    def resolve(self) -> tuple[Iterable[str], Iterable[str]]:
         """resolve plan dependencies recursively -> return spec"""
+        logger.debug("resolve")
+
         spec = Spec()
+        logger.debug("(unresolved=)" + repr(list(self)))
 
         if not self.pool:
-            return list(self)
+            return list(self), []
 
         resolved: Set[Dependency] = set()
         missing: Set[Dependency] = set()
@@ -350,6 +356,7 @@ class Plan:
             packages = PackageGetter(unresolved, self.pool)
             new_deps: Set[Dependency] = set()
             for dep in unresolved:
+                logger.debug(f'resolving dependency: {dep}')
                 package_path = packages[dep]
                 if not package_path:
                     continue
@@ -385,11 +392,12 @@ class Plan:
                     except KeyError:
                         depname = None
 
-
             brokendeps = []
             for dep in missing:
-                brokendeps.append("%s (%s)" % (dep, " -> ".join(get_origins(dep))))
+                brokendeps.append(dep.name)
 
-            raise Error("broken dependencies: " + "\n".join(brokendeps))
+            logger.debug(f'could not find these packages in pool: {brokendeps!r}')
 
-        return spec
+            return spec, brokendeps
+
+        return spec, []
