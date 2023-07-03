@@ -1,7 +1,13 @@
 #!/bin/sh
 set -ex
 
-# needs a root.patched to exist
+# check live tools exist
+if ! command -v lb; then
+    echo "lb doesn't seem to exist -- install live-tools!"
+    exit 1
+fi
+
+# needs a root.patched to exist which is provided by fab
 
 mkdir -p auto
 
@@ -9,6 +15,7 @@ cat >auto/config<<'EOF'
 #!/bin/sh
 set -e
 lb config noauto \
+    --distribution bookworm \
     --apt-indices false \
     --apt-recommends false \
     --binary-image iso-hybrid \
@@ -54,19 +61,17 @@ EOF
 
 chmod +x auto/*
 
+mkdir -p config/hooks/live
+cat >config/hooks/live/turnkey.hook.binary<<'EOF'
+rm -rf pool pool-udeb *sum* boot/grub/install.cfg boot/grub/install_start.cfg boot/grub/grub.cfg
+rsync -avz --delete ../build/cdroot/live/ ./live/
+rsync -avz --delete ../build/cdroot/isolinux/ ./isolinux/
+rsync -avz ../build/cdroot/boot/grub/ ./boot/grub/
+EOF
+
+chmod +x config/hooks/live/turnkey.hook.binary
+
 lb config
 lb build
-
-rm -rf \
-    turnkey-amd64.hybrid.iso \
-    .build/binary_iso \
-    binary/live/filesystem.squashfs \
-    binary/pool binary/pool-udeb binary/*sum*
-
-cp build/cdroot/live/10root.squashfs binary/live/filesystem.squashfs
-sed -i 's/initrd.gz/initrd.img/g' build/cdroot/isolinux/menu.cfg
-cp build/cdroot/isolinux/* binary/isolinux/
-
-lb binary
 
 mv turnkey-amd64.hybrid.iso build/product.iso

@@ -255,7 +255,7 @@ define clean/body
 	$(call remove-deck, $O/root.patched)
 	$(call remove-deck, $O/root.build)
 	$(call remove-deck, $O/bootstrap)
-	-rm -rf auto $O/root.spec $O/cdroot $O/product.iso $O/log lb-build.log config cache $(STAMPS_DIR)
+	-rm -rf auto $O/root.spec $O/cdroot $O/product.iso $O/log lb-build.log config cache $(STAMPS_DIR) turnkey-amd64.*
 	lb clean
 endef
 
