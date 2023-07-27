@@ -562,7 +562,15 @@ $(STAMPS_DIR)/$1: $$($1/deps) $$($1/deps/extra)
 	touch $$@
 endef
 
+ifeq (, $(shell command -v tkldev-detective))
+lint:
+	$(error "tkldev-detective not found, (apt install tkldev-detective)")
+else
+lint:
+	tkldev-detective lint $(shell realpath $O/..)
+endif
+
 STAMPED_TARGETS := bootstrap root.spec root.build root.patched root.sandbox cdroot
 $(foreach target,$(STAMPED_TARGETS),$(eval $(call _stamped_target,$(target))))
 
-.PHONY: all debug redeck help clean cdroot-dynamic updated-initramfs $(STAMPED_TARGETS) 
+.PHONY: all debug redeck help clean cdroot-dynamic updated-initramfs $(STAMPED_TARGETS) lint
