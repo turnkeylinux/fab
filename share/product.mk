@@ -281,7 +281,7 @@ define root.spec/body
 endef
 
 # target: root.build
-root.build/deps ?= $(STAMPS_DIR)/bootstrap $(STAMPS_DIR)/root.spec
+root.build/deps ?= $O/bootstrap $(STAMPS_DIR)/bootstrap $(STAMPS_DIR)/root.spec
 define root.build/init
 	if ! deck --isdeck $O/root.build; then deck $O/bootstrap $O/root.build; fi
 endef
@@ -436,7 +436,7 @@ define root.patched/cleanup
 endef
 
 # target root.sandbox
-root.sandbox/deps ?= $(STAMPS_DIR)/root.patched
+root.sandbox/deps ?= $O/root.patched $(STAMPS_DIR)/root.patched
 define root.sandbox/body
 	$(call remove-deck, $O/root.sandbox)
 	deck $O/root.patched $O/root.sandbox
@@ -445,7 +445,7 @@ endef
 ifndef CHROOT_ONLY
 
 # target: cdroot
-cdroot/deps ?= $(STAMPS_DIR)/root.patched $(_CDROOT)
+cdroot/deps ?= $O/root.patched $(STAMPS_DIR)/root.patched $(_CDROOT)
 define cdroot/body
 	if [ -e $O/cdroot ]; then rm -rf $O/cdroot; fi
 	cp -a $(_CDROOT) $O/cdroot
