@@ -1,0 +1,6 @@
+#!/bin/sh
+set -ex
+
+# this needs to run before 40netcfg!
+
+rm -f /target/etc/resolv.conf

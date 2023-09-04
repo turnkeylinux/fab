@@ -1,0 +1,10 @@
+pciutils
+eject
+e2fsprogs
+keyboard-configuration
+console-setup
+os-prober
+grub-common
+grub-pc-bin
+grub-efi-amd64-bin
+shim-signed

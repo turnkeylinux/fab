@@ -1,0 +1,16 @@
+#!/bin/sh
+set -ex
+
+# completely replace isolinux config with ours
+rsync -avz --delete ../build/cdroot/isolinux/ ./isolinux/
+
+# replace grub config with ours
+rm -f boot/grub/install.cfg boot/grub/install_start.cfg boot/grub/grub.cfg
+rsync -avz ../build/cdroot/boot/grub/ ./boot/grub/
+
+# trim versioned duplicates
+rm -f ./live/initrd.img-* ./live/vmlinuz-*
+
+# replace built filesystem
+rm -rf ./live/filesystem.*
+cp ../build/cdroot/live/10root.squashfs ./live/filesystem.squashfs

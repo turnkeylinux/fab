@@ -1,0 +1,4 @@
+#!/bin/sh
+set -e
+lb build noauto --verbose --debug "${@}" 2>&1 | tee lb-build.log
+

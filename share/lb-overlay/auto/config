@@ -1,0 +1,55 @@
+#!/bin/sh
+set -e
+
+APP="$(basename "$(pwd)")"
+TURNKEY_VERSION="$(cat /etc/turnkey_version)"
+VERSION_NUMBER="$(echo "$TURNKEY_VERSION" | cut -d'-' -f3)"
+CODENAME="${CODENAME:-bookworm}"
+# PKGLIST='config/package-lists/turnkey-offline.list.binary' 
+
+config () {
+    # if grep -q grub-pc "$PKGLIST" && grep -q grub-efi-amd64 "$PKGLIST"; then
+    #     # resolve false positive conflict by ignoring it
+    #     # there is no actual conflict because the packages are only downloaded, not installed
+    #     # cf. live-build/scripts/build/binary_package-lists
+    #     set -- --apt-options "--yes -o Acquire::Retries=5 -o Dpkg::Options::='--force-conflicts'" "$@"
+    # fi
+
+    if [ -n "${APT_HTTP_PROXY}" ]; then
+        # lb cache is only partial, this speeds up the build a lot
+        set -- --apt-http-proxy ${APT_HTTP_PROXY} "$@"
+    fi
+
+    lb config noauto \
+        --distribution "$CODENAME" \
+        --apt-indices false \
+        --apt-recommends false \
+        --binary-image iso-hybrid \
+        --cache true \
+        --cache-indices true \
+        --cache-packages true \
+        --checksums sha512 \
+        --chroot-filesystem squashfs \
+        --chroot-squashfs-compression-type lz4 \
+        --clean \
+        --compression xz \
+        --debian-installer live \
+        --debian-installer-gui false \
+        --debootstrap-options '--variant=minbase' \
+        --memtest none \
+        --gzip-options '--best' \
+        --image-name "turnkey-$APP" \
+        --iso-volume "TurnKey_$APP" \
+        --iso-application "TKLDev fab $VERSION_NUMBER" \
+        --iso-preparer "$(cat /etc/turnkey_version)" \
+        --iso-publisher 'TurnKey Linux; https://turnkeylinux.org; admin@turnkeylinux.org' \
+        --zsync false \
+        --loadlin false \
+        --win32-loader false \
+        --uefi-secure-boot auto \
+        --verbose \
+        --debug \
+        "$@"
+}
+
+config

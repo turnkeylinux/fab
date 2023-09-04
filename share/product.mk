@@ -68,7 +68,8 @@ endif
 CDROOTS_PATH ?= $(FAB_PATH)/cdroots
 CDROOT ?= generic
 MKSQUASHFS ?= /usr/bin/mksquashfs
-MKSQUASHFS_OPTS ?= -no-sparse
+# exclude postfix sockets from squashfs (they cause live d-i to fail unpacking to disk)
+MKSQUASHFS_OPTS ?= -comp xz -b 1M -Xdict-size 1M -no-recovery -wildcards -e 'var/spool/postfix/private/*' -e 'var/spool/postfix/public/*'
 
 # if the CDROOT is a relative path, prefix CDROOTS_PATH
 # we set _CDROOT with eval to improve the readability of $(value _CDROOT) 
@@ -240,9 +241,7 @@ endef
 ifndef CHROOT_ONLY
 help/body += ;\
 	echo '  cdroot        \# created by squashing root.patched into cdroot template + overlay'; \
-	echo '  product.iso   \# product ISO created from the cdroot'; \
-	echo; \
-	echo '  updated-initramfs \# rebuild product with updated initramfs' 
+	echo '  product.iso   \# product ISO created from the cdroot';
 endif
 
 help:
@@ -255,7 +254,7 @@ define clean/body
 	$(call remove-deck, $O/root.patched)
 	$(call remove-deck, $O/root.build)
 	$(call remove-deck, $O/bootstrap)
-	-rm -rf auto $O/root.spec $O/cdroot $O/product.iso $O/log lb-build.log config cache $(STAMPS_DIR) turnkey-amd64.*
+	-rm -rf auto $O/root.spec $O/cdroot $O/product.iso $O/log lb-build.log config cache $(STAMPS_DIR) turnkey-*-amd64.*
 	lb clean
 endef
 
@@ -436,7 +435,7 @@ define root.patched/cleanup
 	$(call root-cleanup, $O/root.patched)
 endef
 
-# target root.sandbox
+# target: root.sandbox
 root.sandbox/deps ?= $(STAMPS_DIR)/root.patched
 define root.sandbox/body
 	$(call remove-deck, $O/root.sandbox)
@@ -451,42 +450,16 @@ define cdroot/body
 	if [ -e $O/cdroot ]; then rm -rf $O/cdroot; fi
 	cp -a $(_CDROOT) $O/cdroot
 	mkdir $O/cdroot/live
+
+	cp $O/root.patched/usr/lib/ISOLINUX/isolinux.bin $O/cdroot/isolinux
+	cp $O/root.patched/usr/lib/syslinux/modules/bios/chain.c32 $O/cdroot/isolinux
+	cp $O/root.patched/usr/lib/syslinux/modules/bios/ldlinux.c32 $O/cdroot/isolinux
+	cp $O/root.patched/usr/lib/syslinux/modules/bios/libcom32.c32 $O/cdroot/isolinux
+	cp $O/root.patched/usr/lib/syslinux/modules/bios/vesamenu.c32 $O/cdroot/isolinux
+	cp $O/root.patched/usr/lib/syslinux/modules/bios/gfxboot.c32 $O/cdroot/isolinux
+
 	if [ -d $(CDROOT_OVERLAY) ]; then fab-apply-overlay $(CDROOT_OVERLAY) $O/cdroot; fi
-
 	$(MKSQUASHFS) $O/root.patched $O/cdroot/live/10root.squashfs $(MKSQUASHFS_OPTS)
-endef
-
-define run-genisoimage
-    xorriso -as mkisofs \
-        -o $O/product.iso -r -J \
-        -V ${ISOLABEL} \
-        -b isolinux/isolinux.bin \
-        -c isolinux/boot.cat \
-        -no-emul-boot \
-        -boot-load-size 4 \
-        -boot-info-table \
-        $O/cdroot/
-endef
-
-define run-genisoimage-uefi
-	xorriso -as mkisofs \
-		-o $O/product.iso -r -J \
-		-V ${ISOLABEL} \
-		-b isolinux/isolinux.bin \
-		-c isolinux/boot.cat \
-		-isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
-		-no-emul-boot \
-		-boot-load-size 4 \
-		-boot-info-table \
-		-eltorito-alt-boot \
-		-e efi.img \
-		-no-emul-boot \
-		-isohybrid-gpt-basdat \
-		$O/cdroot/
-endef
-
-define run-isohybrid
-	isohybrid $O/product.iso
 endef
 
 # target: product.iso
@@ -494,57 +467,13 @@ define product.iso/body
 	${FAB_SHARE_PATH}/lb-iso.sh
 endef
 
-cdroot-dynamic: $(STAMPS_DIR)/root.sandbox
-	$(cdroot-dynamic/pre)
-	$(cdroot-dynamic/body)
-	$(cdroot-dynamic/post)
-
-define cdroot-dynamic/body
-	cp $O/root.sandbox/usr/lib/ISOLINUX/isolinux.bin $O/cdroot/isolinux
-	cp $O/root.sandbox/usr/lib/syslinux/modules/bios/chain.c32 $O/cdroot/isolinux
-	cp $O/root.sandbox/usr/lib/syslinux/modules/bios/ldlinux.c32 $O/cdroot/isolinux
-	cp $O/root.sandbox/usr/lib/syslinux/modules/bios/libcom32.c32 $O/cdroot/isolinux
-	cp $O/root.sandbox/usr/lib/syslinux/modules/bios/vesamenu.c32 $O/cdroot/isolinux
-	cp $O/root.sandbox/usr/lib/syslinux/modules/bios/gfxboot.c32 $O/cdroot/isolinux
-	cp $O/root.sandbox/boot/$(shell basename $(shell readlink $O/root.sandbox/vmlinuz)) $O/cdroot/live/vmlinuz
-	cp $O/root.sandbox/boot/$(shell basename $(shell readlink $O/root.sandbox/initrd.img)) $O/cdroot/live/initrd.gz
-
-	rm -f $O/cdroot/live/20sandbox.squashfs
-	@if deck --isdirty $O/root.sandbox; then \
-		$(call root-cleanup, $O/root.sandbox) \
-		\
-		get_last_level="deck --get-level=last $O/root.sandbox"; \
-		output=$O/cdroot/live/20sandbox.squashfs; \
-		echo "mksquashfs \$$($$get_last_level) $$output"; \
-		\
-		last_level=$$($$get_last_level); \
-		mksquashfs $$last_level $$output; \
-	fi;
-endef
-
-product.iso/deps ?= $(STAMPS_DIR)/cdroot cdroot-dynamic
+product.iso/deps ?= $(STAMPS_DIR)/cdroot
 $O/product.iso: $(product.iso/deps) $(product.iso/deps/extra)
 	$(product.iso/pre)
 	$(product.iso/body)
 	$(product.iso/post)
 
 product.iso: $O/product.iso
-
-# target: updated-initramfs
-define updated-initramfs/body
-	rm -rf $O/product.iso
-	$(root.patched/body)
-	fab-install $$FAB_INSTALL_OPTS $O/root.patched $(INITRAMFS_PACKAGES)
-	cp $O/root.patched/boot/$(shell basename $(shell readlink $O/root.patched/initrd.img)) $O/cdroot/live/initrd.gz
-	$(run-genisoimage)
-endef
-
-
-updated-initramfs/deps ?= $O/product.iso
-updated-initramfs: $(update-initramfs/deps) $(updated-initramfs/deps/extra)
-	$(updated-initramfs/pre)
-	$(updated-initramfs/body)
-	$(updated-initramfs/post)
 
 endif
 
@@ -565,4 +494,4 @@ endef
 STAMPED_TARGETS := bootstrap root.spec root.build root.patched root.sandbox cdroot
 $(foreach target,$(STAMPED_TARGETS),$(eval $(call _stamped_target,$(target))))
 
-.PHONY: all debug redeck help clean cdroot-dynamic updated-initramfs $(STAMPED_TARGETS) 
+.PHONY: all debug redeck help clean $(STAMPED_TARGETS)
