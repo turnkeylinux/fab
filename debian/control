@@ -21,6 +21,7 @@ Depends:
  pool
 Recommends:
  xorriso,
+ syslinux-utils,
  squashfs-tools
 Suggests:
  dd,
