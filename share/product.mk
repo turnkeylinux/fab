@@ -22,7 +22,7 @@ CODENAME ?= $(shell basename $(RELEASE))
 UBUNTU = $(shell [ $(DISTRO) = 'ubuntu' ] && echo 'y')
 DEBIAN = $(shell [ $(DISTRO) = 'debian' ] && echo 'y')
 
-FAB_ARCH = $(shell dpkg --print-architecture)
+FAB_ARCH ?= $(shell dpkg --print-architecture)
 I386 = $(shell [ $(FAB_ARCH) = 'i386' ] && echo 'y')
 AMD64 = $(shell [ $(FAB_ARCH) = 'amd64' ] && echo 'y')
 ARM64 = $(shell [ $(FAB_ARCH) = 'arm64' ] && echo 'y')
