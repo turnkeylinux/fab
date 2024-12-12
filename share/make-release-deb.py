@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-# Copyright (c) TurnKey GNU/Linux - http://www.turnkeylinux.org
+# Copyright (c) TurnKey GNU/Linux - https://www.turnkeylinux.org
 #
 # This file is part of Fab
 #
