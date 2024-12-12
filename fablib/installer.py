@@ -7,21 +7,19 @@
 # Free Software Foundation; either version 3 of the License, or (at your
 # option) any later version.
 
-import io
 import os
 from os.path import join, exists, basename
 import shutil
-from typing import (
-        Iterable, Optional, Dict, Tuple, List, TextIO, IO, AnyStr, cast
-)
+from typing import Iterable, TextIO, cast
 import logging
-logger = logging.getLogger('fab.installer')
 
 import hashlib
 from debian import debfile
 
 from chroot import Chroot
 from fablib import common
+
+logger = logging.getLogger("fab.installer")
 
 
 class Error(Exception):
@@ -30,7 +28,7 @@ class Error(Exception):
 
 class RevertibleFile:
     """File that automatically reverts to previous state on destruction
-       or if the revert method is invoked"""
+    or if the revert method is invoked"""
 
     @staticmethod
     def _get_orig_path(path: str) -> str:
@@ -43,16 +41,16 @@ class RevertibleFile:
             i += 1
 
     def __init__(self, path: str):
-        self.orig_path: Optional[str] = None
+        self.orig_path: str | None = None
         if exists(path):
             self.orig_path = self._get_orig_path(path)
             shutil.move(path, self.orig_path)
-        self.path: Optional[str] = path
+        self.path: str | None = path
 
-        self._inner = open(path, 'w')
+        self._inner = open(path, "w")
 
     def revert(self) -> None:
-        ''' revert file to original state '''
+        """revert file to original state"""
         if self.orig_path is not None:
             assert self.path is not None
             shutil.move(self.orig_path, self.path)
@@ -74,7 +72,8 @@ class RevertibleFile:
 
 
 class RevertibleScript(RevertibleFile):
-    ''' RevertibleFile that ensures file is executable '''
+    """RevertibleFile that ensures file is executable"""
+
     def __init__(self, path: str, lines: Iterable[str]):
         super().__init__(path)
         self.write("\n".join(lines))
@@ -84,10 +83,7 @@ class RevertibleScript(RevertibleFile):
 
 
 class Installer:
-    def __init__(
-            self, chroot_path: str,
-            environ: dict[str, str] = None
-    ):
+    def __init__(self, chroot_path: str, environ: dict[str, str] | None = None):
         if environ is None:
             environ = {}
         env = {"DEBIAN_FRONTEND": "noninteractive", "DEBIAN_PRIORITY": "critical"}
@@ -98,7 +94,7 @@ class Installer:
     @staticmethod
     def _get_packages_priority(packages: list[str]) -> tuple[list[str], list[str]]:
         """high priority packages must be installed before regular packages
-           APT should handle this, but in some circumstances it chokes...
+        APT should handle this, but in some circumstances it chokes...
         """
         HIGH_PRIORITY = "linux-image"
 
@@ -114,10 +110,11 @@ class Installer:
         return high, regular
 
     def _install(
-            self, packages: list[str],
-            ignore_errors: list[str] = None,
-            extra_apt_args: list[str] = None) -> None:
-
+        self,
+        packages: list[str],
+        ignore_errors: list[str] | None = None,
+        extra_apt_args: list[str] | None = None,
+    ) -> None:
         if ignore_errors is None:
             ignore_errors = []
         if extra_apt_args is None:
@@ -125,11 +122,13 @@ class Installer:
         high, regular = self._get_packages_priority(packages)
 
         lines = ["#!/bin/sh", "echo", 'echo "Warning: Fake invoke-rc.d called"']
+        # TODO fake_invoke_rcd not accessed
         fake_invoke_rcd = RevertibleScript(
             join(self.chroot.path, "usr/sbin/invoke-rc.d"), lines
         )
 
         lines = ["#!/bin/sh", "echo", 'echo "Warning: Fake start-stop-daemon called"']
+        # TODO fake_start_stop not accessed
         fake_start_stop = RevertibleScript(
             join(self.chroot.path, "sbin/start-stop-daemon"), lines
         )
@@ -139,15 +138,21 @@ class Installer:
             "#!/bin/sh",
             "echo",
             'echo "Warning: Deferring update-initramfs $@"',
-            f'echo "update-initramfs $@" >> /{defer_log}'
+            f'echo "update-initramfs $@" >> /{defer_log}',
         ]
 
         for packages in (high, regular):
             if packages:
-                args = ["-o", "Debug::pkgProblemResolver=true", "install", "--assume-yes"]
+                args = [
+                    "-o",
+                    "Debug::pkgProblemResolver=true",
+                    "install",
+                    "--assume-yes",
+                ]
                 args.extend(extra_apt_args)
                 apt_return_code = self.chroot.system(
-                        f"apt-get {' '.join((args + packages))}")
+                    f"apt-get {' '.join((args + packages))}"
+                )
                 if apt_return_code != 0:
 
                     def get_last_log(path: str) -> list[str]:
@@ -184,8 +189,7 @@ class Installer:
                         if apt_return_code == 100:
                             # always seems to return 100 when hitting
                             # 'E: Unable to locate package ...'
-                            raise Error(
-                                    'Errors encountered installing packages')
+                            raise Error("Errors encountered installing packages")
                         else:
                             continue
 
@@ -195,13 +199,15 @@ class Installer:
                     errors = set(errors) - set(ignore_errors)
 
                     if ignored_errors:
-                        print(f"Warning: ignoring package installation errors"
-                              f" ({' '.join(ignored_errors)})")
+                        print(
+                            f"Warning: ignoring package installation errors"
+                            f" ({' '.join(ignored_errors)})"
+                        )
 
                     if errors:
                         for error in errors:
                             common.error(error)
-                        raise Error('package installation errors')
+                        raise Error("package installation errors")
 
         defer_log = join(self.chroot.path, defer_log)
         if exists(defer_log):
@@ -216,22 +222,26 @@ class Installer:
                 if self.chroot.system("update-initramfs -u") != 0:
                     self.chroot.system("live-update-initramfs -u")
             else:
-                if self.chroot.system(
-                        f"update-initramfs -c -k {kversion}") != 0:
+                if self.chroot.system(f"update-initramfs -c -k {kversion}") != 0:
                     self.chroot.system(f"live-update-initramfs -c -k {kversion}")
 
             os.remove(defer_log)
 
     def install(
-            self, packages: list[str],
-            ignore_errors: list[str] = None) -> None:
+        self, packages: list[str], ignore_errors: list[str] | None = None
+    ) -> None:
+        # TODO implement or remove
         raise NotImplementedError()
 
 
 class PoolInstaller(Installer):
     def __init__(
-            self, chroot_path: str, pool_path: str,
-            arch: str, environ: dict[str, str] = None):
+        self,
+        chroot_path: str,
+        pool_path: str,
+        arch: str,
+        environ: dict[str, str] | None = None,
+    ):
         super(PoolInstaller, self).__init__(chroot_path, environ)
 
         from pool_lib import Pool
@@ -247,17 +257,18 @@ class PoolInstaller(Installer):
             return str(os.stat(path).st_size)
 
         def md5sum(path: str) -> str:
-            with open(path, 'rb') as fob:
+            with open(path, "rb") as fob:
                 return str(hashlib.md5(fob.read()).hexdigest())
 
         def sha256sum(path: str) -> str:
-            with open(path, 'rb') as fob:
+            with open(path, "rb") as fob:
                 return str(hashlib.sha256(fob.read()).hexdigest())
 
         index = []
         for package in os.listdir(packagedir):
             path = os.path.join(packagedir, package)
-            # dl_path would best be calculated; but we don't have access to chroot_path here...
+            # dl_path would best be calculated; but we don't
+            # have access to chroot_path here...
             dl_path = os.path.join("var/cache/apt/archives", package)
             if path.endswith(".deb"):
                 control = debfile.DebFile(path).debcontrol()
@@ -273,8 +284,7 @@ class PoolInstaller(Installer):
         return index
 
     def install(
-            self, packages: list[str],
-            ignore_errors: list[str] = None
+        self, packages: list[str], ignore_errors: list[str] | None = None
     ) -> None:
         """install packages into chroot via pool"""
 
@@ -308,28 +318,21 @@ class PoolInstaller(Installer):
 
 class LiveInstaller(Installer):
     def __init__(
-            self, chroot_path: str,
-            apt_proxy: str = None,
-            environ: dict[str, str] = None):
+        self,
+        chroot_path: str,
+        apt_proxy: str | None = None,
+        environ: dict[str, str] | None = None,
+    ):
         super(LiveInstaller, self).__init__(chroot_path, environ)
 
         self.apt_proxy = apt_proxy
 
     def install(
-            self, packages: list[str],
-            ignore_errors: list[str] = None) -> None:
+        self, packages: list[str], ignore_errors: list[str] | None = None
+    ) -> None:
         """install packages into chroot via live apt"""
         if ignore_errors is None:
             ignore_errors = []
-
-        # For v17.x I've moved the apt setting to common. I think that is the
-        # right place for it, but haven't 100% committed yet. For now I'm
-        # leaving this here commented...
-        #if self.apt_proxy:
-        #    print("setting apt proxy settings...")
-        #    conf_path = join(self.chroot.path, "etc/apt/apt.conf.d/01proxy")
-        #    with open(conf_path, "w") as fob:
-        #        fob.write('Acquire::http::Proxy "%s";\n' % self.apt_proxy)
 
         print("updating package lists...")
         self.chroot.system("apt-get update")
