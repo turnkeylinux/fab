@@ -23,23 +23,27 @@ UBUNTU = $(shell [ $(DISTRO) = 'ubuntu' ] && echo 'y')
 DEBIAN = $(shell [ $(DISTRO) = 'debian' ] && echo 'y')
 
 FAB_ARCH ?= $(shell dpkg --print-architecture)
+
 I386 = $(shell [ $(FAB_ARCH) = 'i386' ] && echo 'y')
 AMD64 = $(shell [ $(FAB_ARCH) = 'amd64' ] && echo 'y')
 ARM64 = $(shell [ $(FAB_ARCH) = 'arm64' ] && echo 'y')
 
+ifndef FAB_ARCH_FAMILY
 ifeq ($(I386),y)
-ARCH_FAMILY=x86
+FAB_ARCH_FAMILY=x86
 endif
 ifeq ($(AMD64),y)
-ARCH_FAMILY=x86
+FAB_ARCH_FAMILY=x86
 endif
 ifeq ($(ARM64),y)
-ARCH_FAMILY=arm
+FAB_ARCH_FAMILY=arm
 # NONFREE is used to get raspi-firmware and firmware-brcm80211
-NONFREE=1
+# NONFREE=1
 endif
-ifndef ARCH_FAMILY
-$(error unsupported architecture)
+
+ifndef FAB_ARCH_FAMILY
+$(error unsupported architecture family)
+endif
 endif
 
 ifdef FAB_POOL
@@ -152,8 +156,8 @@ endef
 ifdef CHROOT_ONLY
 all: root.sandbox
 else
-ifeq ($(ARCH_FAMILY),arm)
-all: $O/product.img
+ifeq ($(FAB_ARCH_FAMILY),arm)
+all: root.sandbox
 else
 all: $O/product.iso
 endif
@@ -193,7 +197,7 @@ define help/body
 	@echo '  CONF_VARS                  $(value CONF_VARS)'
 	@echo
 	@echo '  FAB_ARCH                   $(value FAB_ARCH)'
-	@echo '  ARCH_FAMILY                $(value ARCH_FAMILY)'
+	@echo '  FAB_ARCH_FAMILY            $(value FAB_ARCH_FAMILY)'
 	@echo '  FAB_POOL                   $(value FAB_POOL)'
 	@echo '  FAB_POOL_PATH              $(value FAB_POOL_PATH)'
 	@echo '  FAB_PLAN_INCLUDE_PATH      $(value FAB_PLAN_INCLUDE_PATH)/'
@@ -243,12 +247,7 @@ define help/body
 	@echo '# remake target and the targets that depend on it'
 	@echo '$$ rm $(value STAMPS_DIR)/<target>; make <target>'
 	@echo
-	@if [ "$(ARCH_FAMILY)" = "arm" ]; \
-	then \
-	echo '# build a target (default: product.img)'; \
-	else \
 	echo '# build a target (default: product.iso)'; \
-	fi
 	@echo '$$ make [target] [O=path/to/build/dir]'
 	@echo '  redeck        # deck unmounted input/output decks (e.g., after reboot)'
 	@echo
@@ -264,16 +263,11 @@ define help/body
 endef
 
 ifndef CHROOT_ONLY
-ifeq ($(ARCH_FAMILY),arm)
-help/body += ;\
-	echo '  product.img   \# product img for raspberry pi 4';
-else
 help/body += ;\
 	echo '  cdroot        \# created by squashing root.patched into cdroot template + overlay'; \
 	echo '  product.iso   \# product ISO created from the cdroot'; \
 	echo; \
 	echo '  updated-initramfs \# rebuild product with updated initramfs' 
-endif
 endif
 
 help:
@@ -286,7 +280,7 @@ define clean/body
 	$(call remove-deck, $O/root.patched)
 	$(call remove-deck, $O/root.build)
 	$(call remove-deck, $O/bootstrap)
-	-rm -rf $O/root.spec $O/cdroot $O/product.iso $O/sdroot $O/product.img $O/product.img.xz $O/log $O/screens $(STAMPS_DIR)
+	-rm -rf $O/root.spec $O/cdroot $O/product.iso $O/log $O/screens $(STAMPS_DIR)
 endef
 
 clean:
@@ -334,7 +328,7 @@ define run-conf-scripts
 	if [ -n "$(wildcard $1/*)" ]; then \
 		echo "\$$(call $0,$1)"; \
 	fi; \
-	for script in $1/* $1/$(ARCH_FAMILY).d/*; do \
+	for script in $1/* $1/$(FAB_ARCH_FAMILY).d/*; do \
 		[ -f "$$script" ] && [ -x "$$script" ] || continue; \
 		args_path=$(strip $1)/args/$$(echo $$(basename $$script) | sed 's/^[^a-zA-Z]*//'); \
 		args="$$([ -f $$args_path ] && (cat $$args_path | sed 's/#.*//'))"; \
@@ -368,7 +362,7 @@ define root.patched/body
 	# apply the common overlays
 	$(foreach overlay,$(_COMMON_OVERLAYS),
 	  @if echo $(overlay) | grep -q '\.d$$'; then \
-		for d in $(overlay)/* $(overlay)/$(ARCH_FAMILY).d/*; do \
+		for d in $(overlay)/* $(overlay)/$(FAB_ARCH_FAMILY).d/*; do \
 		  if echo $$d | grep -q '\.d$$'; then continue; fi; \
 		  echo fab-apply-overlay $$d $O/root.patched; \
 		  fab-apply-overlay $$d $O/root.patched; \
@@ -526,26 +520,6 @@ define product.iso/body
 	$(run-isohybrid)
 endef
 
-# target: product.img
-define product.img/body
-	qemu-img create -f raw $O/product.img 2G
-	parted -s $O/product.img mklabel msdos
-	parted -s $O/product.img -- mkpart primary fat32 4MiB 400MiB
-	parted -s $O/product.img -- mkpart primary ext2 400MiB 100%
-	kpartx -asv $O/product.img
-	mkfs -t vfat -n RASPIFIRM /dev/mapper/loop0p1
-	mkfs -t ext4 -L RASPIROOT /dev/mapper/loop0p2
-	mkdir -p $O/sdroot
-	mount /dev/mapper/loop0p2 $O/sdroot
-	mkdir -p $O/sdroot/boot/firmware
-	mount /dev/mapper/loop0p1 $O/sdroot/boot/firmware
-	cp -ax $O/root.sandbox/* $O/sdroot
-	umount $O/sdroot/boot/firmware
-	umount $O/sdroot
-	kpartx -dsv $O/product.img
-	xz -8 -f $O/product.img
-endef
-
 cdroot-dynamic: $(STAMPS_DIR)/root.sandbox
 	$(cdroot-dynamic/pre)
 	$(cdroot-dynamic/body)
@@ -581,14 +555,6 @@ $O/product.iso: $(product.iso/deps) $(product.iso/deps/extra)
 	$(product.iso/post)
 
 product.iso: $O/product.iso
-
-product.img/deps ?= $(STAMPS_DIR)/root.sandbox
-$O/product.img: $(product.img/deps) $(product.img/deps/extra)
-	$(product.img/pre)
-	$(product.img/body)
-	$(product.img/post)
-
-product.img: $O/product.img
 
 # target: updated-initramfs
 define updated-initramfs/body
