@@ -1,2 +1,3 @@
 share/*     usr/share/fab
 contrib/fab-* usr/bin
+contrib/install-arm-on-amd-deps   usr/bin
