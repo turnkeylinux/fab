@@ -22,9 +22,10 @@ args::
 
 env vars::
 
-    DEBUG       verbose output - overrides -q|--quiet
+    DEBUG       verbose debugging output - overrides -q|--quiet
 
 EOF
+    exit
 }
 
 while [[ $# -ne 0 ]]; do
@@ -41,7 +42,7 @@ while [[ $# -ne 0 ]]; do
 done
 
 for i in "${!pkgs[@]}"; do
-    if ! which "${bins[$i]}"; then
+    if ! which "${bins[$i]}" >/dev/null 2>&1; then
         pkgs_to_install+=("${pkgs[$i]}")
     fi
 done
