@@ -1,0 +1,64 @@
+#!/bin/bash -eu
+
+DEBUG=${DEBUG:-}
+[[ -z "$DEBUG" ]] || set -x
+
+QUIET=
+pkgs=(binfmt-support qemu-system-arm qemu-user-static)
+bins=(/usr/sbin/update-binfmts /usr/bin/qemu-system-arm /usr/bin/qemu-arm-static)
+pkgs_to_install=()
+
+usage() {
+    cat <<EOF
+$(basename "$0") [-h|--help] [-q|--quiet]
+
+Checks packages required to build arm64 on amd64 are installed
+and if not, installs them.
+
+args::
+
+    -h|--help   show this help and exit
+    -q|--quiet  no output
+
+env vars::
+
+    DEBUG       verbose output - overrides -q|--quiet
+
+EOF
+}
+
+while [[ $# -ne 0 ]]; do
+    case $1 in
+        -h|--help)
+            usage;;
+        -q|--quiet)
+            QUIET=q;;
+        *)
+            echo "Unknown option: $1" >&2
+            exit 1;;
+    esac
+    shift
+done
+
+for i in "${!pkgs[@]}"; do
+    if ! which "${bins[$i]}"; then
+        pkgs_to_install+=("${pkgs[$i]}")
+    fi
+done
+
+set +u # unset u - otherwise the test will give an "unbound variable" error
+# shellcheck disable=SC2128
+# even if there are no elements in a array; ${foo[@]} still isn't "empty"
+if [[ -n "$pkgs_to_install" ]]; then
+    if [[ -n "$QUIET" ]]; then
+        echo "Installing: ${pkgs_to_install[*]}"
+        apt-get update
+        apt-get install -y "${pkgs_to_install[@]}"
+        echo ""
+    else
+        apt-get update >/dev/null 2>&1
+        apt-get install -y "${pkgs_to_install[@]}" >/dev/null 2>&1
+    fi
+fi
+
+update-binfmts --display | grep -i"$QUIET" aarch
