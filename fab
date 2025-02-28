@@ -378,20 +378,6 @@ def add_cpp_opts(parser: ArgumentParser) -> None:
     )
 
 
-def get_arch() -> str:
-    fab_arch = os.getenv("FAB_ARCH", "")
-    if os.getenv("ARM_ON_AMD", ""):
-        return "arm64"
-    elif fab_arch:
-        return fab_arch
-    else:
-        return subprocess.run(
-                ["dpkg", "--print-architecture"],
-                capture_output=True,
-                text=True
-                ).stdout.strip()
-
-
 if __name__ == "__main__":
     parser = ArgumentParser(
         formatter_class=RawDescriptionHelpFormatter,
@@ -483,13 +469,6 @@ Configuration environment variables:
     )
     chroot_parser.add_argument(
         "args", metavar="ARG", nargs="*", help="script arguments"
-    )
-    chroot_parser.add_argument(
-        "-a",
-        "--arch",
-        metavar="FAB_ARCH",
-        help="Architecture of chroot\ndefault: $FAB_CHROOT_ENV",
-        default=get_arch()
     )
 
     install_parser = subparsers.add_parser(
