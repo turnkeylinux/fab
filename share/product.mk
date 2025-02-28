@@ -81,7 +81,7 @@ endif
 
 COMMON_PATCHES := turnkey.d $(COMMON_PATCHES)
 
-CONF_VARS_BUILTIN ?= FAB_ARCH FAB_HTTP_PROXY I386 AMD64 ARM64 RELEASE DISTRO CODENAME DEBIAN UBUNTU KERNEL DEBUG CHROOT_ONLY
+CONF_VARS_BUILTIN ?= FAB_ARCH HOST_ARCH FAB_HTTP_PROXY I386 AMD64 ARM64 RELEASE DISTRO CODENAME DEBIAN UBUNTU KERNEL DEBUG CHROOT_ONLY
 
 define filter-undefined-vars
 	$(foreach var,$1,$(if $($(var)), $(var)))
@@ -98,11 +98,11 @@ export FAB_INSTALL_ENV = $(FAB_CHROOT_ENV)
 FAB_SHARE_PATH ?= /usr/share/fab
 BOOTSTRAP ?= $(FAB_PATH)/bootstraps/$(CODENAME)-$(FAB_ARCH)
 ifneq ("$(wildcard $(FAB_PATH)/altstraps/$(CODENAME)-$(FAB_ARCH).core)", "")
-	BOOTSTRAP := $(FAB_PATH)/altstraps/$(CODENAME)-$(FAB_ARCH).core
+BOOTSTRAP := $(FAB_PATH)/altstraps/$(CODENAME)-$(FAB_ARCH).core
 endif
-ifneq (,$(wildcard $(BOOTSTRAP)))
-	$(error bootstrap $(BOOTSTRAP) not found)
-endif)
+ifeq (,"$(wildcard $(BOOTSTRAP)"))
+$(error bootstrap $(BOOTSTRAP) not found - download or build it first)
+endif
 
 CDROOTS_PATH ?= $(FAB_PATH)/cdroots
 CDROOT ?= generic
