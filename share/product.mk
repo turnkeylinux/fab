@@ -23,8 +23,6 @@ ifneq ($(FAB_ARCH),$(HOST_ARCH))
 $(info building $(FAB_ARCH) on $(HOST_ARCH))
 ifeq ($(HOST_ARCH),arm64)
 $(error amd64 product can not be built on arm64)
-else
-ARM_ON_AMD := y
 endif
 endif
 else
@@ -172,7 +170,6 @@ define remove-deck
 	fi
 endef
 
-$(info GOT_TO_HERE)
 ifdef CHROOT_ONLY
 all: root.sandbox
 else
