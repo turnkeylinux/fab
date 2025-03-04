@@ -25,7 +25,7 @@ import sys
 import os
 from os.path import isdir, join, basename, relpath
 
-from debian import debfile
+from debian import debfile, deb822
 
 from fablib.installer import (PoolInstaller,
                               LiveInstaller, Installer)
@@ -96,7 +96,7 @@ class AssociatedAppendAction(argparse.Action):
             setattr(namespace, self.dest, [(option_string, values)])
 
 
-def generate_index(dctrls: Dict[Dependency, debfile.Deb822]) -> str:
+def generate_index(dctrls: Dict[Dependency, deb822.Deb822]) -> str:
     fields = (
         "Package",
         "Essential",
