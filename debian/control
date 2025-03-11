@@ -10,7 +10,7 @@ Build-Depends:
 Standards-Version: 4.0.0
 
 Package: fab
-Architecture: any
+Architecture: all
 Depends:
  cpp,
  ${misc:Depends},
