@@ -1,1 +1,2 @@
 share/*     usr/share/fab
+contrib/fab-* usr/bin
