@@ -1,16 +1,17 @@
-from typing import IO, List, Tuple
+from typing import IO
 import os
-from os import mkdir
-from os.path import exists, dirname, join, isfile
+from os.path import exists, join, isfile
 import re
-import sys
 import shutil
-from tempfile import TemporaryDirectory
+import glob
 from .common import fatal, warn
 
-def parse_removelist(fob: IO[str]) -> Tuple[List[str], List[str]]:
-    remove = []
-    restore = []
+KNOWN_PREFIXES = {
+    '~'
+}
+
+def parse_removelist(fob: IO[str]) -> list[tuple[str | None, str | None, str | None]]:
+    out = []
 
     for line in fob:
         line = re.sub(r'#.*', '', line).strip()
@@ -18,38 +19,37 @@ def parse_removelist(fob: IO[str]) -> Tuple[List[str], List[str]]:
         if not line:
             continue
 
-        if line.startswith('!'):
-            restore.append(line[1:])
-        else:
-            remove.append(line)
-    return remove, restore
+        if '/' not in line:
+            out.append((None, None, f'non-empty invalid line {line!r}'))
 
-def _move(entry: str, source_root_path: str, dest_root_path: str) -> None:
-    entry = entry.strip('/')
-    source_path = join(source_root_path, entry)
-    dest_path = join(dest_root_path, entry)
+        prefix, path = line.split('/', 1)
+        path = '/' + path
+        prefix = prefix.strip()
 
-    if not exists(source_path):
-        warn('entry does not exist: ' + entry)
-        return
+        if prefix and prefix not in KNOWN_PREFIXES:
+            out.append((None, None, f'unknown prefix {prefix!r} in line {line!r}'))
 
-    mkdir(dirname(dest_path))
-    shutil.move(source_path, dest_path)
+        out.append((prefix, path, None))
+    return out
+
+def remove(path: str):
+    if not exists(path):
+        print(f'rm {path}')
+        warn(f'file or directory {path!r} not found!')
+    elif isfile(path):
+        print(f'rm {path}')
+        os.remove(path)
+    else:
+        print(f'rm -r {path}')
+        shutil.rmtree(path)
 
 def apply_removelist(removelist_fob: IO[str], root_path: str) -> None:
-    remove, restore = parse_removelist(removelist_fob)
-    if restore:
-        warn("DEPRECATED: fab-apply-removelist restore functionality is non-"
-             "functional and will produce a hard error in the future")
-
-    for entry in remove:
-        path = join(root_path, entry.strip('/'))
-        if not exists(path):
-            print(f'rm {path}')
-            warn(f'file or directory {path!r} not found!')
-        elif isfile(path):
-            print(f'rm {path}')
-            os.remove(path)
+    for (prefix, path, error) in parse_removelist(removelist_fob):
+        if error or path is None:
+            fatal(error)
+        path = join(root_path, path.strip('/'))
+        if prefix == '~':
+            for path in glob.glob(path):
+                remove(path)
         else:
-            print(f'rm -r {path}')
-            shutil.rmtree(path)
+            remove(path)
