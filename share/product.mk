@@ -8,6 +8,8 @@
 # Free Software Foundation; either version 3 of the License, or (at your
 # option) any later version.
 
+HOST_ARCH := $(shell dpkg --print-architecture)
+
 ifndef FAB_PATH
 $(error FAB_PATH not defined - needed for default paths)
 endif
@@ -16,27 +18,29 @@ ifndef RELEASE
 $(error RELEASE not defined)
 endif
 
+ifndef FAB_ARCH
+$(info FAB_ARCH not set, falling back to system arch $(HOST_ARCH))
+FAB_ARCH := $(HOST_ARCH)
+endif
+
 DISTRO ?= $(shell dirname $(RELEASE))
 CODENAME ?= $(shell basename $(RELEASE))
 
 UBUNTU = $(shell [ $(DISTRO) = 'ubuntu' ] && echo 'y')
 DEBIAN = $(shell [ $(DISTRO) = 'debian' ] && echo 'y')
 
-FAB_ARCH ?= $(shell dpkg --print-architecture)
 
-I386 = $(shell [ $(FAB_ARCH) = 'i386' ] && echo 'y')
 AMD64 = $(shell [ $(FAB_ARCH) = 'amd64' ] && echo 'y')
 ARM64 = $(shell [ $(FAB_ARCH) = 'arm64' ] && echo 'y')
 
 ifndef FAB_ARCH_FAMILY
-ifeq ($(I386),y)
-FAB_ARCH_FAMILY=x86
-endif
 ifeq ($(AMD64),y)
 FAB_ARCH_FAMILY=x86
+FAB_INSTALL_OPTS := '--arch amd64'
 endif
 ifeq ($(ARM64),y)
 FAB_ARCH_FAMILY=arm
+FAB_INSTALL_OPTS := '--arch arm64'
 # NONFREE is used to get raspi-firmware and firmware-brcm80211
 # NONFREE=1
 endif
@@ -52,7 +56,7 @@ export FAB_POOL_PATH
 endif
 
 ifdef FAB_POOL_PATH
-FAB_INSTALL_OPTS = '--no-deps'
+FAB_INSTALL_OPTS += '--no-deps'
 endif
 
 ifndef FAB_HTTP_PROXY
@@ -65,7 +69,7 @@ endif
 
 COMMON_PATCHES := turnkey.d $(COMMON_PATCHES)
 
-CONF_VARS_BUILTIN ?= FAB_ARCH FAB_HTTP_PROXY I386 AMD64 ARM64 RELEASE DISTRO CODENAME DEBIAN UBUNTU KERNEL DEBUG CHROOT_ONLY
+CONF_VARS_BUILTIN ?= FAB_ARCH HOST_ARCH FAB_HTTP_PROXY AMD64 ARM64 RELEASE DISTRO CODENAME DEBIAN UBUNTU KERNEL DEBUG CHROOT_ONLY
 
 define filter-undefined-vars
 	$(foreach var,$1,$(if $($(var)), $(var)))
@@ -80,9 +84,12 @@ export FAB_INSTALL_ENV = $(FAB_CHROOT_ENV)
 
 # FAB_PATH dependent infrastructural components
 FAB_SHARE_PATH ?= /usr/share/fab
-BOOTSTRAP ?= $(FAB_PATH)/bootstraps/$(CODENAME)
-ifneq ("$(wildcard $(FAB_PATH)/altstraps/$(CODENAME).core)", "")
-	BOOTSTRAP := $(FAB_PATH)/altstraps/$(CODENAME).core
+BOOTSTRAP ?= $(FAB_PATH)/bootstraps/$(CODENAME)-$(FAB_ARCH)
+ifneq ("$(wildcard $(FAB_PATH)/altstraps/$(CODENAME)-$(FAB_ARCH).core)", "")
+BOOTSTRAP := $(FAB_PATH)/altstraps/$(CODENAME)-$(FAB_ARCH).core
+endif
+ifeq (,"$(wildcard $(BOOTSTRAP)"))
+$(error bootstrap $(BOOTSTRAP) not found - download or build it first)
 endif
 
 CDROOTS_PATH ?= $(FAB_PATH)/cdroots
@@ -123,7 +130,7 @@ PLAN ?= plan/main
 ROOT_OVERLAY ?= overlay
 CDROOT_OVERLAY ?= cdroot.overlay
 REMOVELIST ?= removelist
-# undefine REMOVELIST if the file doesn't exist
+# unset REMOVELIST if the file doesn't exist
 ifeq ($(wildcard $(REMOVELIST)),)
 REMOVELIST =
 endif
@@ -247,27 +254,27 @@ define help/body
 	@echo '# remake target and the targets that depend on it'
 	@echo '$$ rm $(value STAMPS_DIR)/<target>; make <target>'
 	@echo
-	echo '# build a target (default: product.iso)'; \
+	@echo '# build a target (default: product.iso)'
 	@echo '$$ make [target] [O=path/to/build/dir]'
-	@echo '  redeck        # deck unmounted input/output decks (e.g., after reboot)'
+	@echo '  redeck             # deck unmounted input/output decks (e.g., after reboot)'
 	@echo
-	@echo '  clean         # clean all build targets'
-	@echo '  bootstrap     # minimal chrootable filesystem used to bootstrap the root'
-	@echo '  root.spec     # the spec from which root.build is built (I.e., resolved plan)'
-	@echo '  root.build    # created by applying the root.spec to the bootstrap'
-	@echo '  root.patched  # deck root.build and apply the root overlay and removelist'
+	@echo '  clean              # clean all build targets'
+	@echo '  bootstrap          # minimal chrootable filesystem used to bootstrap the root'
+	@echo '  root.spec          # the spec from which root.build is built (I.e., resolved plan)'
+	@echo '  root.build         # created by applying the root.spec to the bootstrap'
+	@echo '  root.patched       # deck root.build and apply the root overlay and removelist'
 	@echo
-	@echo '  root.sandbox  # changes (e.g., manual prototyping) inside the copy-on-write sandbox'
-	@echo '                # saved as a separate, temporary cdroot squashfs overlay'
+	@echo '  root.sandbox       # changes (e.g., manual prototyping) inside the copy-on-write sandbox'
+	@echo '                     # saved as a separate, temporary cdroot squashfs overlay'
 	@echo
 endef
 
 ifndef CHROOT_ONLY
 help/body += ;\
-	echo '  cdroot        \# created by squashing root.patched into cdroot template + overlay'; \
-	echo '  product.iso   \# product ISO created from the cdroot'; \
+	echo '  cdroot             \# created by squashing root.patched into cdroot template + overlay'; \
+	echo '  product.iso        \# product ISO created from the cdroot'; \
 	echo; \
-	echo '  updated-initramfs \# rebuild product with updated initramfs' 
+	echo '  updated-initramfs  \# rebuild product with updated initramfs'
 endif
 
 help:
