@@ -8,6 +8,8 @@
 # Free Software Foundation; either version 3 of the License, or (at your
 # option) any later version.
 
+HOST_ARCH := $(shell dpkg --print-architecture)
+
 ifndef FAB_PATH
 $(error FAB_PATH not defined - needed for default paths)
 endif
@@ -16,27 +18,38 @@ ifndef RELEASE
 $(error RELEASE not defined)
 endif
 
+ifdef FAB_ARCH
+ifneq ($(FAB_ARCH),$(HOST_ARCH))
+$(info building $(FAB_ARCH) on $(HOST_ARCH))
+ifeq ($(HOST_ARCH),arm64)
+$(error amd64 product can not be built on arm64)
+endif
+endif
+else
+FAB_ARCH := $(HOST_ARCH)
+endif
+
 DISTRO ?= $(shell dirname $(RELEASE))
 CODENAME ?= $(shell basename $(RELEASE))
 
 UBUNTU = $(shell [ $(DISTRO) = 'ubuntu' ] && echo 'y')
 DEBIAN = $(shell [ $(DISTRO) = 'debian' ] && echo 'y')
 
-FAB_ARCH ?= $(shell dpkg --print-architecture)
-
-I386 = $(shell [ $(FAB_ARCH) = 'i386' ] && echo 'y')
 AMD64 = $(shell [ $(FAB_ARCH) = 'amd64' ] && echo 'y')
 ARM64 = $(shell [ $(FAB_ARCH) = 'arm64' ] && echo 'y')
 
 ifndef FAB_ARCH_FAMILY
 ifeq ($(I386),y)
 FAB_ARCH_FAMILY=x86
+FAB_INSTALL_OPTS := '--arch i386'
 endif
 ifeq ($(AMD64),y)
 FAB_ARCH_FAMILY=x86
+FAB_INSTALL_OPTS := '--arch amd64'
 endif
 ifeq ($(ARM64),y)
 FAB_ARCH_FAMILY=arm
+FAB_INSTALL_OPTS := '--arch arm64'
 # NONFREE is used to get raspi-firmware and firmware-brcm80211
 # NONFREE=1
 endif
@@ -52,7 +65,7 @@ export FAB_POOL_PATH
 endif
 
 ifdef FAB_POOL_PATH
-FAB_INSTALL_OPTS = '--no-deps'
+FAB_INSTALL_OPTS += '--no-deps'
 endif
 
 ifndef FAB_HTTP_PROXY
@@ -65,7 +78,7 @@ endif
 
 COMMON_PATCHES := turnkey.d $(COMMON_PATCHES)
 
-CONF_VARS_BUILTIN ?= FAB_ARCH FAB_HTTP_PROXY I386 AMD64 ARM64 RELEASE DISTRO CODENAME DEBIAN UBUNTU KERNEL DEBUG CHROOT_ONLY
+CONF_VARS_BUILTIN ?= FAB_ARCH HOST_ARCH FAB_HTTP_PROXY AMD64 ARM64 RELEASE DISTRO CODENAME DEBIAN UBUNTU KERNEL DEBUG CHROOT_ONLY
 
 define filter-undefined-vars
 	$(foreach var,$1,$(if $($(var)), $(var)))
@@ -80,9 +93,12 @@ export FAB_INSTALL_ENV = $(FAB_CHROOT_ENV)
 
 # FAB_PATH dependent infrastructural components
 FAB_SHARE_PATH ?= /usr/share/fab
-BOOTSTRAP ?= $(FAB_PATH)/bootstraps/$(CODENAME)
-ifneq ("$(wildcard $(FAB_PATH)/altstraps/$(CODENAME).core)", "")
-	BOOTSTRAP := $(FAB_PATH)/altstraps/$(CODENAME).core
+BOOTSTRAP ?= $(FAB_PATH)/bootstraps/$(CODENAME)-$(FAB_ARCH)
+ifneq ("$(wildcard $(FAB_PATH)/altstraps/$(CODENAME)-$(FAB_ARCH).core)", "")
+BOOTSTRAP := $(FAB_PATH)/altstraps/$(CODENAME)-$(FAB_ARCH).core
+endif
+ifeq (,"$(wildcard $(BOOTSTRAP)"))
+$(error bootstrap $(BOOTSTRAP) not found - download or build it first)
 endif
 
 CDROOTS_PATH ?= $(FAB_PATH)/cdroots
@@ -123,7 +139,7 @@ PLAN ?= plan/main
 ROOT_OVERLAY ?= overlay
 CDROOT_OVERLAY ?= cdroot.overlay
 REMOVELIST ?= removelist
-# undefine REMOVELIST if the file doesn't exist
+# unset REMOVELIST if the file doesn't exist
 ifeq ($(wildcard $(REMOVELIST)),)
 REMOVELIST =
 endif

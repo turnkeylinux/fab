@@ -25,4 +25,7 @@ Recommends:
 Suggests:
  dd,
  wodim,
+ binfmt-support,
+ qemu-system-arm,
+ qemu-user-static
 Description: TurnKey GNU/Linux product fabrication framework
