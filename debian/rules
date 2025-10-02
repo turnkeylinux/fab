@@ -1,11 +1,6 @@
 #! /usr/bin/make -f
 
-export DEB_BUILD_MAINT_OPTIONS = hardening=+all
-
-DPKG_EXPORT_BUILDFLAGS = 1
-
-include /usr/share/dpkg/pkg-info.mk
-include /usr/share/dpkg/buildflags.mk
+export PYTHONDONTWRITEBYTECODE=1
 
 %:
 	dh $@ --buildsystem=pybuild
