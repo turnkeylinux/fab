@@ -9,7 +9,6 @@
 
 import os
 import subprocess
-from typing import Tuple, List, Optional
 
 CPP_ARGS = ("-I", "-D", "-U")
 
@@ -18,7 +17,7 @@ class Error(Exception):
     pass
 
 
-def cpp(cpp_input: str, cpp_opts: Optional[List[Tuple[str, str]]]=None) -> str:
+def cpp(cpp_input: str, cpp_opts: list[tuple[str, str]] | None =None) -> str:
     """preprocess <input> through cpp -> preprocessed output
        input may be path/to/file or iterable data type
     """
