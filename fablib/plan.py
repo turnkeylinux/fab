@@ -7,20 +7,19 @@
 # Free Software Foundation; either version 3 of the License, or (at your
 # option) any later version.
 
-import re
 import os
+import re
+from collections.abc import Generator, Iterable, Iterator
+from logging import getLogger
 from os.path import basename, join
-from typing import (
-        List, Optional, Iterator, Dict, Set, Tuple, Iterable, Union, Any, Type,
-        Generator
-)
+from tempfile import TemporaryDirectory
+from typing import Any, ClassVar
 
-from . import cpp
 from debian import debfile, debian_support
 from pool_lib import Pool
 
-from tempfile import TemporaryDirectory
-from logging import getLogger
+from . import cpp
+
 logger = getLogger("fab.plan")
 
 
@@ -32,7 +31,7 @@ class PackageOrigins:
     """class for holding package origins for dependency annotation """
 
     def __init__(self) -> None:
-        self._origins: Dict[str, List[str]] = {}
+        self._origins: dict[str, list[str]] = {}
 
     def add(self, name: str, origin: str) -> None:
         name = name.split("=")[0].strip("*")
@@ -41,7 +40,7 @@ class PackageOrigins:
 
         self._origins[name].append(origin)
 
-    def __getitem__(self, name: str) -> List[str]:
+    def __getitem__(self, name: str) -> list[str]:
         return self._origins[name]
 
 
@@ -49,7 +48,7 @@ class Spec:
     """class for holding a spec"""
 
     def __init__(self) -> None:
-        self._pkgs: Dict[str, str] = {}
+        self._pkgs: dict[str, str] = {}
 
     def add(self, name: str, version: str) -> None:
         """add package name and version to spec"""
@@ -61,7 +60,7 @@ class Spec:
     def __iter__(self) -> Iterator[str]:
         """return list of packages, as name=version"""
         for name, version in self._pkgs.items():
-            yield "%s=%s" % (name, version)
+            yield f"{name}={version}"
 
     def __str__(self) -> str:
         return "\n".join(self._pkgs)
@@ -80,11 +79,13 @@ class Dependency:
     """
 
     class Restrict:
-        RELATIONS = {"<<": [-1], "<=": [-1, 0], "=": [0], ">=": [0, 1], ">>": [1]}
+        RELATIONS: ClassVar[dict[str, list[int]]] = {
+            "<<": [-1], "<=": [-1, 0], "=": [0], ">=": [0, 1], ">>": [1]
+        }
 
         def __init__(self, relation: str, version: str) -> None:
             if relation not in self.RELATIONS:
-                raise Error("bad relation (%s)" % relation)
+                raise Error(f"bad relation ({relation})")
 
             self.relation = relation
             self.version = version
@@ -96,19 +97,25 @@ class Dependency:
             if other is None:
                 return False
 
-            return self.relation == other.relation and self.version == other.version
+            return (
+                self.relation == other.relation
+                and self.version == other.version
+            )
 
         def __contains__(self, version: str) -> bool:
             true_results = self.RELATIONS[self.relation]
 
-            return debian_support.version_compare(version, self.version) in true_results
+            return (
+                debian_support.version_compare(version, self.version)
+                    in true_results
+            )
 
         def __str__(self) -> str:
             return self.relation + " " + self.version
 
-    restrict: Optional[Restrict]
+    restrict: Restrict | None
 
-    def __init__(self, string: str):
+    def __init__(self, string: str) -> None:
         """initialize Dependency from a control file formatted dependency
         e.g.,
             libgpmg1 (>= 1.19.6-1)
@@ -123,7 +130,7 @@ class Dependency:
             string,
         )
         if not m:
-            raise Error("illegally formatted dependency (%s)" % string)
+            raise Error(f"illegally formatted dependency ({string})")
 
         self.name = m.group(1)
         promote = m.group(2)
@@ -139,7 +146,7 @@ class Dependency:
         if parens:
             m = re.match(r"([<>=]+)\s+([\w\~\-\.\+\:]+)$", parens)
             if not m:
-                raise Error("illegal dependency restriction (%s)" % parens)
+                raise Error(f"illegal dependency restriction ({parens})")
 
             relation, version = m.groups()
             self.restrict = Dependency.Restrict(relation, version)
@@ -148,19 +155,20 @@ class Dependency:
         if not self.restrict:
             return self.name
 
-        return "%s (%s)" % (self.name, str(self.restrict))
+        return f"{self.name} ({self.restrict})"
 
     def __hash__(self) -> int:
         return hash(self.name)
 
     def __eq__(self, other: Any) -> bool:
-        if isinstance(other, str) == str:
+        if isinstance(other, str):
             return self.name == other
         elif isinstance(other, Dependency):
             return self.name == other.name
         raise TypeError(
             "don't know how to check equality between Dependency and "
-            f"{other!r} ({type(other)})")
+            f"{other!r} ({type(other)})"
+        )
 
     def is_version_ok(self, version: str) -> bool:
         """compare package := name(relation)ver and version by relation"""
@@ -171,13 +179,15 @@ class Dependency:
 
 
 class PackageGetter:
-    def __init__(self, dep_list: Iterable[Dependency], pool: Pool):
-        logger.debug(f"initializing PackageGetter({list(map(str, dep_list))}, {pool})")
-        self._deps: Dict[Dependency, Optional[str]] = {}
+    def __init__(self, dep_list: Iterable[Dependency], pool: Pool) -> None:
+        logger.debug(
+            f"initializing PackageGetter({list(map(str, dep_list))}, {pool})"
+        )
+        self._deps: dict[Dependency, str | None] = {}
         def format_dep(dep: Dependency) -> str:
             if not dep.restrict or dep.restrict.relation != "=":
                 return dep.name
-            return "%s=%s" % (dep.name, dep.restrict.version)
+            return f"{dep.name}={dep.restrict.version}"
 
         dir = TemporaryDirectory("package_getter", "pool")
         pool.get(dir.name, list(map(format_dep, dep_list)))
@@ -190,25 +200,26 @@ class PackageGetter:
             package_name = fname.split("_")[0]
             self._deps[deps[package_name]] = join(dir.name, fname)
 
-        missing: Set[Dependency] = set(deps.values()) - set(self._deps)
+        missing: set[Dependency] = set(deps.values()) - set(self._deps)
         for dep in missing:
             self._deps[dep] = None
         self.missing = missing
         self.dir = dir
 
-    def __getitem__(self, key: Dependency) -> Optional[str]:
+    def __getitem__(self, key: Dependency) -> str | None:
         return self._deps[key]
 
 
 class Plan:
     @staticmethod
     def _parse_plan_file(
-            path: str, cpp_opts: Optional[List[Tuple[str, str]]]=None) -> Set[str]:
-        """process plan through cpp, then parse it and add packages to plan """
+            path: str, cpp_opts: list[tuple[str, str]] | None = None
+    ) -> set[str]:
+        """process plan through cpp, then parse it and add packages to plan"""
         if cpp_opts is None:
             cpp_opts = []
         processed_plan = cpp.cpp(path, cpp_opts)
-        packages: Set[str] = set()
+        packages: set[str] = set()
         for expr in processed_plan.splitlines():
             expr = re.sub(r"#.*", "", expr)
             expr = expr.strip()
@@ -229,20 +240,23 @@ class Plan:
 
     @classmethod
     def init_from_file(
-            cls: Type['Plan'],
+            cls: type['Plan'],
             plan_file_path: str,
-            cpp_opts: Optional[List[Tuple[str, str]]]=None,
-            pool_path: Optional[str]=None) -> 'Plan':
+            cpp_opts: list[tuple[str, str]] | None = None,
+            pool_path: str | None = None
+    ) -> 'Plan':
         if cpp_opts is None:
             cpp_opts = []
         return cls(cls._parse_plan_file(plan_file_path, cpp_opts), pool_path)
 
-    pool: Optional[Pool]
+    pool: Pool | None
 
-    def __init__(self, iterable: Iterable[str]=(), pool_path: Optional[str]=None):
-        self._plan: Set[str] = set(iterable)
+    def __init__(
+        self, iterable: Iterable[str]=(), pool_path: str | None = None
+    ) -> None:
+        self._plan: set[str] = set(iterable)
 
-        if not pool_path is None:
+        if pool_path is not None:
             self.pool = Pool(pool_path)
         else:
             self.pool = None
@@ -252,7 +266,7 @@ class Plan:
     def __iter__(self) -> Iterator[str]:
         return iter(self._plan)
 
-    def __ior__(self, other: Union['Plan', Set[str]]) -> 'Plan':
+    def __ior__(self, other: 'Plan' | set[str]) -> 'Plan':
         if isinstance(other, Plan):
             self._plan |= other._plan
         else:
@@ -263,9 +277,12 @@ class Plan:
         self._plan.add(v)
 
     def _get_new_deps(
-            self, pkg_control: debfile.Deb822, old_deps: Set[Dependency],
-            depend_fields: List[str]) -> Set[Dependency]:
-        def parse_depends(val: Optional[str]) -> List[str]:
+        self,
+        pkg_control: debfile.Deb822,
+        old_deps: set[Dependency],
+        depend_fields: list[str]
+    ) -> set[Dependency]:
+        def parse_depends(val: str | None) -> list[str]:
             if val is None or val.strip() == "":
                 return []
 
@@ -273,7 +290,7 @@ class Plan:
 
         new_deps = set()
 
-        raw_depends: List[str] = []
+        raw_depends: list[str] = []
         for field_name in depend_fields:
             raw_depends += parse_depends(pkg_control.get(field_name))
 
@@ -284,11 +301,13 @@ class Plan:
 
             alternatives = [Dependency(alt) for alt in raw_depend.split("|")]
 
-            # continue if any of the alternatives are already in resolved or unresolved sets
+            # continue if any of the alternatives are already in resolved or
+            # unresolved sets
             if set(alternatives) & old_deps:
                 continue
 
-            # add the first alternative that exists in the pool to set of new dependencies
+            # add the first alternative that exists in the pool to set of new
+            # dependencies
             for alternative in alternatives:
                 assert self.pool is not None
                 if self.pool.kernel.exists(alternative.name):
@@ -303,14 +322,14 @@ class Plan:
         return new_deps
 
     @staticmethod
-    def _get_provided(pkg_control: debfile.Deb822) -> Set[str]:
+    def _get_provided(pkg_control: debfile.Deb822) -> set[str]:
         raw_provided = pkg_control.get("Provides")
         if raw_provided is None or raw_provided.strip() == "":
             return set()
 
         return set(re.split(r"\s*,\s*", raw_provided.strip()))
 
-    def dctrls(self) -> Dict[Dependency, debfile.Deb822]:
+    def dctrls(self) -> dict[Dependency, debfile.Deb822]:
         """return plan dependencies control file info"""
         toquery = { Dependency(pkg) for pkg in self._plan }
         if self.pool is None:
@@ -338,23 +357,24 @@ class Plan:
         if not self.pool:
             return list(self), []
 
-        resolved: Set[Dependency] = set()
-        missing: Set[Dependency] = set()
-        provided: Set[str] = set()
+        resolved: set[Dependency] = set()
+        missing: set[Dependency] = set()
+        provided: set[str] = set()
 
         def reformat2dep(pkg: str) -> str:
             if "=" not in pkg:
                 return pkg
 
             name, version = pkg.split("=", 1)
-            return "%s (= %s)" % (name, version)
+            return f"{name} (= {version})"
 
         unresolved = { Dependency(reformat2dep(pkg)) for pkg in self }
         while unresolved:
-            # get newest package versions of unresolved dependencies from the pool
-            # and pray they don't conflict with our dependency restrictions
+            # get newest package versions of unresolved dependencies from the
+            # pool and pray they don't conflict with our dependency
+            # restrictions
             packages = PackageGetter(unresolved, self.pool)
-            new_deps: Set[Dependency] = set()
+            new_deps: set[Dependency] = set()
             for dep in unresolved:
                 logger.debug(f'resolving dependency: {dep}')
                 package_path = packages[dep]
@@ -366,8 +386,8 @@ class Plan:
                 version = pkg_control["Version"]
                 if not dep.is_version_ok(version):
                     raise Error(
-                        "dependency '%s' incompatible with newest pool version (%s)"
-                        % (dep, version)
+                        f"dependency '{dep}' incompatible with newest pool"
+                        f" version ({version})"
                     )
                 spec.add(dep.name, version)
                 resolved.add(dep)
@@ -378,12 +398,14 @@ class Plan:
                 provided |= self._get_provided(pkg_control)
 
             unresolved = new_deps - resolved
-            missing = (missing | packages.missing) - provided
+            all_missing = set(
+                map(str, (missing | packages.missing))
+            ) - provided
 
-        if missing:
+        if all_missing:
 
             def get_origins(dep: Dependency) -> Generator[str, None, None]:
-                depname: Optional[str] = dep.name
+                depname: str | None = dep.name
                 # trace the package origins
                 while depname is not None:
                     try:
@@ -396,7 +418,9 @@ class Plan:
             for dep in missing:
                 brokendeps.append(dep.name)
 
-            logger.debug(f'could not find these packages in pool: {brokendeps!r}')
+            logger.debug(
+                f"could not find these packages in pool: {brokendeps!r}"
+            )
 
             return spec, brokendeps
 
