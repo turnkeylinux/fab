@@ -324,7 +324,9 @@ def cmd_apply_overlay(
         overlay: str,
         dstpath: str,
         preserve: bool = False) -> None:
-
+    if not isdir(overlay):
+        print(f"Skipping {overlay} because it is not a directory")
+        return None
     cmd = ['cp', '-TdR']
     if preserve:
         cmd.append('-p')
