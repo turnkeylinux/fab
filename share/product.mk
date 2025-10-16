@@ -69,7 +69,7 @@ endif
 
 COMMON_PATCHES := turnkey.d $(COMMON_PATCHES)
 
-CONF_VARS_BUILTIN ?= FAB_ARCH HOST_ARCH FAB_HTTP_PROXY AMD64 ARM64 RELEASE DISTRO CODENAME DEBIAN UBUNTU KERNEL DEBUG CHROOT_ONLY
+CONF_VARS_BUILTIN ?= FAB_ARCH HOST_ARCH FAB_HTTP_PROXY AMD64 ARM64 RELEASE DISTRO CODENAME DEBIAN UBUNTU KERNEL DEBUG CHROOT_ONLY DI_LIVE_DEBUG
 
 define filter-undefined-vars
 	$(foreach var,$1,$(if $($(var)), $(var)))
@@ -245,6 +245,7 @@ define help/body
 	@echo
 	@echo '# Built-in configuration options:'
 	@echo '  DEBUG                      Turn on product debugging'
+	@echo '  DI_LIVE_DEBUG              Set kernel commandline options for debugging di-live'
 	@echo '  KERNEL                     Override default kernel package'
 	@echo '  EXTRA_PLAN                 Extra packages to include in the plan'
 	@echo '  CHROOT_ONLY                Build a chroot-only product'
