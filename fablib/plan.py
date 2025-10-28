@@ -15,7 +15,7 @@ from os.path import basename, join
 from tempfile import TemporaryDirectory
 from typing import Any, ClassVar, Union
 
-from debian import debfile, debian_support
+from debian import debian_support, deb822, debfile
 from pool_lib import Pool
 
 from . import cpp
@@ -278,7 +278,7 @@ class Plan:
 
     def _get_new_deps(
         self,
-        pkg_control: debfile.Deb822,
+        pkg_control: deb822.Deb822,
         old_deps: set[Dependency],
         depend_fields: list[str]
     ) -> set[Dependency]:
@@ -322,14 +322,14 @@ class Plan:
         return new_deps
 
     @staticmethod
-    def _get_provided(pkg_control: debfile.Deb822) -> set[str]:
+    def _get_provided(pkg_control: deb822.Deb822) -> set[str]:
         raw_provided = pkg_control.get("Provides")
         if raw_provided is None or raw_provided.strip() == "":
             return set()
 
         return set(re.split(r"\s*,\s*", raw_provided.strip()))
 
-    def dctrls(self) -> dict[Dependency, debfile.Deb822]:
+    def dctrls(self) -> dict[Dependency, deb822.Deb822]:
         """return plan dependencies control file info"""
         toquery = { Dependency(pkg) for pkg in self._plan }
         if self.pool is None:
