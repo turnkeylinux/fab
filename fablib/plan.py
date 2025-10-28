@@ -13,7 +13,7 @@ from collections.abc import Generator, Iterable, Iterator
 from logging import getLogger
 from os.path import basename, join
 from tempfile import TemporaryDirectory
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Union
 
 from debian import debfile, debian_support
 from pool_lib import Pool
@@ -266,7 +266,7 @@ class Plan:
     def __iter__(self) -> Iterator[str]:
         return iter(self._plan)
 
-    def __ior__(self, other: 'Plan' | set[str]) -> 'Plan':
+    def __ior__(self, other: Union['Plan', set[str]]) -> 'Plan':
         if isinstance(other, Plan):
             self._plan |= other._plan
         else:
