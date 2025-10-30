@@ -8,31 +8,28 @@
 # Free Software Foundation; either version 3 of the License, or (at your
 # option) any later version.
 
-from argparse import ArgumentParser, RawDescriptionHelpFormatter
 import argparse
-import tempfile
 import subprocess
-from typing import (
-        List, Optional, Tuple, Dict, NoReturn, Union, Any, Sequence
-)
+import tempfile
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
+from collections.abc import Sequence
+from typing import Any, NoReturn
 
 try:
     from typing import Protocol  # type: ignore
 except ImportError:
     from typing_extensions import Protocol  # type: ignore
+import logging
+import os
 import shutil
 import sys
-import os
-from os.path import isdir, join, basename, relpath
+from os.path import basename, isdir, join, relpath
 
-from debian import debfile
-
-from fablib.installer import (PoolInstaller,
-                              LiveInstaller, Installer)
 from chroot import Chroot
-from fablib.plan import Plan, Dependency
-from fablib import cpp, annotate, resolve, removelist
-import logging 
+from debian import debfile
+from fablib import annotate, cpp, removelist, resolve
+from fablib.installer import Installer, LiveInstaller, PoolInstaller
+from fablib.plan import Dependency, Plan
 
 log_level={
     'DEBUG': logging.DEBUG,
@@ -75,7 +72,7 @@ class AssociatedAppendAction(argparse.Action):
         self,
         option_strings: Sequence[str],
         dest: str,
-        nargs: Optional[Union[int, str]] = None,
+        nargs: int | str | None = None,
         **kwargs: Any,
     ) -> None:
         if nargs is not None:
@@ -86,8 +83,8 @@ class AssociatedAppendAction(argparse.Action):
         self,
         parser: ArgumentParser,
         namespace: argparse.Namespace,
-        values: Optional[Union[str, Sequence[Any]]],
-        option_string: Optional[str] = None,
+        values: str | Sequence[Any] | None,
+        option_string: str | None = None,
     ) -> None:
         if (hasattr(namespace, self.dest) and
                 getattr(namespace, self.dest) is not None):
@@ -96,7 +93,7 @@ class AssociatedAppendAction(argparse.Action):
             setattr(namespace, self.dest, [(option_string, values)])
 
 
-def generate_index(dctrls: Dict[Dependency, debfile.Deb822]) -> str:
+def generate_index(dctrls: dict[Dependency, debfile.Deb822]) -> str:
     fields = (
         "Package",
         "Essential",
@@ -131,7 +128,7 @@ def generate_index(dctrls: Dict[Dependency, debfile.Deb822]) -> str:
     return "\n".join(index)
 
 
-def cmd_query(pool_path: Optional[str], packages: List[str]) -> None:
+def cmd_query(pool_path: str | None, packages: list[str]) -> None:
     if pool_path is None:
         fatal(
             "no pool path provided: either pass -p/--pool or set "
@@ -147,7 +144,7 @@ def cmd_query(pool_path: Optional[str], packages: List[str]) -> None:
     print(generate_index(dctrls))
 
 
-def cmd_cpp(plan_path: str, cpp_opts: List[Tuple[str, str]]) -> None:
+def cmd_cpp(plan_path: str, cpp_opts: list[tuple[str, str]]) -> None:
     try:
         print(cpp.cpp(plan_path, cpp_opts))
     except cpp.Error as e:
@@ -156,12 +153,12 @@ def cmd_cpp(plan_path: str, cpp_opts: List[Tuple[str, str]]) -> None:
 
 def cmd_chroot(
         chroot_path: str,
-        script_path_raw: Optional[str],
-        env_vars_raw: Optional[str],
-        script_args: List[str],
-) -> Union[None, NoReturn]:
+        script_path_raw: str | None,
+        env_vars_raw: str | None,
+        script_args: list[str],
+) -> None:
 
-    env_vars: List[str]
+    env_vars: list[str]
     if env_vars_raw is None:
         env_vars = []
     else:
@@ -202,14 +199,14 @@ def cmd_chroot(
 
 def cmd_install(
         chroot_path: str,
-        packages: List[str],
-        pool_path: Optional[str],
-        arch: Optional[str],
+        packages: list[str],
+        pool_path: str | None,
+        arch: str | None,
         no_deps: bool,
-        apt_proxy: Optional[str],
-        ignore_errors_raw: Optional[str],
-        env_vars_raw: Optional[str],
-        cpp_opts: List[Tuple[str, str]],
+        apt_proxy: str | None,
+        ignore_errors_raw: str | None,
+        env_vars_raw: str | None,
+        cpp_opts: list[tuple[str, str]],
 ) -> None:
     logger.debug(
         "fab-install("
@@ -234,7 +231,7 @@ def cmd_install(
                               capture_output=True,
                               text=True).stdout.strip()
 
-    environ: Dict[str, str]
+    environ: dict[str, str]
     if env_vars_raw is None:
         environ = {}
     else:
@@ -244,7 +241,7 @@ def cmd_install(
             if val is not None:
                 environ[name] = val
 
-    ignore_errors: List[str]
+    ignore_errors: list[str]
     if ignore_errors_raw is None:
         ignore_errors = []
     else:
@@ -310,10 +307,10 @@ def cmd_plan_annotate(pool_path: str, inplace: bool, plan_path: str) -> None:
 
 def cmd_plan_resolve(
     output_path: str,
-    bootstrap_path: Optional[str],
+    bootstrap_path: str | None,
     pool_path: str,
-    cpp_opts: List[Tuple[str, str]],
-    plans: List[str],
+    cpp_opts: list[tuple[str, str]],
+    plans: list[str],
 ) -> None:
 
     resolve.resolve_plan(output_path, bootstrap_path,
