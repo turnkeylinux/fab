@@ -15,7 +15,7 @@ from os.path import basename, join
 from tempfile import TemporaryDirectory
 from typing import Any, ClassVar, Union
 
-from debian import debian_support, deb822, debfile
+from debian import deb822, debfile, debian_support
 from pool_lib import Pool
 
 from . import cpp
