@@ -7,7 +7,7 @@ from typing import IO
 
 from .common import fatal, warn
 
-KNOWN_PREFIXES = {"~"}
+KNOWN_PREFIXES = {"~", "!"}
 
 
 def parse_removelist(
@@ -56,5 +56,7 @@ def apply_removelist(removelist_fob: IO[str], root_path: str) -> None:
         if prefix == "~":
             for this_path in glob.glob(path):
                 remove(this_path)
+        elif prefix == "!":
+            os.makedirs(path)
         else:
             remove(path)
