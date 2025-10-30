@@ -93,7 +93,7 @@ class Dependency:
         def __hash__(self) -> int:
             return hash(self.relation) ^ hash(self.version)
 
-        def __eq__(self, other: Any) -> bool:
+        def __eq__(self, other: Any) -> bool:  # noqa: ANN401
             if other is None:
                 return False
 
@@ -160,7 +160,7 @@ class Dependency:
     def __hash__(self) -> int:
         return hash(self.name)
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: Any) -> bool:  # noqa: ANN401
         if isinstance(other, str):
             return self.name == other
         elif isinstance(other, Dependency):
