@@ -12,13 +12,13 @@ import argparse
 import subprocess
 import tempfile
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from typing import Any, NoReturn
 
 try:
-    from typing import Protocol  # type: ignore
+    from typing import Protocol
 except ImportError:
-    from typing_extensions import Protocol  # type: ignore
+    from typing_extensions import Protocol  # type: ignore[assignment]
 import logging
 import os
 import shutil
@@ -26,7 +26,7 @@ import sys
 from os.path import basename, isdir, join, relpath
 
 from chroot import Chroot
-from debian import debfile
+from debian import deb822
 from fablib import annotate, cpp, removelist, resolve
 from fablib.installer import Installer, LiveInstaller, PoolInstaller
 from fablib.plan import Dependency, Plan
@@ -43,6 +43,7 @@ log_level={
 }[os.getenv('FAB_LOG_LEVEL', 'warn').upper()]
 logger = logging.getLogger().getChild("fab")
 logger.setLevel(log_level)
+
 
 class SupportsStr(Protocol):
     def __str__(self) -> str:
@@ -73,7 +74,7 @@ class AssociatedAppendAction(argparse.Action):
         option_strings: Sequence[str],
         dest: str,
         nargs: int | str | None = None,
-        **kwargs: Any,
+        **kwargs: Any,  # noqa: ANN401
     ) -> None:
         if nargs is not None:
             raise ValueError("nargs not allowed")
@@ -93,7 +94,7 @@ class AssociatedAppendAction(argparse.Action):
             setattr(namespace, self.dest, [(option_string, values)])
 
 
-def generate_index(dctrls: dict[Dependency, debfile.Deb822]) -> str:
+def generate_index(dctrls: dict[Dependency, deb822.Deb822]) -> str:
     fields = (
         "Package",
         "Essential",
@@ -263,8 +264,8 @@ def cmd_install(
     installer: Installer
     if pool_path is not None:
         if no_deps:
-            pool_packages = list(plan)
-            other_packages = []
+            pool_packages: Iterable[str] = iter(plan)
+            other_packages: Iterable[str] = iter([])
         else:
             pool_packages, other_packages = plan.resolve()
             pool_packages = list(pool_packages)
@@ -281,8 +282,8 @@ def cmd_install(
         print("these packages will be installed via apt:")
         for pkg in other_packages:
             print(f" - {pkg}")
-        pool_installer.install(pool_packages, ignore_errors)
-        installer.install(other_packages, ignore_errors)
+        pool_installer.install(list(pool_packages), ignore_errors)
+        installer.install(list(other_packages), ignore_errors)
         return
     else:
         packages = list(plan)
@@ -328,7 +329,7 @@ def cmd_apply_overlay(
     if preserve:
         cmd.append('-p')
 
-    subprocess.run(cmd + [overlay, dstpath])
+    subprocess.run([*cmd, overlay, dstpath])
 
 
 def cmd_apply_patch(
@@ -344,7 +345,8 @@ def cmd_apply_patch(
         cat_proc = subprocess.Popen([cmd, patch], stdout=subprocess.PIPE)
         patch_proc = subprocess.Popen(['patch', '-Nbtur', '-', '-p1', '-d',
                                       dstpath])
-        cat_proc.stdout.close()
+        if cat_proc.stdout is not None:
+            cat_proc.stdout.close()
         patch_proc.wait()
     except subprocess.CalledProcessError:
         print(f'Warning: patch {patch} failed to apply', file=sys.stderr)
