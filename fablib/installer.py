@@ -41,7 +41,7 @@ class RevertibleFile:
 
             i += 1
 
-    def __init__(self, path: str):
+    def __init__(self, path: str) -> None:
         self.orig_path: str | None = None
         if exists(path):
             self.orig_path = self._get_orig_path(path)
@@ -75,7 +75,7 @@ class RevertibleFile:
 class RevertibleScript(RevertibleFile):
     """RevertibleFile that ensures file is executable"""
 
-    def __init__(self, path: str, lines: Iterable[str]):
+    def __init__(self, path: str, lines: Iterable[str]) -> None:
         super().__init__(path)
         self.write("\n".join(lines))
         self.close()
@@ -84,16 +84,25 @@ class RevertibleScript(RevertibleFile):
 
 
 class Installer:
-    def __init__(self, chroot_path: str, environ: dict[str, str] | None = None):
+    def __init__(
+        self,
+        chroot_path: str,
+        environ: dict[str, str] | None = None,
+    ) -> None:
         if environ is None:
             environ = {}
-        env = {"DEBIAN_FRONTEND": "noninteractive", "DEBIAN_PRIORITY": "critical"}
+        env = {
+            "DEBIAN_FRONTEND": "noninteractive",
+            "DEBIAN_PRIORITY": "critical"
+        }
         env.update(environ)
 
         self.chroot = Chroot(chroot_path, environ=env)
 
     @staticmethod
-    def _get_packages_priority(packages: list[str]) -> tuple[list[str], list[str]]:
+    def _get_packages_priority(
+            packages: list[str],
+    ) -> tuple[list[str], list[str]]:
         """high priority packages must be installed before regular packages
         APT should handle this, but in some circumstances it chokes...
         """
@@ -122,13 +131,19 @@ class Installer:
             extra_apt_args = []
         high, regular = self._get_packages_priority(packages)
 
-        lines = ["#!/bin/sh", "echo", 'echo "Warning: Fake invoke-rc.d called"']
+        lines = [
+            "#!/bin/sh", "echo", 'echo "Warning: Fake invoke-rc.d called"'
+        ]
         # TODO fake_invoke_rcd not accessed
         fake_invoke_rcd = RevertibleScript(
             join(self.chroot.path, "usr/sbin/invoke-rc.d"), lines
         )
 
-        lines = ["#!/bin/sh", "echo", 'echo "Warning: Fake start-stop-daemon called"']
+        lines = [
+            "#!/bin/sh",
+            "echo",
+            'echo "Warning: Fake start-stop-daemon called"'
+        ]
         # TODO fake_start_stop not accessed
         fake_start_stop = RevertibleScript(
             join(self.chroot.path, "sbin/start-stop-daemon"), lines
@@ -169,7 +184,9 @@ class Installer:
                         log.reverse()
                         return log
 
-                    def get_errors(log: list[str], error_str: str) -> list[str]:
+                    def get_errors(
+                        log: list[str], error_str: str
+                    ) -> list[str]:
                         errors = []
                         for line in reversed(log):
                             if line == error_str:
@@ -178,7 +195,9 @@ class Installer:
                             errors.append(basename(line).split("_")[0])
                         return errors
 
-                    log = get_last_log(join(self.chroot.path, "var/log/apt/term.log"))
+                    log = get_last_log(
+                        join(self.chroot.path, "var/log/apt/term.log")
+                    )
 
                     error_str = "Errors were encountered while processing:"
                     if error_str not in log:
@@ -190,7 +209,9 @@ class Installer:
                         if apt_return_code == 100:
                             # always seems to return 100 when hitting
                             # 'E: Unable to locate package ...'
-                            raise Error("Errors encountered installing packages")
+                            raise Error(
+                                "Errors encountered installing packages"
+                            )
                         else:
                             continue
 
@@ -223,8 +244,12 @@ class Installer:
                 if self.chroot.system("update-initramfs -u") != 0:
                     self.chroot.system("live-update-initramfs -u")
             else:
-                if self.chroot.system(f"update-initramfs -c -k {kversion}") != 0:
-                    self.chroot.system(f"live-update-initramfs -c -k {kversion}")
+                if self.chroot.system(
+                    f"update-initramfs -c -k {kversion}"
+                ) != 0:
+                    self.chroot.system(
+                        f"live-update-initramfs -c -k {kversion}"
+                    )
 
             os.remove(defer_log)
 
@@ -242,8 +267,8 @@ class PoolInstaller(Installer):
         pool_path: str,
         arch: str,
         environ: dict[str, str] | None = None,
-    ):
-        super(PoolInstaller, self).__init__(chroot_path, environ)
+    ) -> None:
+        super().__init__(chroot_path, environ)
 
         from pool_lib import Pool
 
@@ -299,7 +324,9 @@ class PoolInstaller(Installer):
         self.pool.get(packagedir, packages, strict=True)
 
         print("generating package index...")
-        sources_list = RevertibleFile(join(self.chroot.path, "etc/apt/sources.list"))
+        sources_list = RevertibleFile(
+            join(self.chroot.path, "etc/apt/sources.list")
+        )
         # making RevertibleFile a truly compliant TextIO is a high-effort,
         # low-reward action. Here we just need it to support .write, so we
         # pretend it is a full TextIO object.
@@ -323,8 +350,8 @@ class LiveInstaller(Installer):
         chroot_path: str,
         apt_proxy: str | None = None,
         environ: dict[str, str] | None = None,
-    ):
-        super(LiveInstaller, self).__init__(chroot_path, environ)
+    ) -> None:
+        super().__init__(chroot_path, environ)
 
         self.apt_proxy = apt_proxy
 
