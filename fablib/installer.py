@@ -7,16 +7,17 @@
 # Free Software Foundation; either version 3 of the License, or (at your
 # option) any later version.
 
-import os
-from os.path import join, exists, basename
-import shutil
-from typing import Iterable, TextIO, cast
-import logging
-
 import hashlib
-from debian import debfile
+import logging
+import os
+import shutil
+from collections.abc import Iterable
+from os.path import basename, exists, join
+from typing import TextIO, cast
 
 from chroot import Chroot
+from debian import debfile
+
 from fablib import common
 
 logger = logging.getLogger("fab.installer")
@@ -151,7 +152,7 @@ class Installer:
                 ]
                 args.extend(extra_apt_args)
                 apt_return_code = self.chroot.system(
-                    f"apt-get {' '.join((args + packages))}"
+                    f"apt-get {' '.join(args + packages)}"
                 )
                 if apt_return_code != 0:
 
