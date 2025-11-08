@@ -28,7 +28,7 @@ class Error(Exception):
 
 
 class PackageOrigins:
-    """class for holding package origins for dependency annotation """
+    """class for holding package origins for dependency annotation"""
 
     def __init__(self) -> None:
         self._origins: dict[str, list[str]] = {}
@@ -80,7 +80,11 @@ class Dependency:
 
     class Restrict:
         RELATIONS: ClassVar[dict[str, list[int]]] = {
-            "<<": [-1], "<=": [-1, 0], "=": [0], ">=": [0, 1], ">>": [1]
+            "<<": [-1],
+            "<=": [-1, 0],
+            "=": [0],
+            ">=": [0, 1],
+            ">>": [1],
         }
 
         def __init__(self, relation: str, version: str) -> None:
@@ -107,7 +111,7 @@ class Dependency:
 
             return (
                 debian_support.version_compare(version, self.version)
-                    in true_results
+                in true_results
             )
 
         def __str__(self) -> str:
@@ -184,6 +188,7 @@ class PackageGetter:
             f"initializing PackageGetter({list(map(str, dep_list))}, {pool})"
         )
         self._deps: dict[Dependency, str | None] = {}
+
         def format_dep(dep: Dependency) -> str:
             if not dep.restrict or dep.restrict.relation != "=":
                 return dep.name
@@ -213,7 +218,7 @@ class PackageGetter:
 class Plan:
     @staticmethod
     def _parse_plan_file(
-            path: str, cpp_opts: list[tuple[str, str]] | None = None
+        path: str, cpp_opts: list[tuple[str, str]] | None = None
     ) -> set[str]:
         """process plan through cpp, then parse it and add packages to plan"""
         if cpp_opts is None:
@@ -240,11 +245,11 @@ class Plan:
 
     @classmethod
     def init_from_file(
-            cls: type['Plan'],
-            plan_file_path: str,
-            cpp_opts: list[tuple[str, str]] | None = None,
-            pool_path: str | None = None
-    ) -> 'Plan':
+        cls: type["Plan"],
+        plan_file_path: str,
+        cpp_opts: list[tuple[str, str]] | None = None,
+        pool_path: str | None = None,
+    ) -> "Plan":
         if cpp_opts is None:
             cpp_opts = []
         return cls(cls._parse_plan_file(plan_file_path, cpp_opts), pool_path)
@@ -252,7 +257,7 @@ class Plan:
     pool: Pool | None
 
     def __init__(
-        self, iterable: Iterable[str]=(), pool_path: str | None = None
+        self, iterable: Iterable[str] = (), pool_path: str | None = None
     ) -> None:
         self._plan: set[str] = set(iterable)
 
@@ -266,7 +271,7 @@ class Plan:
     def __iter__(self) -> Iterator[str]:
         return iter(self._plan)
 
-    def __ior__(self, other: Union['Plan', set[str]]) -> 'Plan':
+    def __ior__(self, other: Union["Plan", set[str]]) -> "Plan":
         if isinstance(other, Plan):
             self._plan |= other._plan
         else:
@@ -280,7 +285,7 @@ class Plan:
         self,
         pkg_control: deb822.Deb822,
         old_deps: set[Dependency],
-        depend_fields: list[str]
+        depend_fields: list[str],
     ) -> set[Dependency]:
         def parse_depends(val: str | None) -> list[str]:
             if val is None or val.strip() == "":
@@ -331,9 +336,9 @@ class Plan:
 
     def dctrls(self) -> dict[Dependency, deb822.Deb822]:
         """return plan dependencies control file info"""
-        toquery = { Dependency(pkg) for pkg in self._plan }
+        toquery = {Dependency(pkg) for pkg in self._plan}
         if self.pool is None:
-            raise Error('attempt to use `None` pool value!')
+            raise Error("attempt to use `None` pool value!")
         else:
             packages = PackageGetter(toquery, self.pool)
 
@@ -368,7 +373,7 @@ class Plan:
             name, version = pkg.split("=", 1)
             return f"{name} (= {version})"
 
-        unresolved = { Dependency(reformat2dep(pkg)) for pkg in self }
+        unresolved = {Dependency(reformat2dep(pkg)) for pkg in self}
         while unresolved:
             # get newest package versions of unresolved dependencies from the
             # pool and pray they don't conflict with our dependency
@@ -376,7 +381,7 @@ class Plan:
             packages = PackageGetter(unresolved, self.pool)
             new_deps: set[Dependency] = set()
             for dep in unresolved:
-                logger.debug(f'resolving dependency: {dep}')
+                logger.debug(f"resolving dependency: {dep}")
                 package_path = packages[dep]
                 if not package_path:
                     continue
@@ -398,9 +403,7 @@ class Plan:
                 provided |= self._get_provided(pkg_control)
 
             unresolved = new_deps - resolved
-            all_missing = set(
-                map(str, (missing | packages.missing))
-            ) - provided
+            all_missing = set(map(str, (missing | packages.missing))) - provided
 
         if all_missing:
 

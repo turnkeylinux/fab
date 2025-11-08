@@ -93,7 +93,7 @@ class Installer:
             environ = {}
         env = {
             "DEBIAN_FRONTEND": "noninteractive",
-            "DEBIAN_PRIORITY": "critical"
+            "DEBIAN_PRIORITY": "critical",
         }
         env.update(environ)
 
@@ -101,7 +101,7 @@ class Installer:
 
     @staticmethod
     def _get_packages_priority(
-            packages: list[str],
+        packages: list[str],
     ) -> tuple[list[str], list[str]]:
         """high priority packages must be installed before regular packages
         APT should handle this, but in some circumstances it chokes...
@@ -131,21 +131,17 @@ class Installer:
             extra_apt_args = []
         high, regular = self._get_packages_priority(packages)
 
-        lines = [
-            "#!/bin/sh", "echo", 'echo "Warning: Fake invoke-rc.d called"'
-        ]
+        lines = ["#!/bin/sh", "echo", 'echo "Warning: Fake invoke-rc.d called"']
         # TODO fake_invoke_rcd not accessed
-        fake_invoke_rcd = RevertibleScript(
-            join(self.chroot.path, "usr/sbin/invoke-rc.d"), lines
-        )
+        RevertibleScript(join(self.chroot.path, "usr/sbin/invoke-rc.d"), lines)
 
         lines = [
             "#!/bin/sh",
             "echo",
-            'echo "Warning: Fake start-stop-daemon called"'
+            'echo "Warning: Fake start-stop-daemon called"',
         ]
         # TODO fake_start_stop not accessed
-        fake_start_stop = RevertibleScript(
+        RevertibleScript(
             join(self.chroot.path, "sbin/start-stop-daemon"), lines
         )
 
@@ -184,9 +180,7 @@ class Installer:
                         log.reverse()
                         return log
 
-                    def get_errors(
-                        log: list[str], error_str: str
-                    ) -> list[str]:
+                    def get_errors(log: list[str], error_str: str) -> list[str]:
                         errors = []
                         for line in reversed(log):
                             if line == error_str:
@@ -244,9 +238,10 @@ class Installer:
                 if self.chroot.system("update-initramfs -u") != 0:
                     self.chroot.system("live-update-initramfs -u")
             else:
-                if self.chroot.system(
-                    f"update-initramfs -c -k {kversion}"
-                ) != 0:
+                if (
+                    self.chroot.system(f"update-initramfs -c -k {kversion}")
+                    != 0
+                ):
                     self.chroot.system(
                         f"live-update-initramfs -c -k {kversion}"
                     )

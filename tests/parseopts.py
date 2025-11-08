@@ -1,11 +1,10 @@
-import sys
 import getopt
+import sys
 
 opts, args = getopt.getopt(sys.argv[1:], "I:D:")
 
 for opt, val in opts:
-    if opt == '-I':
+    if opt == "-I":
         print("INCLUDE: " + val)
-    elif opt == '-D':
+    elif opt == "-D":
         print("DEFINE: " + val)
-    

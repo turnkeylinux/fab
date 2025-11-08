@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 # Copyright (c) 2013 Alon Swartz <alon@turnkeylinux.org>
 #
 # This file is part of Fab
@@ -25,36 +25,41 @@ Warnings:
       This will alter the image, you might want to make a copy before hand.
 """
 
-import os
-import sys
-import stat
 import getopt
+import os
+import stat
 import subprocess
+import sys
+from typing import NoReturn
 
-def fatal(e: Any) -> NoReturn:
-    print('Error: ' + str(e), file=sys.stderr)
-    sys.exit(1)
-
-def usage(e: Any=None) -> NoReturn:
-    if e:
-        print('Error: ' + str(e), file=sys.stderr)
-
-    cmd = os.path.basename(sys.argv[0])
-    print('Syntax: %s iso_path usb_device' % cmd, file=sys.stderr)
-    print(__doc__.strip(), file=sys.stderr)
-
-    sys.exit(1)
 
 class Error(Exception):
     pass
 
+
+def fatal(message: str | Error | getopt.GetoptError) -> NoReturn:
+    print(f"Error: {message}", file=sys.stderr)
+    sys.exit(1)
+
+
+def usage(message: str | getopt.GetoptError | None = None) -> NoReturn:
+    if message:
+        print(f"Error: {message}", file=sys.stderr)
+
+    cmd = os.path.basename(sys.argv[0])
+    print(f"Syntax: {cmd} iso_path usb_device", file=sys.stderr)
+    print(__doc__.strip(), file=sys.stderr)
+
+    sys.exit(1)
+
+
 class Iso:
-    def __init__(self, path: str):
+    def __init__(self, path: str) -> None:
         self.path = os.path.realpath(path)
         self.name = os.path.basename(self.path)
 
         if not os.path.exists(self.path):
-            raise Error("iso path does not exist: %s" % self.path)
+            raise Error(f"iso path does not exist: {self.path}")
 
     def make_hybrid(self) -> None:
         subprocess.run(["isohybrid", self.path])
@@ -65,8 +70,7 @@ class Iso:
     @property
     def is_hybrid(self) -> bool:
         output = subprocess.run(
-            ["fdisk", "-l", self.path],
-            capture_output=True, text=True
+            ["fdisk", "-l", self.path], capture_output=True, text=True
         ).stdout
 
         if "Hidden HPFS/NTFS" in output:
@@ -82,20 +86,22 @@ class Iso:
 
 
 class Usb:
-    def __init__(self, path: str):
+    def __init__(self, path: str) -> None:
         self.path = path
 
         if not os.path.exists(self.path):
-            raise Error("usb path does not exist: %s" % self.path)
+            raise Error(f"usb path does not exist: {self.path}")
 
         if not self.is_block_device:
-            raise Error("usb path is not a block device: %s" % self.path)
+            raise Error(f"usb path is not a block device: {self.path}")
 
         if self.is_partition:
-            raise Error("usb path seems to be a partition: %s" % self.path)
+            raise Error(f"usb path seems to be a partition: {self.path}")
 
         if not self.is_usb_device:
-            raise Error("usb path is not verifiable as a usb device: %s" % self.path)
+            raise Error(
+                f"usb path is not verifiable as a usb device: {self.path}"
+            )
 
     @property
     def is_block_device(self) -> bool:
@@ -122,18 +128,19 @@ class Usb:
         output = subprocess.run(cmd, text=True).stdout
         return output.split(" ")[0]
 
-    def write_iso(self, iso_path: str):
-        cmd = ["dd", "if=%s" % iso_path, "of=%s" % self.path]
+    def write_iso(self, iso_path: str) -> None:
+        cmd = ["dd", f"if={iso_path}", f"of={self.path}"]
         subprocess.run(cmd)
 
-def main():
+
+def main() -> None:
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], 'h', ['help'])
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "h", ["help"])
     except getopt.GetoptError as e:
         usage(e)
 
-    for opt, val in opts:
-        if opt in ('-h', '--help'):
+    for opt, _val in opts:
+        if opt in ("-h", "--help"):
             usage()
 
     if not len(args) == 2:
@@ -149,8 +156,8 @@ def main():
         fatal(e)
 
     print("*" * 78)
-    print("iso: %s (hybrid: %s)" % (iso.name, iso.is_hybrid))
-    print("usb: %s (%s)" % (usb.name, usb.path))
+    print(f"iso: {iso.name} (hybrid: {iso.is_hybrid})")
+    print(f"usb: {usb.name} ({usb.path})")
     print("*" * 78)
 
     cont = input("Is the above correct? (y/N): ").strip()
@@ -165,6 +172,5 @@ def main():
     usb.write_iso(iso.path)
 
 
-if __name__ == '__main__':
-   main()
-
+if __name__ == "__main__":
+    main()
