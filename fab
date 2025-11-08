@@ -380,11 +380,14 @@ def add_cpp_opts(parser: ArgumentParser) -> None:
 
 if __name__ == "__main__":
     parser = ArgumentParser(
+        prog="fab",
         formatter_class=RawDescriptionHelpFormatter,
         description="""
 Configuration environment variables:
     FAB_POOL_PATH           Path to the package pool
-    FAB_PLAN_INCLUDE_PATH   Global include path for plan preprocessing""",
+    FAB_PLAN_INCLUDE_PATH   Global include path for plan preprocessing
+    FAB_LOG_LEVEL           DEBUG|WARN|INFO|ERR|CRITICAL|FATAL (default: WARN)
+""",
     )
     parser.add_argument(
         "-v",
@@ -489,7 +492,9 @@ Environment:
                                 default: /usr/share/fab
 """,
     )
-    install_parser.add_argument("chroot", metavar="PATH", help="path to chroot")
+    install_parser.add_argument(
+        "chroot", metavar="PATH", help="path to chroot"
+    )
     install_parser.add_argument(
         "packages",
         nargs="*",
