@@ -74,6 +74,14 @@ class AssociatedAppendAction(argparse.Action):
         nargs: int | str | None = None,
         **kwargs: Any,  # noqa: ANN401
     ) -> None:
+        logger.debug(
+            "AssociatedAppendAction("
+            f"\n  {option_strings=},"
+            f"\n  {dest=},"
+            f"\n  {nargs=},"
+            f"\n  {kwargs=},"
+            "\n)"
+        )
         if nargs is not None:
             raise ValueError("nargs not allowed")
         super().__init__(option_strings, dest, **kwargs)
@@ -95,6 +103,7 @@ class AssociatedAppendAction(argparse.Action):
 
 
 def generate_index(dctrls: dict[Dependency, deb822.Deb822]) -> str:
+    logger.debug(f"generate_index({dctrls=})")
     fields = (
         "Package",
         "Essential",
@@ -130,6 +139,7 @@ def generate_index(dctrls: dict[Dependency, deb822.Deb822]) -> str:
 
 
 def cmd_query(pool_path: str | None, packages: list[str]) -> None:
+    logger.debug(f"cmd_query({pool_path=}, {packages=})")
     if pool_path is None:
         fatal(
             "no pool path provided: either pass -p/--pool or set "
@@ -146,6 +156,7 @@ def cmd_query(pool_path: str | None, packages: list[str]) -> None:
 
 
 def cmd_cpp(plan_path: str, cpp_opts: list[tuple[str, str]]) -> None:
+    logger.debug(f"cmd_cpp({plan_path=}, {cpp_opts=})")
     try:
         print(cpp.cpp(plan_path, cpp_opts))
     except cpp.Error as e:
@@ -158,6 +169,14 @@ def cmd_chroot(
     env_vars_raw: str | None,
     script_args: list[str],
 ) -> None:
+    logger.debug(
+        "cmd_chroot("
+        f"\n  {chroot_path=},"
+        f"\n  {script_path_raw=},"
+        f"\n  {env_vars_raw=},"
+        f"\n  {script_args=},"
+        "\n)"
+    )
     env_vars: list[str]
     if env_vars_raw is None:
         env_vars = []
@@ -211,15 +230,16 @@ def cmd_install(
 ) -> None:
     logger.debug(
         "fab-install("
-        f"{chroot_path=}, "
-        f"{packages=}, "
-        f"{pool_path=}, "
-        f"{arch=}, "
-        f"{no_deps=}, "
-        f"{apt_proxy=}, "
-        f"{ignore_errors_raw=}, "
-        f"{env_vars_raw=}, "
-        f"{cpp_opts=})"
+        f"\n  {chroot_path=},"
+        f"\n  {packages=}, "
+        f"\n  {pool_path=}, "
+        f"\n  {arch=}, "
+        f"\n  {no_deps=}, "
+        f"\n  {apt_proxy=}, "
+        f"\n  {ignore_errors_raw=}, "
+        f"\n  {env_vars_raw=}, "
+        f"\n  {cpp_opts=}"
+        "\n)"
     )
     if not isdir(chroot_path):
         fatal(f"no such chroot ({chroot_path})")
@@ -248,9 +268,9 @@ def cmd_install(
     else:
         ignore_errors = ignore_errors_raw.split(":")
 
-    logger.debug(f"  with environ={environ}")
-    logger.debug(f"  with ignore_errors={ignore_errors}")
-    logger.debug(f"  with pool_path={pool_path}")
+    logger.debug(f"  with {environ=}")
+    logger.debug(f"  with {ignore_errors=}")
+    logger.debug(f"  with {pool_path=}")
 
     plan = Plan(pool_path=pool_path)
     for package in packages:
@@ -297,6 +317,7 @@ def cmd_install(
 
 
 def cmd_plan_annotate(pool_path: str, inplace: bool, plan_path: str) -> None:
+    logger.debug(f"cmd_plan_annotate({pool_path=}, {inplace=}, {plan_path=})")
     newplan = annotate.plan_lint(plan_path, pool_path)
     if inplace:
         with open(plan_path, "w") as fob:
@@ -312,6 +333,15 @@ def cmd_plan_resolve(
     cpp_opts: list[tuple[str, str]],
     plans: list[str],
 ) -> None:
+    logger.debug(
+        "cmd_plan_resolve("
+        f"\n  {output_path=},"
+        f"\n  {bootstrap_path=},"
+        f"\n  {pool_path=},"
+        f"\n  {cpp_opts=},"
+        f"\n  {plans=}"
+        "\n)"
+    )
     resolve.resolve_plan(
         output_path, bootstrap_path, pool_path, cpp_opts, plans
     )
@@ -320,6 +350,7 @@ def cmd_plan_resolve(
 def cmd_apply_overlay(
     overlay: str, dstpath: str, preserve: bool = False
 ) -> None:
+    logger.debug(f"cmd_apply_overlay({overlay=}, {dstpath=}, {preserve=})")
     if not isdir(overlay):
         print(f"Skipping {overlay} because it is not a directory")
         return None
@@ -331,6 +362,7 @@ def cmd_apply_overlay(
 
 
 def cmd_apply_patch(patch: str, dstpath: str) -> None:
+    logger.debug(f"cmd_apply_patch({patch=}, {dstpath=})")
     if patch.endswith(".gz"):
         cmd = "zcat"
     elif patch.endswith(".bz2"):
@@ -351,6 +383,7 @@ def cmd_apply_patch(patch: str, dstpath: str) -> None:
 
 
 def add_cpp_opts(parser: ArgumentParser) -> None:
+    logger.debug(f"add_cpp_opts({parser=})")
     cpp_group = parser.add_argument_group(
         "fab-cpp options", "For plan pre-processing"
     )
