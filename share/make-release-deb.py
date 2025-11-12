@@ -15,7 +15,7 @@ Arguments:
 
     path/to/changelog       Source for latest package name and version
     path/to/output          Path to output destination
-     
+
         If this is a file, we create the debian archive at this path.
         If this is a directory, in it we create package_version_arch.deb
 
@@ -23,18 +23,16 @@ Options:
 
     --dep=[DEPEND]          Add depend to control
 """
-import os
-from os.path import *
 
-import sys
-import shutil
 import getopt
-
+import os
 import re
-from string import Template
-
-from tempfile import TemporaryDirectory
+import shutil
 import subprocess
+import sys
+from os.path import join
+from string import Template
+from tempfile import TemporaryDirectory
 
 CONTROL_TPL = """\
 Package: $NAME
@@ -48,22 +46,28 @@ Depends: $DEPENDS
 Description: $NAME release
 """
 
+
 class Error(Exception):
     pass
 
-def usage(e=None):
-    if e:
-        print("Error: " + str(e), file=sys.stderr)
 
-    print("Syntax: %s path/to/changelog path/to/output" % sys.argv[0], file=sys.stderr)
+def usage(message: str | getopt.GetoptError | None = None) -> None:
+    if message:
+        print(f"Error: {message}", file=sys.stderr)
+
+    print(
+        f"Syntax: {sys.argv[0]} path/to/changelog path/to/output",
+        file=sys.stderr,
+    )
     print(__doc__.strip(), file=sys.stderr)
 
     sys.exit(1)
 
-def parse_changelog(path):
+
+def parse_changelog(path: str) -> tuple[str, str, str]:
     with open(path) as fob:
         firstline = fob.readline()
-    m = re.match('^(\w[-+0-9a-z.]*) \((\S+)\)', firstline)
+    m = re.match(r"^(\w[-+0-9a-z.]*) \((\S+)\)", firstline)
     if not m:
         raise Error("can't parse first line of changelog:\n" + firstline)
 
@@ -76,24 +80,31 @@ def parse_changelog(path):
 
             break
 
-    m = re.match(r' -- (.* <.*?>)', line)
+    m = re.match(r" -- (.* <.*?>)", line)
     if not m:
         raise Error("can't parse maintainer:\n" + line)
     maintainer = m.group(1)
 
     return name, version, maintainer
 
-def make_release_deb(path_changelog, path_output, depends=[]):
+
+def make_release_deb(
+    path_changelog: str, path_output: str, depends: list[str] | None = None
+) -> None:
+    if depends is None:
+        depends = []
     name, version, maintainer = parse_changelog(path_changelog)
 
     with TemporaryDirectory() as tmpdir:
         os.mkdir(join(tmpdir, "DEBIAN"))
         with open(join(tmpdir, "DEBIAN/control"), "w") as fob:
-            content = Template(CONTROL_TPL).substitute(NAME=name,
-                                                       VERSION=version,
-                                                       MAINTAINER=maintainer,
-                                                       DEPENDS=", ".join(depends))
-            print(re.sub("Depends: \n", "", content), end=' ', file=fob)
+            content = Template(CONTROL_TPL).substitute(
+                NAME=name,
+                VERSION=version,
+                MAINTAINER=maintainer,
+                DEPENDS=", ".join(depends),
+            )
+            print(re.sub("Depends: \n", "", content), end=" ", file=fob)
 
         tmpdir_doc = join(tmpdir, "usr/share/doc/" + name)
         os.makedirs(tmpdir_doc)
@@ -101,25 +112,27 @@ def make_release_deb(path_changelog, path_output, depends=[]):
         shutil.copy(path_changelog, tmpdir_doc)
         subprocess.run(["dpkg-deb", "-b", tmpdir, path_output])
 
-def main():
+
+def main() -> None:
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:], 'h', ['dep='])
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "h", ["dep="])
     except getopt.GetoptError as e:
         usage(e)
 
     if len(args) != 2:
         usage()
 
-    depends=[]
+    depends = []
     for opt, val in opts:
-        if opt == '-h':
+        if opt == "-h":
             usage()
 
-        if opt == '--dep':
+        if opt == "--dep":
             depends.append(val)
 
     path_changelog, path_output = args
     make_release_deb(path_changelog, path_output, depends)
+
 
 if __name__ == "__main__":
     main()

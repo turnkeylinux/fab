@@ -17,9 +17,9 @@ class Error(Exception):
     pass
 
 
-def cpp(cpp_input: str, cpp_opts: list[tuple[str, str]] | None =None) -> str:
+def cpp(cpp_input: str, cpp_opts: list[tuple[str, str]] | None = None) -> str:
     """preprocess <input> through cpp -> preprocessed output
-       input may be path/to/file or iterable data type
+    input may be path/to/file or iterable data type
     """
     cpp_input = os.fspath(cpp_input)
     if cpp_opts is None:

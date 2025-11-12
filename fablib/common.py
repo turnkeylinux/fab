@@ -9,20 +9,24 @@
 
 import os
 import sys
-from typing import Any, NoReturn
+from typing import NoReturn
+
 
 def mkdir(path: os.PathLike) -> None:
     path = os.fspath(path)
     if not os.path.exists(path):
         os.makedirs(path)
 
+
 ## cli common
-def fatal(s: Any) -> NoReturn:
-    print("error: " + str(s), file=sys.stderr)
+def fatal(message: str) -> NoReturn:
+    print(f"Fatal error: {message}", file=sys.stderr)
     sys.exit(1)
 
-def error(s: Any) -> None:
-    print("error: " + str(s), file=sys.stderr)
 
-def warn(s: Any) -> None:
-    print("warning: " + str(s), file=sys.stderr)
+def error(message: str) -> None:
+    print(f"Error: {message}", file=sys.stderr)
+
+
+def warn(message: str) -> None:
+    print(f"Warning: {message}", file=sys.stderr)

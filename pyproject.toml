@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=77.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fab"
+version = "1.1.0"
+authors = [{name = "TurnKey GNU/Linux", email = "jeremy@turnkeylinux.org"}]
+license = "GPL-3.0-or-later"
+description = "TurnKey GNU/Linux product fabrication framework"
+
+[project.urls]
+Homepage = "https://github.com/turnkeylinux/fab"
+
+[tool.setuptools]
+packages = ["fablib"]
+script-files = ["fab"]
+include-package-data = false
+
+[tool.setuptools.package-data]
+fablib = ["py.typed"]

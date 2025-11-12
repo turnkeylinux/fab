@@ -8,13 +8,15 @@
 # option) any later version.
 
 import sys
+from collections.abc import Callable
+from typing import NoReturn
 
 
-def usage(doc):
-    def decor(print_syntax):
-        def wrapper(err=None):
-            if err:
-                print("error: %s" % err, file=sys.stderr)
+def usage(doc: str) -> Callable:
+    def decor(print_syntax: Callable) -> Callable:
+        def wrapper(message: str | None = None) -> NoReturn:
+            if message:
+                print(f"Error: {message}", file=sys.stderr)
             print_syntax()
             if doc:
                 print(doc.strip(), file=sys.stderr)
