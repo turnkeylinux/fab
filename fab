@@ -197,6 +197,19 @@ def cmd_chroot(
         environ["USER"] = "root"
         environ["UID"] = "0"
         environ["EUID"] = "0"
+
+    os_environ_debug = "\n".join(
+        sorted([f"  {k}: {v}" for k, v in os.environ.items()])
+    )
+    chr_environ_debug = "\n".join(
+        sorted([f"  {k}: {v}" for k, v in environ.items()])
+    )
+    logger.debug(
+        "cmd_chroot()"
+        f"\nchroot = Chroot({chroot_path}, {environ=})"
+        f"\n\nfull env:\n---------\n{os_environ_debug}"
+        f"\n\nchroot env:\n-----------\n{chr_environ_debug}"
+    )
     chroot = Chroot(chroot_path, environ=environ)
 
     if not script_args and not script_path_raw:
