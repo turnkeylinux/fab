@@ -18,10 +18,10 @@ Depends:
  ${shlibs:Depends},
  turnkey-chroot,
  python3-debian,
- pool
-Recommends:
  xorriso,
- squashfs-tools
+ squashfs-tools,
+Recommends:
+ pool,
 Suggests:
  dd,
  wodim,
