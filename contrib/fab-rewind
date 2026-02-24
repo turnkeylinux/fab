@@ -68,7 +68,6 @@ undeck() {
         stop_services "$targ"
         if [[ "$targ" == "cdroot" ]]; then
             rm -rf build/product.iso
-            rm -rf "build/$targ"
         else
             deck -D "build/$targ"
         fi
@@ -93,6 +92,7 @@ mount_if_not_mounted() {
      fi
 }
 
+# cdroot is not a deck - but 'undeck' handles it anyway
 undeck cdroot
 undeck root.sandbox
 
