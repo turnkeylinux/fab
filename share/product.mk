@@ -1,5 +1,5 @@
 #!/usr/bin/make -f
-# Copyright (c) TurnKey GNU/Linux - https://www.turnkeylinux.org
+# Copyright (c) TurnKey GNU/Linux - http://www.turnkeylinux.org
 #
 # This file is part of Fab
 #
@@ -7,8 +7,6 @@
 # under the terms of the GNU Affero General Public License as published by the
 # Free Software Foundation; either version 3 of the License, or (at your
 # option) any later version.
-
-HOST_ARCH := $(shell dpkg --print-architecture)
 
 ifndef FAB_PATH
 $(error FAB_PATH not defined - needed for default paths)
@@ -18,45 +16,23 @@ ifndef RELEASE
 $(error RELEASE not defined)
 endif
 
-ifndef FAB_ARCH
-$(info FAB_ARCH not set, falling back to system arch $(HOST_ARCH))
-FAB_ARCH := $(HOST_ARCH)
-endif
-
 DISTRO ?= $(shell dirname $(RELEASE))
 CODENAME ?= $(shell basename $(RELEASE))
 
-UBUNTU = $(shell [ $(DISTRO) = 'ubuntu' ] && echo 'y')
-DEBIAN = $(shell [ $(DISTRO) = 'debian' ] && echo 'y')
+UBUNTU = $(shell [ "$(DISTRO)" = 'ubuntu' ] && echo 'y')
+DEBIAN = $(shell [ "$(DISTRO)" = 'debian' ] && echo 'y')
 
-
-AMD64 = $(shell [ $(FAB_ARCH) = 'amd64' ] && echo 'y')
-ARM64 = $(shell [ $(FAB_ARCH) = 'arm64' ] && echo 'y')
-
-ifndef FAB_ARCH_FAMILY
-ifeq ($(AMD64),y)
-FAB_ARCH_FAMILY=x86
-FAB_INSTALL_OPTS := '--arch amd64'
-endif
-ifeq ($(ARM64),y)
-FAB_ARCH_FAMILY=arm
-FAB_INSTALL_OPTS := '--arch arm64'
-# NONFREE is used to get raspi-firmware and firmware-brcm80211
-# NONFREE=1
-endif
-
-ifndef FAB_ARCH_FAMILY
-$(error unsupported architecture family)
-endif
-endif
+FAB_ARCH = $(shell dpkg --print-architecture)
+I386 = $(shell [ "$(FAB_ARCH)" = 'i386' ] && echo 'y')
+AMD64 = $(shell [ "$(FAB_ARCH)" = 'amd64' ] && echo 'y')
 
 ifdef FAB_POOL
 FAB_POOL_PATH=$(FAB_PATH)/pools/$(CODENAME)
-#export FAB_POOL_PATH
+export FAB_POOL_PATH
 endif
 
 ifdef FAB_POOL_PATH
-FAB_INSTALL_OPTS += '--no-deps'
+FAB_INSTALL_OPTS = '--no-deps'
 endif
 
 ifndef FAB_HTTP_PROXY
@@ -69,7 +45,7 @@ endif
 
 COMMON_PATCHES := turnkey.d $(COMMON_PATCHES)
 
-CONF_VARS_BUILTIN ?= FAB_ARCH HOST_ARCH FAB_HTTP_PROXY AMD64 ARM64 RELEASE DISTRO CODENAME DEBIAN UBUNTU KERNEL DEBUG CHROOT_ONLY DI_LIVE_DEBUG
+CONF_VARS_BUILTIN ?= FAB_ARCH FAB_HTTP_PROXY I386 AMD64 RELEASE DISTRO CODENAME DEBIAN UBUNTU KERNEL DEBUG CHROOT_ONLY
 
 define filter-undefined-vars
 	$(foreach var,$1,$(if $($(var)), $(var)))
@@ -78,20 +54,15 @@ endef
 _CONF_VARS_BUILTIN = $(call filter-undefined-vars,$(CONF_VARS_BUILTIN))
 _CONF_VARS = $(_CONF_VARS_BUILTIN) $(call filter-undefined-vars,$(CONF_VARS))
 
-#export $(_CONF_VARS)
-#export FAB_CHROOT_ENV = $(shell echo $(_CONF_VARS) | sed 's/ \+/:/g')
-#export FAB_INSTALL_ENV = $(FAB_CHROOT_ENV)
-FAB_CHROOT_ENV = $(shell echo $(_CONF_VARS) | sed 's/ \+/:/g')
-FAB_INSTALL_ENV = $(FAB_CHROOT_ENV)
+export $(_CONF_VARS)
+export FAB_CHROOT_ENV = $(shell echo $(_CONF_VARS) | sed 's/ \+/:/g')
+export FAB_INSTALL_ENV = $(FAB_CHROOT_ENV)
 
 # FAB_PATH dependent infrastructural components
 FAB_SHARE_PATH ?= /usr/share/fab
-BOOTSTRAP ?= $(FAB_PATH)/bootstraps/$(CODENAME)-$(FAB_ARCH)
-ifneq ("$(wildcard $(FAB_PATH)/altstraps/$(CODENAME)-$(FAB_ARCH).core)", "")
-BOOTSTRAP := $(FAB_PATH)/altstraps/$(CODENAME)-$(FAB_ARCH).core
-endif
-ifeq (,"$(wildcard $(BOOTSTRAP)"))
-$(error bootstrap $(BOOTSTRAP) not found - download or build it first)
+BOOTSTRAP ?= $(FAB_PATH)/bootstraps/$(CODENAME)
+ifneq ("$(wildcard $(FAB_PATH)/altstraps/$(CODENAME).core)", "")
+	BOOTSTRAP := $(FAB_PATH)/altstraps/$(CODENAME).core
 endif
 
 CDROOTS_PATH ?= $(FAB_PATH)/cdroots
@@ -125,14 +96,14 @@ _COMMON_REMOVELISTS = $(call prefix-relative-paths,$(COMMON_REMOVELISTS),$(COMMO
 _COMMON_REMOVELISTS_FINAL = $(call prefix-relative-paths,$(COMMON_REMOVELISTS_FINAL),$(COMMON_REMOVELISTS_FINAL_PATH))
 
 FAB_PLAN_INCLUDE_PATH ?= $(FAB_PATH)/common/plans
-#export FAB_PLAN_INCLUDE_PATH
+export FAB_PLAN_INCLUDE_PATH
 
 # default locations of product build inputs
 PLAN ?= plan/main
 ROOT_OVERLAY ?= overlay
 CDROOT_OVERLAY ?= cdroot.overlay
 REMOVELIST ?= removelist
-# unset REMOVELIST if the file doesn't exist
+# undefine REMOVELIST if the file doesn't exist
 ifeq ($(wildcard $(REMOVELIST)),)
 REMOVELIST =
 endif
@@ -165,11 +136,7 @@ endef
 ifdef CHROOT_ONLY
 all: root.sandbox
 else
-ifeq ($(FAB_ARCH_FAMILY),arm)
-all: root.sandbox
-else
 all: $O/product.iso
-endif
 endif
 
 define mount-deck
@@ -206,7 +173,6 @@ define help/body
 	@echo '  CONF_VARS                  $(value CONF_VARS)'
 	@echo
 	@echo '  FAB_ARCH                   $(value FAB_ARCH)'
-	@echo '  FAB_ARCH_FAMILY            $(value FAB_ARCH_FAMILY)'
 	@echo '  FAB_POOL                   $(value FAB_POOL)'
 	@echo '  FAB_POOL_PATH              $(value FAB_POOL_PATH)'
 	@echo '  FAB_PLAN_INCLUDE_PATH      $(value FAB_PLAN_INCLUDE_PATH)/'
@@ -247,7 +213,6 @@ define help/body
 	@echo
 	@echo '# Built-in configuration options:'
 	@echo '  DEBUG                      Turn on product debugging'
-	@echo '  DI_LIVE_DEBUG              Set kernel commandline options for debugging di-live'
 	@echo '  KERNEL                     Override default kernel package'
 	@echo '  EXTRA_PLAN                 Extra packages to include in the plan'
 	@echo '  CHROOT_ONLY                Build a chroot-only product'
@@ -259,25 +224,25 @@ define help/body
 	@echo
 	@echo '# build a target (default: product.iso)'
 	@echo '$$ make [target] [O=path/to/build/dir]'
-	@echo '  redeck             # deck unmounted input/output decks (e.g., after reboot)'
+	@echo '  redeck        # deck unmounted input/output decks (e.g., after reboot)'
 	@echo
-	@echo '  clean              # clean all build targets'
-	@echo '  bootstrap          # minimal chrootable filesystem used to bootstrap the root'
-	@echo '  root.spec          # the spec from which root.build is built (I.e., resolved plan)'
-	@echo '  root.build         # created by applying the root.spec to the bootstrap'
-	@echo '  root.patched       # deck root.build and apply the root overlay and removelist'
-	@echo
-	@echo '  root.sandbox       # changes (e.g., manual prototyping) inside the copy-on-write sandbox'
-	@echo '                     # saved as a separate, temporary cdroot squashfs overlay'
+	@echo '  clean         # clean all build targets'
+	@echo '  bootstrap     # minimal chrootable filesystem used to bootstrap the root'
+	@echo '  root.spec     # the spec from which root.build is built (I.e., resolved plan)'
+	@echo '  root.build    # created by applying the root.spec to the bootstrap'
+	@echo '  root.patched  # deck root.build and apply the root overlay and removelist'
+    @echo
+	@echo '  root.sandbox  # changes (e.g., manual prototyping) inside the copy-on-write sandbox'
+	@echo '                # saved as a separate, temporary cdroot squashfs overlay'
 	@echo
 endef
 
 ifndef CHROOT_ONLY
 help/body += ;\
-	echo '  cdroot             \# created by squashing root.patched into cdroot template + overlay'; \
-	echo '  product.iso        \# product ISO created from the cdroot'; \
+	echo '  cdroot        \# created by squashing root.patched into cdroot template + overlay'; \
+	echo '  product.iso   \# product ISO created from the cdroot'; \
 	echo; \
-	echo '  updated-initramfs  \# rebuild product with updated initramfs'
+	echo '  updated-initramfs \# rebuild product with updated initramfs' 
 endif
 
 help:
@@ -338,7 +303,7 @@ define run-conf-scripts
 	if [ -n "$(wildcard $1/*)" ]; then \
 		echo "\$$(call $0,$1)"; \
 	fi; \
-	for script in $1/* $1/$(FAB_ARCH_FAMILY).d/*; do \
+	for script in $1/*; do \
 		[ -f "$$script" ] && [ -x "$$script" ] || continue; \
 		args_path=$(strip $1)/args/$$(echo $$(basename $$script) | sed 's/^[^a-zA-Z]*//'); \
 		args="$$([ -f $$args_path ] && (cat $$args_path | sed 's/#.*//'))"; \
@@ -372,8 +337,7 @@ define root.patched/body
 	# apply the common overlays
 	$(foreach overlay,$(_COMMON_OVERLAYS),
 	  @if echo $(overlay) | grep -q '\.d$$'; then \
-		for d in $(overlay)/* $(overlay)/$(FAB_ARCH_FAMILY).d/*; do \
-		  if echo $$d | grep -q '\.d$$'; then continue; fi; \
+	  	for d in $(overlay)/*; do \
 		  echo fab-apply-overlay $$d $O/root.patched; \
 		  fab-apply-overlay $$d $O/root.patched; \
 		done; \

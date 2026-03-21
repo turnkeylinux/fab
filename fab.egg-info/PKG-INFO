@@ -1,0 +1,7 @@
+Metadata-Version: 2.4
+Name: fab
+Version: 1.1.0
+Summary: TurnKey GNU/Linux product fabrication framework
+Author-email: TurnKey GNU/Linux <jeremy@turnkeylinux.org>
+License-Expression: GPL-3.0-or-later
+Project-URL: Homepage, https://github.com/turnkeylinux/fab

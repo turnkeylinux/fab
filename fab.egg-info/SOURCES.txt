@@ -1,0 +1,17 @@
+README.rst
+fab
+pyproject.toml
+fab.egg-info/PKG-INFO
+fab.egg-info/SOURCES.txt
+fab.egg-info/dependency_links.txt
+fab.egg-info/top_level.txt
+fablib/__init__.py
+fablib/annotate.py
+fablib/common.py
+fablib/cpp.py
+fablib/help.py
+fablib/installer.py
+fablib/plan.py
+fablib/py.typed
+fablib/removelist.py
+fablib/resolve.py
