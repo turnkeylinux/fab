@@ -3,5 +3,7 @@ tmp
 *.pyo
 *.tar.bz2
 .mypy_cache
+.ruff_cache
 __pycache__
 tags
+fab.egg-info/
