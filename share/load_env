@@ -1,0 +1,103 @@
+#!/bin/bash
+# This script is called by /usr/share/fab/product.mk.
+# It sets the needed environment variables once, so make doesn't need to keep
+# recalculating them
+
+
+_echo() {
+    # Because we call this script directly from the top of the make file/s,
+    # make will expect anything sent to stdout to be valid make commands.
+    # However stderr is ignored by make, so ALL output to users needs to be
+    # sent to stderr.
+    echo "$*" >&2
+}
+fatal() { _echo "Fatal: $*"; exit 1; }
+
+[[ -n "$FAB_PATH" ]] || fatal "FAB_PATH not set - required for default paths"
+
+if [[ -z "$RELEASE" ]]; then
+    _distro="$(lsb_release -si)"
+    DISTRO="${_distro,,}"
+    CODENAME="$(lsb_release -sc)"
+    RELEASE="$DISTRO/$CODENAME"
+    _echo "RELEASE not set - falling back to system: $RELEASE"
+else
+    DISTRO="$(dirname "$RELEASE")"
+    CODENAME="$(basename "$RELEASE")"
+fi
+
+DEBIAN=
+UBUNTU=
+case $DISTRO in
+    debian)
+        DEBIAN=y;;
+    ubuntu)
+        UBUNTU=y;;
+    *)
+        fatal "Distro '$DISTRO' not supported"
+esac
+
+AMD64=
+ARM64=
+FAB_ARCH_FAMILY=
+if [[ -z "$FAB_ARCH" ]]; then
+    FAB_ARCH="$(dpkg --print-architecture)"
+    _echo "FAB_ARCH not set - falling back to system: $FAB_ARCH"
+fi
+case $FAB_ARCH in
+    amd64)
+        AMD64=y
+        FAB_ARCH_FAMILY=x86
+        ;;
+    arm64)
+        ARM64=y
+        FAB_ARCH_FAMILY=arm
+        ;;
+    *)
+        fatal "Architecture '$FAB_ARCH' not supported"
+        ;;
+esac
+
+if [[ -n "$FAB_POOL" ]]; then
+    FAB_POOL_PATH="$FAB_PATH/pools/$CODENAME"
+    FAB_INSTALL_OPTS="$FAB_INSTALL_OPTS --no-deps"
+fi
+
+if [[ "${NO_PROXY,,}" == "true" ]]; then
+    _echo "NO_PROXY set - disabling caching proxies"
+    FAB_HTTP_PROXY=
+    FAB_HTTPS_PROXY=
+else
+    [[ -n "$FAB_HTTP_PROXY" ]] || _echo "Warning - FAB_HTTP_PROXY not set"
+    [[ -n "$FAB_HTTPS_PROXY" ]] || _echo "Warning - FAB_HTTPS_PROXY not set"
+fi
+
+cat > /tmp/.build_env <<EOF
+FAB_PATH=$FAB_PATH
+DISTRO=$DISTRO
+CODENAME=$CODENAME
+RELEASE=$RELEASE
+
+DEBIAN=$DEBIAN
+UBUNTU=$UBUNTU
+
+FAB_ARCH=$FAB_ARCH
+AMD64=$AMD64
+ARM64=$ARM64
+FAB_ARCH_FAMILY=$FAB_ARCH_FAMILY
+FAB_INSTALL_OPTS="--arch $FAB_ARCH"
+
+FAB_POOL=$FAB_POOL
+FAB_POOL_PATH=${FAB_POOL_PATH:-$FAB_PATH/pools/$CODENAME}
+
+BOOTSTRAP=${BOOTSTRAP:-$FAB_PATH/bootstraps/$CODENAME-$FAB_ARCH}
+CDROOT=${CDROOT:-generic}
+MKSQUASHFS=${MKSQUASHFS:-/usr/bin/mksquashfs}
+PLAN=${PLAN:-plan/main}
+REMOVELIST=${REMOVELIST:-removelist}
+O=${O:-build}
+ISOLABEL=${ISOLABEL:-$(basename "$PWD")}
+STAMPS_DIR=${STAMPS_DIR:-$O/stamps}
+DEBIAN=$DEBIAN
+UBUNTU=$UBUNTU
+EOF

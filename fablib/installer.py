@@ -16,7 +16,7 @@ from os.path import basename, exists, join
 from typing import TextIO, cast
 
 from chroot import Chroot
-from debian import debfile
+from debian import deb822, debfile
 
 from fablib import common
 

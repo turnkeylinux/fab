@@ -4,7 +4,7 @@ import re
 from re import Match
 from tempfile import TemporaryDirectory
 
-from debian import debfile
+from debian import deb822
 
 
 def parse_plan(plan: str) -> set[str]:
