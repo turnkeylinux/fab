@@ -8,64 +8,10 @@
 # Free Software Foundation; either version 3 of the License, or (at your
 # option) any later version.
 
-HOST_ARCH := $(shell dpkg --print-architecture)
-
-ifndef FAB_PATH
-$(error FAB_PATH not defined - needed for default paths)
-endif
-
-ifndef RELEASE
-$(error RELEASE not defined)
-endif
-
-ifndef FAB_ARCH
-$(info FAB_ARCH not set, falling back to system arch $(HOST_ARCH))
-FAB_ARCH := $(HOST_ARCH)
-endif
-
-DISTRO ?= $(shell dirname $(RELEASE))
-CODENAME ?= $(shell basename $(RELEASE))
-
-UBUNTU = $(shell [ $(DISTRO) = 'ubuntu' ] && echo 'y')
-DEBIAN = $(shell [ $(DISTRO) = 'debian' ] && echo 'y')
-
-
-AMD64 = $(shell [ $(FAB_ARCH) = 'amd64' ] && echo 'y')
-ARM64 = $(shell [ $(FAB_ARCH) = 'arm64' ] && echo 'y')
-
-ifndef FAB_ARCH_FAMILY
-ifeq ($(AMD64),y)
-FAB_ARCH_FAMILY=x86
-FAB_INSTALL_OPTS := '--arch amd64'
-endif
-ifeq ($(ARM64),y)
-FAB_ARCH_FAMILY=arm
-FAB_INSTALL_OPTS := '--arch arm64'
-# NONFREE is used to get raspi-firmware and firmware-brcm80211
-# NONFREE=1
-endif
-
-ifndef FAB_ARCH_FAMILY
-$(error unsupported architecture family)
-endif
-endif
-
-ifdef FAB_POOL
-FAB_POOL_PATH=$(FAB_PATH)/pools/$(CODENAME)
-#export FAB_POOL_PATH
-endif
-
-ifdef FAB_POOL_PATH
-FAB_INSTALL_OPTS += '--no-deps'
-endif
-
-ifndef FAB_HTTP_PROXY
-$(warning FAB_HTTP_PROXY is not defined)
-endif
-
-ifndef FAB_HTTPS_PROXY
-$(warning FAB_HTTPS_PROXY is not defined)
-endif
+# execute script to load/calculate env vars and write to tmp file, then load
+# them from the tmp file - not ideal but no secrets/sensitive info saved
+$(shell /usr/share/fab/load_env)
+include /tmp/.build_env
 
 COMMON_PATCHES := turnkey.d $(COMMON_PATCHES)
 
@@ -78,9 +24,9 @@ endef
 _CONF_VARS_BUILTIN = $(call filter-undefined-vars,$(CONF_VARS_BUILTIN))
 _CONF_VARS = $(_CONF_VARS_BUILTIN) $(call filter-undefined-vars,$(CONF_VARS))
 
-#export $(_CONF_VARS)
-#export FAB_CHROOT_ENV = $(shell echo $(_CONF_VARS) | sed 's/ \+/:/g')
-#export FAB_INSTALL_ENV = $(FAB_CHROOT_ENV)
+export $(_CONF_VARS)
+export FAB_CHROOT_ENV = $(shell echo $(_CONF_VARS) | sed 's/ \+/:/g')
+export FAB_INSTALL_ENV = $(FAB_CHROOT_ENV)
 FAB_CHROOT_ENV = $(shell echo $(_CONF_VARS) | sed 's/ \+/:/g')
 FAB_INSTALL_ENV = $(FAB_CHROOT_ENV)
 
@@ -125,7 +71,7 @@ _COMMON_REMOVELISTS = $(call prefix-relative-paths,$(COMMON_REMOVELISTS),$(COMMO
 _COMMON_REMOVELISTS_FINAL = $(call prefix-relative-paths,$(COMMON_REMOVELISTS_FINAL),$(COMMON_REMOVELISTS_FINAL_PATH))
 
 FAB_PLAN_INCLUDE_PATH ?= $(FAB_PATH)/common/plans
-#export FAB_PLAN_INCLUDE_PATH
+export FAB_PLAN_INCLUDE_PATH
 
 # default locations of product build inputs
 PLAN ?= plan/main
@@ -251,6 +197,9 @@ define help/body
 	@echo '  KERNEL                     Override default kernel package'
 	@echo '  EXTRA_PLAN                 Extra packages to include in the plan'
 	@echo '  CHROOT_ONLY                Build a chroot-only product'
+	@echo '  TKL_TESTING=y              Enable TurnKey testing apt repo'
+	@echo '  NO_PROXY=true              Disable local squid proxy'
+
 
 	@echo 
 	@echo '=== Usage'
