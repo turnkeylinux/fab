@@ -81,14 +81,7 @@ mount_if_not_mounted() {
     if deck --ismounted "$target"; then
         return
     else
-        targets_array_len=${#targets[@]}
-        for (( i=0; i<targets_array_len; i++ )); do
-            if [[ "${targets[$i]}" == "bootstrap" ]]; then
-                deck "$FAB_PATH/bootstraps/$codename" build/bootstrap
-            else
-                deck "build/${target}"
-            fi
-        done
+        deck "build/${target}"
      fi
 }
 
