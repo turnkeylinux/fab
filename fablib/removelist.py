@@ -2,7 +2,7 @@ import glob
 import os
 import re
 import shutil
-from os.path import exists, isfile, join
+from os.path import exists, isdir, join
 from typing import IO
 
 from .common import fatal, warn
@@ -40,12 +40,12 @@ def remove(path: str) -> None:
     if not exists(path):
         print(f"rm {path}")
         warn(f"file or directory {path!r} not found!")
-    elif isfile(path):
-        print(f"rm {path}")
-        os.remove(path)
-    else:
+    elif isdir(path):
         print(f"rm -r {path}")
         shutil.rmtree(path)
+    else:
+        print(f"rm {path}")
+        os.remove(path)
 
 
 def apply_removelist(removelist_fob: IO[str], root_path: str) -> None:
