@@ -20,7 +20,6 @@ Depends:
  python3-debian,
  xorriso,
  squashfs-tools,
-Recommends:
  pool,
 Suggests:
  dd,
