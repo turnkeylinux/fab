@@ -4,7 +4,7 @@ import re
 from re import Match
 from tempfile import TemporaryDirectory
 
-from debian import deb822
+from debian import debfile
 
 
 def parse_plan(plan: str) -> set[str]:
@@ -54,7 +54,9 @@ def plan_lint(plan_path: str, pool_path: str) -> str:
         plan = fob.read().strip()
 
     packages = parse_plan(plan)
-    packages_info: dict[str, str] = get_packages_info(list(packages), pool_path)
+    packages_info: dict[str, str] = get_packages_info(
+        list(packages), pool_path,
+    )
 
     if not packages:
         column_len = 0
