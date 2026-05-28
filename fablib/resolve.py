@@ -7,6 +7,8 @@ from debian.deb822 import Deb822
 
 from .plan import PackageOrigins, Plan
 
+import re
+
 logger = logging.getLogger("fab.resolve")
 
 
@@ -18,6 +20,25 @@ def iter_packages(root: str) -> Generator[str, None, None]:
                 deb = Deb822(control.splitlines())
                 if deb["Status"] == "install ok installed":
                     yield deb["Package"]
+                control = ""
+            else:
+                control += line
+
+
+def iter_provided(root: str) -> Generator[str, None, None]:
+    """Yield virtual package names provided by installed bootstrap packages."""
+    control = ""
+    with open(join(root, "var/lib/dpkg/status")) as fob:
+        for line in fob:
+            if not line.strip():
+                deb = Deb822(control.splitlines())
+                if deb["Status"] == "install ok installed":
+                    provides = deb.get("Provides", "")
+                    if provides:
+                        for p in re.split(r"\s*,\s*", provides.strip()):
+                            name = p.split()[0].strip()
+                            if name:
+                                yield name
                 control = ""
             else:
                 control += line
@@ -54,8 +75,10 @@ def resolve_plan(
     plans: list[str],
 ) -> None:
     plan = Plan(pool_path=pool_path)
+    bootstrap_provided: set[str] = set()
     if bootstrap_path:
         bootstrap_packages = set(iter_packages(bootstrap_path))
+        bootstrap_provided = set(iter_provided(bootstrap_path))
         plan |= bootstrap_packages
 
         for package in bootstrap_packages:
@@ -72,7 +95,7 @@ def resolve_plan(
             plan.add(plan_path)
             plan.packageorigins.add(plan_path, "_")
 
-    spec, unresolved = plan.resolve()
+    spec, unresolved = plan.resolve(bootstrap_provided=bootstrap_provided)
     logger.debug("unresolved" + "\n".join(unresolved))
     spec = annotate_spec(unresolved, spec, plan.packageorigins)
     logger.debug(spec)

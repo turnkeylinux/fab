@@ -352,7 +352,7 @@ class Plan:
 
         return dctrls
 
-    def resolve(self) -> tuple[Iterable[str], Iterable[str]]:
+    def resolve(self, bootstrap_provided: set[str] | None = None) -> tuple[Iterable[str], Iterable[str]]:
         """resolve plan dependencies recursively -> return spec"""
         logger.debug("resolve")
 
@@ -364,7 +364,7 @@ class Plan:
 
         resolved: set[Dependency] = set()
         missing: set[Dependency] = set()
-        provided: set[str] = set()
+        provided: set[str] = set(bootstrap_provided or set())
 
         def reformat2dep(pkg: str) -> str:
             if "=" not in pkg:
@@ -402,8 +402,10 @@ class Plan:
                 )
                 provided |= self._get_provided(pkg_control)
 
+            missing |= packages.missing
             unresolved = new_deps - resolved
-            all_missing = set(map(str, (missing | packages.missing))) - provided
+
+        all_missing = set(map(str, missing)) - provided
 
         if all_missing:
 
@@ -417,9 +419,7 @@ class Plan:
                     except KeyError:
                         depname = None
 
-            brokendeps = []
-            for dep in missing:
-                brokendeps.append(dep.name)
+            brokendeps = [dep.name for dep in missing if str(dep) in all_missing]
 
             logger.debug(
                 f"could not find these packages in pool: {brokendeps!r}"
