@@ -3,11 +3,15 @@ Section: misc
 Priority: optional
 Maintainer: Stefan Davis <stefan@turnkeylinux.org>
 Build-Depends:
- debhelper (>= 10),
- python3-all (>= 3.7~),
+ debhelper-compat (= 13),
+ python3 (>= 3.13),
+ pybuild-plugin-pyproject,
+ dh-python,
  python3-debian,
- dh-python
-Standards-Version: 4.0.0
+Standards-Version: 4.7.2
+Vcs-Git: https://github.com/turnkeylinux/fab.git
+Vcs-Browser: https://github.com/turnkeylinux/fab
+Rules-Requires-Root: no
 
 Package: fab
 Architecture: all
