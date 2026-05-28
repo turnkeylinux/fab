@@ -298,6 +298,10 @@ class PoolInstaller(Installer):
             with open(path, "rb") as fob:
                 return str(hashlib.sha256(fob.read()).hexdigest())
 
+        def sha512sum(path: str) -> str:
+            with open(path, "rb") as fob:
+                return str(hashlib.sha512(fob.read()).hexdigest())
+
         index = []
         for package in os.listdir(packagedir):
             path = join(packagedir, package)
@@ -313,6 +317,7 @@ class PoolInstaller(Installer):
                 index.append("Size: " + filesize(path))
                 index.append("MD5sum: " + md5sum(path))
                 index.append("SHA256: " + sha256sum(path))
+                index.append("SHA512: " + sha512sum(path))
                 index.append("")
 
         return index
