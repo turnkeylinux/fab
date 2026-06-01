@@ -36,7 +36,7 @@ BOOTSTRAP ?= $(FAB_PATH)/bootstraps/$(CODENAME)-$(FAB_ARCH)
 ifneq ("$(wildcard $(FAB_PATH)/altstraps/$(CODENAME)-$(FAB_ARCH).core)", "")
   BOOTSTRAP := $(FAB_PATH)/altstraps/$(CODENAME)-$(FAB_ARCH).core
 endif
-ifeq (,"$(wildcard $(BOOTSTRAP)"))
+ifeq (,$(wildcard $(BOOTSTRAP)))
   $(error bootstrap $(BOOTSTRAP) not found - download or build it first)
 endif
 
