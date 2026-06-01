@@ -13,6 +13,14 @@
 $(shell /usr/share/fab/load_env)
 include /tmp/.build_env
 
+# check if root is overlayfs and warn user
+IS_OVERLAY := $(shell [ "$$(findmnt -n -o FSTYPE /)" = "overlay" ] && echo yes)
+ifeq ($(IS_OVERLAY),yes)
+  FREE_RAM := $(shell free -mh | awk '/^Mem:/ {print $$4}')
+  $(info '/' is overlayfs. Build will fail unless "proper" filesystem is mounted)
+  $(info [free RAM: $(FREE_RAM)])
+endif
+
 COMMON_PATCHES := turnkey.d $(COMMON_PATCHES)
 
 CONF_VARS_BUILTIN ?= FAB_ARCH HOST_ARCH FAB_HTTP_PROXY AMD64 ARM64 RELEASE DISTRO CODENAME DEBIAN UBUNTU KERNEL DEBUG CHROOT_ONLY DI_LIVE_DEBUG
