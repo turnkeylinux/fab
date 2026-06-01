@@ -16,7 +16,7 @@ from os.path import basename, exists, join
 from typing import TextIO, cast
 
 from chroot import Chroot
-from debian import deb822, debfile
+from debian import debfile
 
 from fablib import common
 
@@ -28,8 +28,10 @@ class Error(Exception):
 
 
 class RevertibleFile:
-    """File that automatically reverts to previous state on destruction
-    or if the revert method is invoked"""
+    """File that automatically reverts to previous state.
+
+    Reverts on destruction or if the revert method is invoked.
+    """
 
     @staticmethod
     def _get_orig_path(path: str) -> str:
@@ -51,7 +53,7 @@ class RevertibleFile:
         self._inner = open(path, "w")
 
     def revert(self) -> None:
-        """revert file to original state"""
+        """Revert file to original state."""
         if self.orig_path is not None:
             assert self.path is not None
             shutil.move(self.orig_path, self.path)
@@ -73,7 +75,7 @@ class RevertibleFile:
 
 
 class RevertibleScript(RevertibleFile):
-    """RevertibleFile that ensures file is executable"""
+    """RevertibleFile that ensures file is executable."""
 
     def __init__(self, path: str, lines: Iterable[str]) -> None:
         super().__init__(path)
@@ -103,8 +105,10 @@ class Installer:
     def _get_packages_priority(
         packages: list[str],
     ) -> tuple[list[str], list[str]]:
-        """high priority packages must be installed before regular packages
-        APT should handle this, but in some circumstances it chokes...
+        """Sort list of packages into 2 lists of high & regular priority.
+
+        High priority packages must be installed before regular packages, APT
+        should handle this, but in some circumstances it chokes...
         """
         HIGH_PRIORITY = "linux-image"
 
@@ -256,6 +260,9 @@ class Installer:
 
 
 class PoolInstaller(Installer):
+
+    _class = "PoolInstaller"
+
     def __init__(
         self,
         chroot_path: str,
@@ -263,6 +270,12 @@ class PoolInstaller(Installer):
         arch: str,
         environ: dict[str, str] | None = None,
     ) -> None:
+
+        logging.debug(
+            f"{self._class}(\n {chroot_path=},\n {pool_path=},\n  {arch=},"
+            f" {environ=}\n)",
+        )
+
         super().__init__(chroot_path, environ)
 
         from pool_lib import Pool
@@ -285,12 +298,16 @@ class PoolInstaller(Installer):
             with open(path, "rb") as fob:
                 return str(hashlib.sha256(fob.read()).hexdigest())
 
+        def sha512sum(path: str) -> str:
+            with open(path, "rb") as fob:
+                return str(hashlib.sha512(fob.read()).hexdigest())
+
         index = []
         for package in os.listdir(packagedir):
-            path = os.path.join(packagedir, package)
+            path = join(packagedir, package)
             # dl_path would best be calculated; but we don't
             # have access to chroot_path here...
-            dl_path = os.path.join("var/cache/apt/archives", package)
+            dl_path = join("var/cache/apt/archives", package)
             if path.endswith(".deb"):
                 control = debfile.DebFile(path).debcontrol()
                 for field in list(control.keys()):
@@ -300,6 +317,7 @@ class PoolInstaller(Installer):
                 index.append("Size: " + filesize(path))
                 index.append("MD5sum: " + md5sum(path))
                 index.append("SHA256: " + sha256sum(path))
+                index.append("SHA512: " + sha512sum(path))
                 index.append("")
 
         return index
@@ -307,15 +325,16 @@ class PoolInstaller(Installer):
     def install(
         self, packages: list[str], ignore_errors: list[str] | None = None
     ) -> None:
-        """install packages into chroot via pool"""
+        """Install packages into chroot via pool."""
 
         if ignore_errors is None:
             ignore_errors = []
 
+        logging.debug(f"{self._class}.install({packages=}, {ignore_errors=})")
+
         print("getting packages...")
         packagedir = join(self.chroot.path, "var/cache/apt/archives")
         logger.debug(f"{packagedir=}")
-        logger.debug(f"{packages=}")
         self.pool.get(packagedir, packages, strict=True)
 
         print("generating package index...")
@@ -353,7 +372,7 @@ class LiveInstaller(Installer):
     def install(
         self, packages: list[str], ignore_errors: list[str] | None = None
     ) -> None:
-        """install packages into chroot via live apt"""
+        """Install packages into chroot via live apt."""
         if ignore_errors is None:
             ignore_errors = []
 
