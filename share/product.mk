@@ -34,10 +34,10 @@ FAB_INSTALL_ENV = $(FAB_CHROOT_ENV)
 FAB_SHARE_PATH ?= /usr/share/fab
 BOOTSTRAP ?= $(FAB_PATH)/bootstraps/$(CODENAME)-$(FAB_ARCH)
 ifneq ("$(wildcard $(FAB_PATH)/altstraps/$(CODENAME)-$(FAB_ARCH).core)", "")
-BOOTSTRAP := $(FAB_PATH)/altstraps/$(CODENAME)-$(FAB_ARCH).core
+  BOOTSTRAP := $(FAB_PATH)/altstraps/$(CODENAME)-$(FAB_ARCH).core
 endif
 ifeq (,"$(wildcard $(BOOTSTRAP)"))
-$(error bootstrap $(BOOTSTRAP) not found - download or build it first)
+  $(error bootstrap $(BOOTSTRAP) not found - download or build it first)
 endif
 
 CDROOTS_PATH ?= $(FAB_PATH)/cdroots
@@ -49,9 +49,9 @@ MKSQUASHFS_OPTS ?= -no-sparse
 # we set _CDROOT with eval to improve the readability of $(value _CDROOT) 
 # in help target
 ifeq ($(shell echo $(CDROOT) | grep ^/), )
-$(eval _CDROOT = $$(CDROOTS_PATH)/$(CDROOT))
+  $(eval _CDROOT = $$(CDROOTS_PATH)/$(CDROOT))
 else
-$(eval _CDROOT = $(CDROOT))
+  $(eval _CDROOT = $(CDROOT))
 endif
 
 COMMON_OVERLAYS_PATH ?= $(FAB_PATH)/common/overlays
@@ -80,7 +80,7 @@ CDROOT_OVERLAY ?= cdroot.overlay
 REMOVELIST ?= removelist
 # unset REMOVELIST if the file doesn't exist
 ifeq ($(wildcard $(REMOVELIST)),)
-REMOVELIST =
+  REMOVELIST =
 endif
 
 UNIT_DIRS ?= unit.d
@@ -103,19 +103,22 @@ define remove-deck
 			exit 1; \
 		fi; \
 		fuser -k $1; \
+		for m in run dev/pts dev proc sys; do \
+			umount "$1/$m" || true ; \
+		done ; \
 		echo deck -D $1; \
 		deck -D $1; \
 	fi
 endef
 
 ifdef CHROOT_ONLY
-all: root.sandbox
+  all: root.sandbox
 else
-ifeq ($(FAB_ARCH_FAMILY),arm)
-all: root.sandbox
-else
-all: $O/product.iso
-endif
+  ifeq ($(FAB_ARCH_FAMILY),arm)
+    all: root.sandbox
+  else
+    all: $O/product.iso
+  endif
 endif
 
 define mount-deck
@@ -222,7 +225,7 @@ define help/body
 endef
 
 ifndef CHROOT_ONLY
-help/body += ;\
+  help/body += ;\
 	echo '  cdroot             \# created by squashing root.patched into cdroot template + overlay'; \
 	echo '  product.iso        \# product ISO created from the cdroot'; \
 	echo; \
