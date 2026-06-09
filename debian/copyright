@@ -1,7 +1,37 @@
-Copyright (c) 2011-2014 TurnKey GNU/Linux - https://www.turnkeylinux.org
-Copyright (c) 2020-2026 TurnKey GNU/Linux - https://www.turnkeylinux.org
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: fab
+Upstream-Contact: TurnKey GNU/Linux <admin@turnkeylinux.org>
 
-Fab is free software; you can redistribute it and/or modify it
-under the terms of the GNU Affero General Public License as published by the
-Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
+Files: *
+Copyright:
+ 2011-2017 Liraz Siri <liraz@turnkeylinux.org>
+ 2011-2016 Alon Swartz <alon@turnkeylinux.org>
+ 2016-2026 TurnKey Linux Contributors & Maintainers <admin@turnkeylinux.org>
+License: GPL-3+
+
+Files: .travis.yml
+ debian/compat
+ debian/control
+ debian/fab.docs
+ debian/rules
+ debian/source/format
+Copyright:
+ 2017 Chris Lamb <chris@chris-lamb.co.uk>
+License: GPL-3+
+
+License: GPL-3+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ .
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU General Public License for more details.
+ .
+ You should have received a copy of the GNU General Public License
+ along with this program. If not, see <http://www.gnu.org/licenses/>.
+ .
+ The complete text of the GNU General Public License
+ can be found in /usr/share/common-licenses/GPL-3 file.
