@@ -1,0 +1,61 @@
+v1.1 Release Notes
+==================
+
+Additional functionality, bugfixes and code cleanup.
+
+* Bugfix:
+  - Fix removelist bug where non-file non-dirs (e.g. symlinks or file-sockets)
+    would not be removed.
+
+* New contrib convenience scripts for improved app-dev flow:
+  - fab-investigate:
+    - Interactivly enter and investigate an appliance chroot (fab-chroot with
+      some extra setup and tear down).
+  - fab-rewind:
+    - Wind back build step/s.
+
+* ARM64 support:
+  - Initial support for arm64:
+    - Incomplete, but now supports basic arm64 builds.
+
+* Code quality and maintenance:
+  - Remove legacy travis config.
+  - Logging and increased debug feedback.
+  - Ruff & mypy config included (pyproject.toml).
+  - Linting, typing and formating updates (consistent with config) - including:
+    - Cleaner, clearer docstrings.
+    - Long lines wrapped.
+    - ... (lots more)
+  - Update all URLs in comments and docs to https.
+  - Debian Trixie debian module import updates:
+    - debian.debfile.Deb822 => debian.deb822.Deb822.
+    - Special thanks to Marcos! :) https://github.com/marcos-mendez.
+    - Remove redundant use of os.path prefix (specific sub module/s already
+      imported).
+  - fab/product.mk:
+    - Introduce indents for readability.
+    - Bugfix bootstrap check (misplaced quotes).
+    - Ensure nothing is mounted in deck when "undecking".
+    - Check for '/' on overlayfs and give helpful error message (previous
+      default behavior was not very helpful...).
+    - Now leverages a bash script (load_env) to read/generate required env
+      vars, rather than make re-evaluating them over and over. A bit hacky, but
+      does the job and makes the build a little quicker too which is nice.
+  - cryptpass.py (convenience script to generate encrypted password hashes):
+    - Code cleanup & python3 updates.
+  - iso2usb.py (convenience script to "burn" ISO to USB):
+    - Code cleanup & python3 updates.
+  - Update gitignore to ignore common build & cached assests.
+  
+* Packaging updates:
+  - Migrate python packaging from setup.py => pyproject.toml.
+  - Include build dependencies to support pyproject packaging.
+  - Set arch to 'all'.
+  - Set static datetime and exclude bytecode by default to make package leaner
+    and reproducable.
+  - Bump Debian compat version and update to modern declaration.
+  - Bump Standards-Version.
+  - Add additional control file fields.
+  - Dependency updates:
+    - Move squashfs-tools & xorriso from "Recommends" to "Depends".
+    - Bump python version dependency.
