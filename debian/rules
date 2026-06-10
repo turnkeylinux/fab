@@ -3,4 +3,4 @@
 export PYTHONDONTWRITEBYTECODE=1
 
 %:
-	dh $@ --buildsystem=pybuild
+	dh $@ --with python3 --buildsystem=pybuild
