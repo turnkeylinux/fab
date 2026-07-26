@@ -112,7 +112,7 @@ define remove-deck
 		fi; \
 		fuser -k $1; \
 		for m in run dev/pts dev proc sys; do \
-			umount "$1/$m" || true ; \
+			mountpoint -q "$1/$m" && umount "$1/$m" ; \
 		done ; \
 		echo deck -D $1; \
 		deck -D $1; \
